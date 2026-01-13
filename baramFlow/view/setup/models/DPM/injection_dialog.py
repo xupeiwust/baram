@@ -114,7 +114,7 @@ class InjectionDialog(QDialog):
 
     def _load(self):
         self._ui.name.setText(self._injection.name)
-        self._ui.injectionType.setCurrentIndex(self._ui.injectionType.findData(self._injection.injector.type))
+        self._ui.injectionType.setCurrentIndex(self._ui.injectionType.findData(self._injection.type))
 
         self._ui.numberOfParticlesPerPoint.setBatchableNumber(
             self._injection.injector.pointInjection.numberOfParticlesPerPoint)
@@ -255,7 +255,7 @@ class InjectionDialog(QDialog):
             return
 
         self._injection.name = self._ui.name.text()
-        self._injection.injector.type = injectionType
+        self._injection.type = injectionType
         if injectionType == DPMInjectionType.POINT:
             self._injection.injector.pointInjection.numberOfParticlesPerPoint = self._ui.numberOfParticlesPerPoint.batchableNumber()
             self._injection.injector.pointInjection.injectionTime = self._ui.injectionTime.batchableNumber()

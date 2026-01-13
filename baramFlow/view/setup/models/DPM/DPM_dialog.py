@@ -11,7 +11,7 @@ from widgets.enum_button_group import EnumButtonGroup
 from widgets.selector_dialog import SelectorDialog, SelectorItem
 
 from baramFlow.base.material.material import MaterialManager, MaterialType, Materials, Phase
-from baramFlow.base.model.DPM_model import DPMModelManager
+from baramFlow.base.model.DPM_model import DPMModelManager, Injection
 from baramFlow.base.model.model import DPMParticleType, DPMTrackingScheme, DPMDragForce, DPMLiftForce, Contamination
 from baramFlow.base.model.model import DPMTurbulentDispersion, DPMHeatTransferSpeicification
 from baramFlow.base.model.model import DPMEvaporationModel, DPMEnthalpyTransferType
@@ -67,7 +67,7 @@ class DPMDialog(QDialog):
         self._evaporationTabIndex = self._ui.tabWidget.indexOf(self._ui.evaporationTab)
 
         self._properties = None
-        self._injections = None
+        self._injections: list[Injection] = []
 
         self._particleType = None
         self._inertParticle = None
@@ -166,7 +166,7 @@ class DPMDialog(QDialog):
 
         self._ui.maxParticleCourantNumberWidget.setVisible(transient)
         self._ui.DPMIterationIntervalWidget.setVisible(not transient)
-        
+
         self._ui.tabWidget.setTabEnabled(self._heatTransferTabIndex, energyOn)
 
         #
@@ -424,8 +424,7 @@ class DPMDialog(QDialog):
         self._ui.totalComposition.setStyleSheet('' if total == 1 else 'color: red;')
 
     def _openInjectionListDialog(self):
-        self._dialog = InjectionListDialog(
-            self, DPMModelManager.injections() if self._injections is None else self._injections)
+        self._dialog = InjectionListDialog(self, self._injections or DPMModelManager.injections())
         self._dialog.accepted.connect(self._updateInjections)
         self._dialog.open()
 

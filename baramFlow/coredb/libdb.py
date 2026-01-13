@@ -6,6 +6,9 @@ from enum import Enum, auto
 from PySide6.QtCore import QCoreApplication
 from lxml import etree
 
+from lxml.builder import ElementMaker
+
+
 ns = 'http://www.baramcfd.org/baram'
 nsmap = {'': ns}
 
@@ -66,9 +69,26 @@ def dbErrorToMessage(exception: ValueException):
         return QCoreApplication.translate('CoreDBError', '{} is invalid. {1}').format(name, error)
 
 
-def dbTextToBool(text):
+def xmlToBool(text):
+    assert text == 'true' or text == 'false'
     return text == 'true'
 
 
-def boolToDBText(value):
+def boolToXml(value: bool) -> str:
     return 'true' if value else 'false'
+
+
+def handle_bool(builder, value: bool) -> str:
+    return boolToXml(value)
+
+
+E = ElementMaker(namespace=ns, typemap={
+    bool: handle_bool
+})
+
+
+class ElementEnum(Enum):
+    def toElement(self, tag:str):
+        return E(tag, self.value)
+
+

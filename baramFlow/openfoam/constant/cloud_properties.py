@@ -315,10 +315,10 @@ class CloudProperties(DictionaryFile):
         data = {}
 
         for injection in injections:
-            if injection.injector.type == DPMInjectionType.POINT:
+            if injection.type == DPMInjectionType.POINT:
                 data[injection.name] = self._constructManualInjection(injection.injector.pointInjection)
             else:
-                if injection.injector.type == DPMInjectionType.SURFACE:
+                if injection.type == DPMInjectionType.SURFACE:
                     data[injection.name] = self._constructPatchInjection(injection.injector.surfaceInjection)
                 else:
                     data[injection.name] = self._constructConeInjection(injection.injector.coneInjection)

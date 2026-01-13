@@ -5,10 +5,11 @@ from dataclasses import dataclass, field
 
 from baramFlow.coredb.libdb import nsmap
 from baramFlow.base.constants import Function1Type
+from baramFlow.coredb.libdb import E
 
 
 class BatchableNumber:
-    def __init__(self, text, default=None):
+    def __init__(self, text: str, default=None):
         self._text = text
         self._default = default
 
@@ -38,6 +39,11 @@ class BatchableNumber:
         attr = f' batchParameter="{self.parameter()}"' if self.isParameter() else ''
         return f'<{name}{attr}>{self._default if self.isParameter() else self._text}</{name}>'
 
+    def toElement(self, tag: str):
+        if self.isParameter():
+            return E(tag, self._default, batchParameter=self.parameter())
+        else:
+            return E(tag, self._text)
 
 @dataclass
 class Vector:
@@ -58,6 +64,11 @@ class Vector:
     def toXML(self):
         return f"{self.x.toXML('x')}{self.y.toXML('y')}{self.z.toXML('z')}"
 
+    def toElement(self, tag: str):
+        return E(tag,
+                 self.x.toElement('x'),
+                 self.y.toElement('y'),
+                 self.z.toElement('z'))
 
 @dataclass
 class Function1ScalarRow:
@@ -71,6 +82,11 @@ class Function1ScalarRow:
 
     def toXML(self):
         return f'<t>{self.t}</t><v>{self.v}</v>'
+
+    def toElement(self, tag: str):
+        return E(tag,
+                 E('t', self.t),
+                 E('v', self.v))
 
 
 @dataclass
@@ -90,12 +106,18 @@ class Function1VectorRow:
     def toXML(self):
         return f'<t>{self.t}</t><x>{self.x}</x><y>{self.y}</y><z>{self.z}</z>'
 
+    def toElement(self, tag:str = ''):
+        return E(tag,
+                 E('t', self.t),
+                 E('x', self.x),
+                 E('y', self.y),
+                 E('z', self.z))
 
 @dataclass
 class Function1Scalar:
     type: Function1Type = Function1Type.CONSTANT
     constant: BatchableNumber = field(default_factory=lambda: BatchableNumber('100'))
-    table: list = None
+    table: list[Function1ScalarRow] = field(default_factory=list)
 
     @staticmethod
     def fromElement(e):
@@ -119,6 +141,13 @@ class Function1Scalar:
             <table>{rows}</table>
         '''
 
+    def toElement(self, tag: str):
+        tableElement = E('table')
+        tableElement.extend([row.toElement('row') for row in self.table])
+        return E(tag,
+                 self.type.toElement('type'),
+                 self.constant.toElement('constant'),
+                 tableElement)
 
 @dataclass
 class Function1Vector:
@@ -147,3 +176,11 @@ class Function1Vector:
             <constant>{self.constant.toXML()}</constant>
             <table>{rows}</table>
         '''
+
+    def toElement(self, tag: str):
+        tableElement = E('table')
+        tableElement.extend([row.toElement('row') for row in self.table])
+        return E(tag,
+                 self.type.toElement('type'),
+                 self.constant.toElement('constant'),
+                 tableElement)

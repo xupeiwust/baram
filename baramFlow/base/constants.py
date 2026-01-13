@@ -4,8 +4,10 @@
 
 from enum import Enum, IntFlag
 
+from baramFlow.coredb.libdb import ElementEnum
 
-class FieldCategory(Enum):
+
+class FieldCategory(ElementEnum):
     GEOMETRY    = 'geometry'
     BASIC       = 'basic'
     COLLATERAL  = 'collateral'
@@ -14,7 +16,7 @@ class FieldCategory(Enum):
     USER_SCALAR = 'userScalar'
 
 
-class FieldType(Enum):
+class FieldType(ElementEnum):
     VECTOR = 'vector'
     SCALAR = 'scalar'
 
@@ -26,6 +28,6 @@ class VectorComponent(IntFlag):
     Z         = 8
 
 
-class Function1Type(Enum):
+class Function1Type(ElementEnum):
     CONSTANT    = "constant"
     TABLE       = "table"

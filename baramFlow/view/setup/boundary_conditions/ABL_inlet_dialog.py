@@ -9,7 +9,7 @@ from widgets.async_message_box import AsyncMessageBox
 
 from baramFlow.base.boundary.ABL_inlet import ABLFlowDirection, Vector, ABLInletCondition, AtmosphericBoundaryLayer
 from baramFlow.base.boundary.ABL_inlet import PasquillStability, updateABLInletBoundaryConditions
-from baramFlow.coredb.libdb import dbTextToBool
+from baramFlow.coredb.libdb import xmlToBool
 from baramFlow.coredb import coredb
 from baramFlow.coredb.boundary_db import BoundaryDB, FlowDirectionSpecificationMethod
 from baramFlow.coredb.region_db import RegionDB
@@ -124,7 +124,7 @@ class ABLInletDialog(QDialog):
         self._ui.minimumZCoordinate.setText(db.getValue(self._generalXPath + '/minimumZCoordinate'))
 
         self._ui.pasquillStability.setChecked(
-            not dbTextToBool(db.getAttribute(self._generalXPath + '/pasquillStability', 'disabled')))
+            not xmlToBool(db.getAttribute(self._generalXPath + '/pasquillStability', 'disabled')))
         self._ui.stabilityClass.setCurrentIndex(
             self._ui.stabilityClass.findData(db.getValue(self._generalXPath + '/pasquillStability/stabilityClass')))
         self._ui.latitude.setText(db.getValue(self._generalXPath + '/pasquillStability/latitude'))

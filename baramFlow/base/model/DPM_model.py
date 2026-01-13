@@ -9,7 +9,7 @@ from baramFlow.base.base import BatchableNumber, Vector, Function1Scalar, Functi
 from baramFlow.base.boundary.boundary import PatchInteractionType
 from baramFlow.coredb import coredb
 from baramFlow.coredb.boundary_db import BoundaryType
-from baramFlow.coredb.libdb import nsmap, dbTextToBool, boolToDBText, ns
+from baramFlow.coredb.libdb import boolToXml, E, nsmap, xmlToBool
 from .model import MODELS_XPATH, DPMParticleType, DPMTrackingScheme, DPMDragForce, DPMLiftForce, Contamination
 from .model import DPMTurbulentDispersion, DPMHeatTransferSpeicification, DPMEvaporationModel, DPMEnthalpyTransferType
 from .model import DPMInjectionType, DPMDiameterDistribution, DPMFlowRateSpec, DPMParticleSpeed, DPMParticleVelocityType
@@ -26,6 +26,10 @@ class InertProperties:
     def fromElement(e):
         return InertProperties(inertParticle=e.find('inertParticle', namespaces=nsmap).text)
 
+    def toElement(self, tag: str):
+        return E(tag,
+                 E('inertParticle', self.inertParticle))
+
 
 @dataclass
 class DropletCompositionMaterial:
@@ -40,10 +44,14 @@ class DropletCompositionMaterial:
     def toXML(self):
         return f'<mid>{self.mid}</mid><composition>{self.composition}</composition>'
 
+    def toElement(self, tag: str):
+        return E(tag,
+                 E('mid', self.mid),
+                 E('composition', self.composition))
 
 @dataclass
 class DropletProperties:
-    composition: list
+    composition: list[DropletCompositionMaterial]
     temperature: BatchableNumber
 
     @staticmethod
@@ -55,6 +63,12 @@ class DropletProperties:
         return DropletProperties(composition=composition,
                                  temperature=BatchableNumber.fromElement(e.find('temperature', namespaces=nsmap)))
 
+    def toElement(self, tag: str):
+        compositionElement =  E('composition')
+        compositionElement.extend([c.toElement('material') for c in self.composition])
+        return E(tag,
+                 compositionElement,
+                 self.temperature.toElement('temperature'))
 
 @dataclass
 class NumericalConditions:
@@ -67,12 +81,19 @@ class NumericalConditions:
     @staticmethod
     def fromElement(e):
         return NumericalConditions(
-            interactionWithContinuousPhase=dbTextToBool(e.find('interactionWithContinuousPhase', namespaces=nsmap).text),
+            interactionWithContinuousPhase=xmlToBool(e.find('interactionWithContinuousPhase', namespaces=nsmap).text),
             maxParticleCourantNumber=BatchableNumber.fromElement(e.find('maxParticleCourantNumber', namespaces=nsmap)),
             DPMIterationInterval=BatchableNumber.fromElement(e.find('DPMIterationInterval', namespaces=nsmap)),
-            nodeBasedAveraging=dbTextToBool(e.find('nodeBasedAveraging', namespaces=nsmap).text),
+            nodeBasedAveraging=xmlToBool(e.find('nodeBasedAveraging', namespaces=nsmap).text),
             trackingScheme=DPMTrackingScheme(e.find('trackingScheme', namespaces=nsmap).text))
 
+    def toElement(self, tag: str):
+        return E(tag,
+                 E('interactionWithContinuousPhase', self.interactionWithContinuousPhase),
+                 self.maxParticleCourantNumber.toElement('maxParticleCourantNumber'),
+                 self.DPMIterationInterval.toElement('DPMIterationInterval'),
+                 E('nodeBasedAveraging', self.interactionWithContinuousPhase),
+                 self.trackingScheme.toElement('trackingScheme'))
 
 @dataclass
 class NonSphereDrag:
@@ -83,6 +104,9 @@ class NonSphereDrag:
         return NonSphereDrag(
             shapeFactor=BatchableNumber.fromElement(e.find('shapeFactor', namespaces=nsmap)))
 
+    def toElement(self, tag: str):
+        return E(tag,
+                 self.shapeFactor.toElement('shapeFactor'))
 
 @dataclass
 class TomiyamaDrag:
@@ -95,6 +119,10 @@ class TomiyamaDrag:
             surfaceTension=BatchableNumber.fromElement(e.find('surfaceTension', namespaces=nsmap)),
             contamination=Contamination(e.find('contamination', namespaces=nsmap).text))
 
+    def toElement(self, tag: str):
+        return E(tag,
+                 self.surfaceTension.toElement('surfaceTension'),
+                 self.contamination.toElement('contamination'))
 
 @dataclass
 class DragForce:
@@ -109,6 +137,11 @@ class DragForce:
             nonSphereDrag=NonSphereDrag.fromElement(e.find('nonSphereDrag', namespaces=nsmap)),
             tomyamaDrag=TomiyamaDrag.fromElement(e.find('TomiyamaDrag', namespaces=nsmap)))
 
+    def toElement(self, tag: str):
+        return E(tag,
+                 self.specification.toElement('specification'),
+                 self.nonSphereDrag.toElement('nonSphereDrag'),
+                 self.tomyamaDrag.toElement('TomiyamaDrag'))
 
 @dataclass
 class TomiyamaLift:
@@ -119,6 +152,9 @@ class TomiyamaLift:
         return TomiyamaLift(
             surfaceTension=BatchableNumber.fromElement(e.find('surfaceTension', namespaces=nsmap)))
 
+    def toElement(self, tag: str):
+        return E(tag,
+                 self.surfaceTension.toElement('surfaceTension'))
 
 @dataclass
 class LiftForce:
@@ -131,6 +167,10 @@ class LiftForce:
             specification=DPMLiftForce(e.find('specification', namespaces=nsmap).text),
             tomiyamaLift=TomiyamaLift.fromElement(e.find('TomiyamaLift', namespaces=nsmap)))
 
+    def toElement(self, tag: str):
+        return E(tag,
+                 self.specification.toElement('specification'),
+                 self.tomiyamaLift.toElement('TomiyamaLift'))
 
 @dataclass
 class BrownianMotionForce:
@@ -141,10 +181,15 @@ class BrownianMotionForce:
     @staticmethod
     def fromElement(e):
         return BrownianMotionForce(
-            disabled=dbTextToBool(e.get('disabled')),
+            disabled=xmlToBool(e.get('disabled')),
             molecularFreePathLength=BatchableNumber.fromElement(e.find('molecularFreePathLength', namespaces=nsmap)),
-            useTurbulence=dbTextToBool(e.find('useTurbulence', namespaces=nsmap).text))
+            useTurbulence=xmlToBool(e.find('useTurbulence', namespaces=nsmap).text))
 
+    def toElement(self, tag: str):
+        return E(tag,
+                 self.molecularFreePathLength.toElement('molecularFreePathLength'),
+                 E('useTurbulence', self.useTurbulence),
+                 disabled=boolToXml(self.disabled))
 
 @dataclass
 class KinematicModel:
@@ -159,10 +204,17 @@ class KinematicModel:
         return KinematicModel(
             dragForce=DragForce.fromElement(e.find('dragForce', namespaces=nsmap)),
             liftForce=LiftForce.fromElement(e.find('liftForce', namespaces=nsmap)),
-            gravity=dbTextToBool(e.find('gravity', namespaces=nsmap).text),
-            pressureGradient=dbTextToBool(e.find('pressureGradient', namespaces=nsmap).text),
+            gravity=xmlToBool(e.find('gravity', namespaces=nsmap).text),
+            pressureGradient=xmlToBool(e.find('pressureGradient', namespaces=nsmap).text),
             brownianMotionForce=BrownianMotionForce.fromElement(e.find('brownianMotionForce', namespaces=nsmap)))
 
+    def toElement(self, tag: str):
+        return E(tag,
+                 self.dragForce.toElement('dragForce'),
+                 self.liftForce.toElement('liftForce'),
+                 E('gravity', self.gravity),
+                 E('pressureGradient', self.pressureGradient),
+                 self.brownianMotionForce.toElement('brownianMotionForce'))
 
 @dataclass
 class RanzMarshall:
@@ -170,8 +222,11 @@ class RanzMarshall:
 
     @staticmethod
     def fromElement(e):
-        return RanzMarshall(birdCorrection=dbTextToBool(e.find('birdCorrection', namespaces=nsmap).text))
+        return RanzMarshall(birdCorrection=xmlToBool(e.find('birdCorrection', namespaces=nsmap).text))
 
+    def toElement(self, tag: str):
+        return E(tag,
+                 E('birdCorrection', self.birdCorrection))
 
 @dataclass
 class HeatTransfer:
@@ -183,6 +238,10 @@ class HeatTransfer:
         return HeatTransfer(specification=DPMHeatTransferSpeicification(e.find('specification', namespaces=nsmap).text),
                             ranzMarsahll=RanzMarshall.fromElement(e.find('ranzMarshall', namespaces=nsmap)))
 
+    def toElement(self, tag: str):
+        return E(tag,
+                 self.specification.toElement('specification'),
+                 self.ranzMarsahll.toElement('ranzMarshall'))
 
 @dataclass
 class Evaporation:
@@ -195,6 +254,10 @@ class Evaporation:
             model=DPMEvaporationModel(e.find('model', namespaces=nsmap).text),
             enthalpyTransferType=DPMEnthalpyTransferType(e.find('enthalpyTransferType', namespaces=nsmap).text))
 
+    def toElement(self, tag: str):
+        return E(tag,
+                 self.model.toElement('model'),
+                 self.enthalpyTransferType.toElement('enthalpyTransferType'))
 
 @dataclass
 class DPMModelProperties:
@@ -220,67 +283,17 @@ class DPMModelProperties:
             evaporation=Evaporation.fromElement(e.find('evaporation', namespaces=nsmap)),
         )
 
-    def toElement(self):
-        composition = ''
-        for item in self.droplet.composition:
-            composition += f'<material>{item.toXML()}</material>'
+    def toElement(self, tag: str):
+        return E(tag,
+                 self.particleType.toElement('particleType'),
+                 self.inert.toElement('inert'),
+                 self.droplet.toElement('droplet'),
+                 self.numericalConditions.toElement('numericalConditions'),
+                 self.kinematicModel.toElement('kinematicModel'),
+                 self.turbulentDispersion.toElement('turbulentDispersion'),
+                 self.heatTransfer.toElement('heatTransfer'),
+                 self.evaporation.toElement('evaporation'))
 
-        return etree.fromstring(
-            f'''
-            <properties xmlns="http://www.baramcfd.org/baram">
-                <particleType>{self.particleType.value}</particleType>
-                <inert>
-                    <inertParticle>{self.inert.inertParticle}</inertParticle>
-                </inert>
-                <droplet>
-                    <composition>{composition}</composition>
-                    {self.droplet.temperature.toXML('temperature')}
-                </droplet>
-                <numericalConditions>
-                    <interactionWithContinuousPhase>{boolToDBText(self.numericalConditions.interactionWithContinuousPhase)}</interactionWithContinuousPhase>
-                    {self.numericalConditions.maxParticleCourantNumber.toXML('maxParticleCourantNumber')}
-                    {self.numericalConditions.DPMIterationInterval.toXML('DPMIterationInterval')}
-                    <nodeBasedAveraging>{boolToDBText(self.numericalConditions.nodeBasedAveraging)}</nodeBasedAveraging>
-                    <trackingScheme>{self.numericalConditions.trackingScheme.value}</trackingScheme>
-                </numericalConditions>
-                <kinematicModel>
-                    <dragForce>
-                        <specification>{self.kinematicModel.dragForce.specification.value}</specification>
-                        <nonSphereDrag>
-                            {self.kinematicModel.dragForce.nonSphereDrag.shapeFactor.toXML('shapeFactor')}
-                        </nonSphereDrag>
-                        <TomiyamaDrag>
-                            {self.kinematicModel.dragForce.tomyamaDrag.surfaceTension.toXML('surfaceTension')}
-                            <contamination>{self.kinematicModel.dragForce.tomyamaDrag.contamination.value}</contamination>
-                        </TomiyamaDrag>
-                    </dragForce>
-                    <liftForce>
-                        <specification>{self.kinematicModel.liftForce.specification.value}</specification>
-                        <TomiyamaLift>
-                            {self.kinematicModel.liftForce.tomiyamaLift.surfaceTension.toXML('surfaceTension')}
-                        </TomiyamaLift>
-                    </liftForce>
-                    <gravity>{boolToDBText(self.kinematicModel.gravity)}</gravity>
-                    <pressureGradient>{boolToDBText(self.kinematicModel.pressureGradient)}</pressureGradient>
-                    <brownianMotionForce{' disabled="true"' if self.kinematicModel.brownianMotionForce.disabled else ''}>
-                        {self.kinematicModel.brownianMotionForce.molecularFreePathLength.toXML('molecularFreePathLength')}
-                        <useTurbulence>{boolToDBText(self.kinematicModel.brownianMotionForce.useTurbulence)}</useTurbulence>
-                    </brownianMotionForce>
-                </kinematicModel>
-                <turbulentDispersion>{self.turbulentDispersion.value}</turbulentDispersion>
-                <heatTransfer>
-                    <specification>{self.heatTransfer.specification.value}</specification>
-                    <ranzMarshall>
-                        <birdCorrection>{boolToDBText(self.heatTransfer.ranzMarsahll.birdCorrection)}</birdCorrection>
-                    </ranzMarshall>
-                </heatTransfer>
-                <evaporation>
-                    <model>{self.evaporation.model.value}</model>
-                    <enthalpyTransferType>{self.evaporation.enthalpyTransferType.value}</enthalpyTransferType>
-                </evaporation>
-            </properties>
-            '''
-        )
 
 
 @dataclass
@@ -288,7 +301,7 @@ class PointInjection:
     numberOfParticlesPerPoint: BatchableNumber  = field(default_factory=lambda: BatchableNumber('100'))
     injectionTime: BatchableNumber              = field(default_factory=lambda: BatchableNumber('0'))
     particleVelocity: Vector                    = field(default_factory=lambda: Vector.new('1', '1', '1'))
-    positions: list                             = field(default_factory=list)
+    positions: list[Vector]                     = field(default_factory=list)
 
     @staticmethod
     def fromElement(e):
@@ -303,6 +316,14 @@ class PointInjection:
             positions=positions
         )
 
+    def toElement(self, tag: str):
+        positionsElement = E('positions')
+        positionsElement.extend([p.toElement('position') for p in self.positions])
+        return E(tag,
+            self.numberOfParticlesPerPoint.toElement('numberOfParticlesPerPoint'),
+            self.injectionTime.toElement('injectionTime'),
+            self.particleVelocity.toElement('particleVelocity'),
+            positionsElement)
 
 @dataclass
 class ParticleCountParameters:
@@ -316,6 +337,10 @@ class ParticleCountParameters:
             numberOfParticlesPerParcel=BatchableNumber.fromElement(
                 e.find('numberOfParticlesPerParcel',namespaces=nsmap)))
 
+    def toElement(self, tag: str):
+        return E(tag,
+                 self.parcelPerSecond.toElement('parcelPerSecond'),
+                 self.numberOfParticlesPerParcel.toElement('numberOfParticlesPerParcel'))
 
 @dataclass
 class ParticleVolumeParameters:
@@ -332,6 +357,12 @@ class ParticleVolumeParameters:
             volumeFlowRate=Function1Scalar.fromElement(e.find('volumeFlowRate',namespaces=nsmap)),
             massFlowRate=BatchableNumber.fromElement(e.find('massFlowRate',namespaces=nsmap)))
 
+    def toElement(self, tag: str):
+        return E(tag,
+                 self.parcelPerSecond.toElement('parcelPerSecond'),
+                 self.totalMass.toElement('totalMass'),
+                 self.volumeFlowRate.toElement('volumeFlowRate'),
+                 self.massFlowRate.toElement('massFlowRate'))
 
 @dataclass
 class FlowRate:
@@ -350,6 +381,13 @@ class FlowRate:
             startTime=BatchableNumber.fromElement(e.find('startTime', namespaces=nsmap)),
             stopTime=BatchableNumber.fromElement(e.find('stopTime', namespaces=nsmap)))
 
+    def toElement(self, tag: str):
+        return E(tag,
+                 self.specification.toElement('specification'),
+                 self.particleCount.toElement('particleCount'),
+                 self.particleVolume.toElement('particleVolume'),
+                 self.startTime.toElement('startTime'),
+                 self.stopTime.toElement('stopTime'))
 
 @dataclass
 class ConeInjection:
@@ -382,6 +420,20 @@ class ConeInjection:
             injectorPressure=Function1Scalar.fromElement(e.find('injectorPressure', namespaces=nsmap)),
             dischargeCoeff=Function1Scalar.fromElement(e.find('dischargeCoeff', namespaces=nsmap)))
 
+    def toElement(self, tag: str):
+        return E(tag,
+                 self.injectorType.toElement('injectorType'),
+                 self.position.toElement('position'),
+                 self.axis.toElement('axis'),
+                 self.outerConeAngle.toElement('outerConeAngle'),
+                 self.innerConeAngle.toElement('innerConeAngle'),
+                 self.outerRadius.toElement('outerRadius'),
+                 self.innerRadius.toElement('innerRadius'),
+                 self.swirlVelocity.toElement('swirlVelocity'),
+                 self.particleSpeed.toElement('particleSpeed'),
+                 self.injectionSpeed.toElement('injectionSpeed'),
+                 self.injectorPressure.toElement('injectorPressure'),
+                 self.dischargeCoeff.toElement('dischargeCoeff'))
 
 @dataclass
 class ParticleVelocity:
@@ -393,6 +445,10 @@ class ParticleVelocity:
         return ParticleVelocity(type=DPMParticleVelocityType(e.find('type', namespaces=nsmap).text),
                                 value=Vector.fromElement(e.find('value', namespaces=nsmap)))
 
+    def toElement(self, tag: str):
+        return E(tag,
+                 self.type.toElement('type'),
+                 self.value.toElement('value'))
 
 @dataclass
 class SurfaceInjection:
@@ -405,10 +461,14 @@ class SurfaceInjection:
             particleVelocity=ParticleVelocity.fromElement(e.find('particleVelocity', namespaces=nsmap)),
             bcid=e.find('surface', namespaces=nsmap).text)
 
+    def toElement(self, tag: str):
+        return E(tag,
+                 self.particleVelocity.toElement('particleVelocity'),
+                 E('surface', self.bcid))
+
 
 @dataclass
-class Injector:
-    type: DPMInjectionType              = DPMInjectionType.CONE
+class InjectorProperties:
     pointInjection: PointInjection      = field(default_factory=PointInjection)
     flowRate: FlowRate                  = field(default_factory=FlowRate)
     surfaceInjection: SurfaceInjection  = field(default_factory=SurfaceInjection)
@@ -416,14 +476,17 @@ class Injector:
 
     @staticmethod
     def fromElement(e):
-        properties = e.find('injectorProperties', namespaces=nsmap)
-        return Injector(type=DPMInjectionType(e.find('type', namespaces=nsmap).text),
-                        pointInjection=PointInjection.fromElement(properties.find('pointInjection', namespaces=nsmap)),
-                        flowRate=FlowRate.fromElement(properties.find('flowRate', namespaces=nsmap)),
-                        surfaceInjection=SurfaceInjection.fromElement(
-                            properties.find('surfaceInjection', namespaces=nsmap)),
-                        coneInjection=ConeInjection.fromElement(properties.find('coneInjection', namespaces=nsmap)))
+        return InjectorProperties(pointInjection=PointInjection.fromElement(e.find('pointInjection', namespaces=nsmap)),
+                        flowRate=FlowRate.fromElement(e.find('flowRate', namespaces=nsmap)),
+                        surfaceInjection=SurfaceInjection.fromElement(e.find('surfaceInjection', namespaces=nsmap)),
+                        coneInjection=ConeInjection.fromElement(e.find('coneInjection', namespaces=nsmap)))
 
+    def toElement(self, tag: str):
+        return E(tag,
+            self.pointInjection.toElement('pointInjection'),
+            self.flowRate.toElement('flowRate'),
+            self.coneInjection.toElement('coneInjection'),
+            self.surfaceInjection.toElement('surfaceInjection'))
 
 @dataclass
 class DiameterDistribution:
@@ -446,11 +509,21 @@ class DiameterDistribution:
             spreadParameter=BatchableNumber.fromElement(e.find('spreadParameter', namespaces=nsmap)),
             stdDeviation=BatchableNumber.fromElement(e.find('stdDeviation', namespaces=nsmap)))
 
+    def toElement(self, tag: str):
+        return E(tag,
+            E('type', self.type.value),
+            self.diameter.toElement('diameter'),
+            self.minDiameter.toElement('minDiameter'),
+            self.maxDiameter.toElement('maxDiameter'),
+            self.meanDiameter.toElement('meanDiameter'),
+            self.spreadParameter.toElement('spreadParameter'),
+            self.stdDeviation.toElement('stdDeviation'))
 
 @dataclass
 class Injection:
     name: str                                   = ''
-    injector: Injector                          = field(default_factory=Injector)
+    type: DPMInjectionType                      = DPMInjectionType.CONE
+    injector: InjectorProperties                = field(default_factory=InjectorProperties)
     diameterDistribution: DiameterDistribution  = field(default_factory=DiameterDistribution)
 
     @staticmethod
@@ -562,75 +635,16 @@ class Injection:
     def fromElement(e):
         return Injection(
             name=e.find('name', namespaces=nsmap).text,
-            injector=Injector.fromElement(e),
+            type=DPMInjectionType(e.find('type', namespaces=nsmap).text),
+            injector=InjectorProperties.fromElement(e.find('injectorProperties', namespaces=nsmap)),
             diameterDistribution=DiameterDistribution.fromElement(e.find('diameterDistribution', namespaces=nsmap)))
 
-    def toElement(self):
-        positions = ''
-        for position in self.injector.pointInjection.positions:
-            positions += f'<position>{position.toXML()}</position>'
-
-        return etree.fromstring(
-            f'''
-            <injection xmlns="http://www.baramcfd.org/baram">
-                <name>{self.name}</name>
-                <type>{self.injector.type.value}</type>
-                <injectorProperties>
-                    <pointInjection>
-                        {self.injector.pointInjection.numberOfParticlesPerPoint.toXML('numberOfParticlesPerPoint')}
-                        {self.injector.pointInjection.injectionTime.toXML('injectionTime')}
-                        <particleVelocity>{self.injector.pointInjection.particleVelocity.toXML()}</particleVelocity>
-                        <positions>{positions}</positions>
-                    </pointInjection>
-                    <flowRate>
-                        <specification>{self.injector.flowRate.specification.value}</specification>
-                        <particleCount>
-                            {self.injector.flowRate.particleCount.parcelPerSecond.toXML('parcelPerSecond')}
-                            {self.injector.flowRate.particleCount.numberOfParticlesPerParcel.toXML('numberOfParticlesPerParcel')}
-                        </particleCount>
-                        <particleVolume>
-                            {self.injector.flowRate.particleVolume.parcelPerSecond.toXML('parcelPerSecond')}
-                            {self.injector.flowRate.particleVolume.totalMass.toXML('totalMass')}
-                            <volumeFlowRate>{self.injector.flowRate.particleVolume.volumeFlowRate.toXML()}</volumeFlowRate>
-                            {self.injector.flowRate.particleVolume.massFlowRate.toXML('massFlowRate')}
-                        </particleVolume>
-                        {self.injector.flowRate.startTime.toXML('startTime')}
-                        {self.injector.flowRate.stopTime.toXML('stopTime')}
-                    </flowRate>
-                    <coneInjection>
-                        <injectorType>{self.injector.coneInjection.injectorType.value}</injectorType>
-                        <position>{self.injector.coneInjection.position.toXML()}</position>
-                        <axis>{self.injector.coneInjection.axis.toXML()}</axis>
-                        <outerConeAngle>{self.injector.coneInjection.outerConeAngle.toXML()}</outerConeAngle>
-                        <innerConeAngle>{self.injector.coneInjection.innerConeAngle.toXML()}</innerConeAngle>
-                        {self.injector.coneInjection.outerRadius.toXML('outerRadius')}
-                        {self.injector.coneInjection.innerRadius.toXML('innerRadius')}
-                        <swirlVelocity>{self.injector.coneInjection.swirlVelocity.toXML()}</swirlVelocity>
-                        <particleSpeed>{self.injector.coneInjection.particleSpeed.value}</particleSpeed>
-                        {self.injector.coneInjection.injectionSpeed.toXML('injectionSpeed')}
-                        <injectorPressure>{self.injector.coneInjection.injectorPressure.toXML()}</injectorPressure>
-                        <dischargeCoeff>{self.injector.coneInjection.dischargeCoeff.toXML()}</dischargeCoeff>
-                    </coneInjection>
-                    <surfaceInjection>
-                        <particleVelocity>
-                            <type>{self.injector.surfaceInjection.particleVelocity.type.value}</type>
-                            <value>{self.injector.surfaceInjection.particleVelocity.value.toXML()}</value>
-                        </particleVelocity>
-                        <surface>{self.injector.surfaceInjection.bcid}</surface>
-                    </surfaceInjection>
-                </injectorProperties>
-                <diameterDistribution>
-                    <type>{self.diameterDistribution.type.value}</type>
-                    {self.diameterDistribution.diameter.toXML('diameter')}
-                    {self.diameterDistribution.minDiameter.toXML('minDiameter')}
-                    {self.diameterDistribution.maxDiameter.toXML('maxDiameter')}
-                    {self.diameterDistribution.meanDiameter.toXML('meanDiameter')}
-                    {self.diameterDistribution.spreadParameter.toXML('spreadParameter')}
-                    {self.diameterDistribution.stdDeviation.toXML('stdDeviation')}
-                </diameterDistribution>
-            </injection>
-            '''
-        )
+    def toElement(self, tag: str):
+        return E(tag,
+                 E('name', self.name),
+                 self.type.toElement('type'),
+                 self.injector.toElement('injectorProperties'),
+                 self.diameterDistribution.toElement('diameterDistribution'))
 
 
 class DPMModelManager:
@@ -660,18 +674,17 @@ class DPMModelManager:
                 for e in coredb.CoreDB().getElements(DPM_MODELS_XPATH + '/properties/droplet/composition/material/mid')]
 
     @staticmethod
-    def updateDPMModel(db, properties, injections):
+    def updateDPMModel(db, properties: DPMModelProperties, injections: list[Injection]):
         dpmModels = db.getElement(DPM_MODELS_XPATH)
 
-        if injections is None:  # Not modified
+        if injections:
+            injectionsElement = E('injections')
+            injectionsElement.extend([i.toElement('injection') for i in injections])
+        else:  # Not modified
             injectionsElement = dpmModels.find('injections', namespaces=nsmap)
-        else:
-            injectionsElement = etree.Element(f'{{{ns}}}injections')
-            for injection in injections:
-                injectionsElement.append(Injection.toElement(injection))
 
         dpmModels.clear()
-        dpmModels.append(properties.toElement())
+        dpmModels.append(properties.toElement('properties'))
         dpmModels.append(injectionsElement)
 
         db.increaseConfigCount()
