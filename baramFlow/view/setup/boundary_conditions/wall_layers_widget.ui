@@ -70,9 +70,6 @@
          <property name="styleSheet">
           <string notr="true"/>
          </property>
-         <property name="frameShadow">
-          <enum>QFrame::Shadow::Raised</enum>
-         </property>
          <layout class="QGridLayout" name="gridLayout_3">
           <property name="verticalSpacing">
            <number>2</number>
@@ -136,12 +133,12 @@
        <item>
         <spacer name="verticalSpacer">
          <property name="orientation">
-          <enum>Qt::Orientation::Vertical</enum>
+          <enum>Qt::Vertical</enum>
          </property>
          <property name="sizeHint" stdset="0">
           <size>
-           <width>20</width>
-           <height>40</height>
+           <width>40</width>
+           <height>20</height>
           </size>
          </property>
         </spacer>
