@@ -37,6 +37,9 @@ def collateralFieldDict(fields: list[Field]) -> dict:
         if WALL_HEAT_FLUX in fields:
             functions[f'collateralWallHeatFlux_{rname}'] = foWallHeatFluxReport(rname)
 
+        if CELSIUS_TEMPERATURE in fields:
+            functions[f'celsiusTemperature_{rname}'] = foCelsiusTemperatureReport(rname)
+
         region = db.getRegionProperties(rname)
 
         if not region.isFluid():
@@ -64,10 +67,6 @@ def collateralFieldDict(fields: list[Field]) -> dict:
 
         if WALL_Y_PLUS in fields:
             functions[f'collateralWallYPlus_{rname}'] = foWallYPlusReport(rname)
-
-        if CELSIUS_TEMPERATURE in fields:
-            print('collateralFieldDict')
-            functions[f'celsiusTemperature_{rname}'] = foCelsiusTemperatureReport(rname)
 
     return functions
 
