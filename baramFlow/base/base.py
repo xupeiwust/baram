@@ -106,7 +106,7 @@ class Function1VectorRow:
     def toXML(self):
         return f'<t>{self.t}</t><x>{self.x}</x><y>{self.y}</y><z>{self.z}</z>'
 
-    def toElement(self, tag:str = ''):
+    def toElement(self, tag:str):
         return E(tag,
                  E('t', self.t),
                  E('x', self.x),
