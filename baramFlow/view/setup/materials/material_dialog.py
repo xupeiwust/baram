@@ -424,25 +424,13 @@ class MaterialDialog(ResizableDialog):
                                     self._ui.boilingTemperature.text(), self.tr('Boiling Temperature'))
 
                         self._ui.saturationPressure.updateData(self._saturationPressure)
-                        db.removeElement(self._xpath + '/saturationPressure')
-                        db.addElementFromString(self._xpath,
-                                                '<saturationPressure xmlns="http://www.baramcfd.org/baram">'
-                                                f'{self._saturationPressure.toXML()}'
-                                                '</saturationPressure>')
+                        db.replaceElemenet(self._xpath + '/saturationPressure', self._saturationPressure.toElement('saturationPressure'))
 
                         self._ui.enthalpyOfVaporization.updateData(self._enthalpyOfVaporization)
-                        db.removeElement(self._xpath + '/enthalpyOfVaporization')
-                        db.addElementFromString(self._xpath,
-                                                '<enthalpyOfVaporization xmlns="http://www.baramcfd.org/baram">'
-                                                f'{self._enthalpyOfVaporization.toXML()}'
-                                                '</enthalpyOfVaporization>')
+                        db.replaceElemenet(self._xpath + '/enthalpyOfVaporization', self._enthalpyOfVaporization.toElement('enthalpyOfVaporization'))
 
                         self._ui.dropletSurfaceTension.updateData(self._dropletSurfaceTension)
-                        db.removeElement(self._xpath + '/dropletSurfaceTension')
-                        db.addElementFromString(self._xpath,
-                                                '<dropletSurfaceTension xmlns="http://www.baramcfd.org/baram">'
-                                                f'{self._dropletSurfaceTension.toXML()}'
-                                                '</dropletSurfaceTension>')
+                        db.replaceElemenet(self._xpath + '/dropletSurfaceTension', self._dropletSurfaceTension.toElement('dropletSurfaceTension'))
 
                 if ModelsDB.isEnergyModelOn():
                     if self._phase == Phase.SOLID:

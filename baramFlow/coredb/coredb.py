@@ -863,6 +863,14 @@ class _CoreDB(object):
 
         self._configCount += 1
 
+    def replaceElemenet(self, xpath, element):
+        oldElement = self._xmlTree.find(xpath, namespaces=nsmap)
+        if oldElement is None:
+            raise LookupError
+
+        parent = oldElement.getparent()
+        parent.replace(oldElement, element)
+
     def clearElement(self, xpath):
         element = self._xmlTree.find(xpath, namespaces=nsmap)
         if element is None:
