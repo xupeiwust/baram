@@ -11,6 +11,7 @@ from libbaram.natural_name_uuid import uuidToNnstr
 from widgets.async_message_box import AsyncMessageBox
 from widgets.selector_dialog import SelectorDialog
 
+from baramFlow.base.base import TrackedData
 from baramFlow.coredb import coredb
 from baramFlow.coredb.boundary_db import BoundaryDB, BoundaryType
 from baramFlow.coredb.libdb import ValueException, dbErrorToMessage
@@ -33,7 +34,7 @@ class FanDialog(CoupledBoundaryConditionDialog):
         self._coupledBoundary = None
 
         self._fanCurveName: UUID
-        self._fanCurve: list[list[float]] = []
+        self._fanCurve = TrackedData()
 
         self._boundarySelector = None
         self._dialog = None
@@ -63,19 +64,13 @@ class FanDialog(CoupledBoundaryConditionDialog):
         self._setCoupledBoundary(db.getValue(self._xpath + '/coupledBoundary'))
         self._fanCurveName = UUID(db.getValue(self._xpath + '/fanCurveName'))
 
-        if self._fanCurveName.int != 0:
-            df = Project.instance().fileDB().getDataFrame(uuidToNnstr(self._fanCurveName))
-            if df is not None:
-                self._fanCurve = df.values.tolist()
-
     @qasync.asyncSlot()
     async def _accept(self):
         if not self._coupledBoundary:
             await AsyncMessageBox().information(self, self.tr('Input Error'), self.tr('Select Coupled Boundary'))
             return
 
-        df = pd.DataFrame(self._fanCurve)
-        if df.empty:
+        if self._fanCurve.isNone() and self._fanCurveName.int == 0:
             await AsyncMessageBox().information(self, self.tr('Input Error'), self.tr('Edit Fan Curve'))
             return
 
@@ -83,7 +78,7 @@ class FanDialog(CoupledBoundaryConditionDialog):
             with coredb.CoreDB() as db:
                 coupleTypeChanged = self._changeCoupledBoundary(db, self._coupledBoundary, self.BOUNDARY_TYPE)
 
-                if self._fanCurveName.int == 0:
+                if self._fanCurve.isModified():
                     self._fanCurveName = uuid4()
 
                     self._writeConditions(db, self._xpath)
@@ -93,7 +88,7 @@ class FanDialog(CoupledBoundaryConditionDialog):
         except ValueException as ve:
             await AsyncMessageBox().information(self, self.tr('Input Error'), dbErrorToMessage(ve))
 
-        Project.instance().fileDB().putDataFrame(uuidToNnstr(self._fanCurveName), df)
+        Project.instance().fileDB().putDataFrame(uuidToNnstr(self._fanCurveName), pd.DataFrame(self._fanCurve.data()))
 
         if coupleTypeChanged:
             self.boundaryTypeChanged.emit(int(self._coupledBoundary))
@@ -106,12 +101,17 @@ class FanDialog(CoupledBoundaryConditionDialog):
             self.reject()
 
     def _editFanCurve(self):
-        self._dialog = PiecewiseLinearDialog(self, self.tr('Fan Curve'), 'Q', 'm3/s', ['P'], 'Pa', self._fanCurve)
+        if self._fanCurve.isNone() and self._fanCurveName.int != 0:
+            df = Project.instance().fileDB().getDataFrame(uuidToNnstr(self._fanCurveName))
+            if df is not None:
+                self._fanCurve = TrackedData(df.values.tolist())
+
+        self._dialog = PiecewiseLinearDialog(self, self.tr('Fan Curve'), 'Q', 'm3/s', ['P'], 'Pa', self._fanCurve.data())
         self._dialog.accepted.connect(self._fanCurveAccepted)
         self._dialog.open()
 
     def _fanCurveAccepted(self):
-        self._fanCurve = self._dialog.getData()
+        self._fanCurve.setData(self._dialog.getData())
 
     def _selectCoupledBoundary(self):
         if not self._boundarySelector:

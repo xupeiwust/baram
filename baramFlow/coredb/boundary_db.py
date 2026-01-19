@@ -122,9 +122,10 @@ class ShearCondition(Enum):
     SLIP = 'slip'
 
 
-class WallTemperature(Enum):
+class WallHeatTransferMode(Enum):
     ADIABATIC = 'adiabatic'
     CONSTANT_TEMPERATURE = 'constantTemperature'
+    TEMPERATURE_DISTRIBUTION = 'temperatureDistribution'
     CONSTANT_HEAT_FLUX = 'constantHeatFlux'
     CONVECTION = 'convection'
 

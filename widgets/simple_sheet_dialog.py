@@ -14,12 +14,13 @@ from .simple_sheet_dialog_ui import Ui_SimpleSheetDialog
 
 
 class SimpleSheetDialog(QDialog):
-    def __init__(self, parent, labels: list[str], data: Optional[list[list[float]]] = None, readOnly: bool = False):
+    def __init__(self, parent, title, labels: list[str], data: Optional[list[list[float]]] = None, readOnly: bool = False):
         super().__init__(parent)
 
         self._ui = Ui_SimpleSheetDialog()
         self._ui.setupUi(self)
 
+        self.setWindowTitle(title)
         self._ui.sheet.setup(labels, data, readOnly=readOnly)
 
         if readOnly:

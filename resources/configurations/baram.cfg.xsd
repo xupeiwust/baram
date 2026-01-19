@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" targetNamespace="http://www.baramcfd.org/baram"
-           xmlns="http://www.baramcfd.org/baram" elementFormDefault="qualified" version="12">
+           xmlns="http://www.baramcfd.org/baram" elementFormDefault="qualified" version="13">
 
     <!-- type definitions -->
     <xs:simpleType name="uuidType">
@@ -1615,7 +1615,7 @@
                     </xs:sequence>
                 </xs:complexType>
             </xs:element>
-            <xs:element name="temperature">
+            <xs:element name="heatTransfer">
                 <xs:complexType>
                     <xs:sequence>
                         <xs:element name="type" default="adiabatic">
@@ -1623,6 +1623,7 @@
                                 <xs:restriction base="xs:string">
                                     <xs:enumeration value="adiabatic"/>
                                     <xs:enumeration value="constantTemperature"/>
+                                    <xs:enumeration value="temperatureDistribution"/>
                                     <xs:enumeration value="constantHeatFlux"/>
                                     <xs:enumeration value="convection"/>
                                 </xs:restriction>
@@ -1630,6 +1631,7 @@
                         </xs:element>
                         <xs:element name="temperature" type="inputNumberType" default="300"/>
                         <xs:element name="heatFlux" type="inputNumberType" default="1000"/>
+                        <xs:element name="temperatureDistributionName" type="uuidType"/>
                         <xs:element name="heatTransferCoefficient" type="inputNumberType" default="100"/>
                         <xs:element name="freeStreamTemperature" type="inputNumberType" default="300"/>
                         <xs:element name="externalEmissivity" type="inputRatioType" default="0"/>

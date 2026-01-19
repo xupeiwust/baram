@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from baramFlow.coredb.boundary_db import BoundaryDB, BoundaryType, InterfaceMode, WallTemperature
+from baramFlow.coredb.boundary_db import BoundaryDB, BoundaryType, InterfaceMode, WallHeatTransferMode
 from baramFlow.coredb.turbulence_model_db import TurbulenceModelsDB, TurbulenceModel
 from baramFlow.openfoam.boundary_conditions.boundary_condition import BoundaryCondition
 
@@ -88,8 +88,8 @@ class Alphat(BoundaryCondition):
         if self._isAtmosphericWall(xpath):
             return self._constructCalculated()
         else:
-            spec = self._db.getValue(xpath + '/wall/temperature/type')
-            if spec == WallTemperature.ADIABATIC.value:
+            spec = self._db.getValue(xpath + '/wall/heatTransfer/type')
+            if spec == WallHeatTransferMode.ADIABATIC.value:
                 return self._constructCompressibleAlphatWallFunction()
             else:
                 return self._constructCompressibleAlphatJayatillekeWallFunction()

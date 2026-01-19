@@ -1269,6 +1269,20 @@ def _version_11(root: etree.Element):
                 materialNode.append(etree.fromstring(f'<dropletSurfaceTension xmlns="{_ns}"><type>constant</type><constant>0.0</constant></dropletSurfaceTension>'))
 
 
+def _version_12(root: etree.Element):
+    logger.debug('  Upgrading to v13')
+
+    # root.set('version', '13')
+
+    for p in root.findall(f'regions/region/boundaryConditions/boundaryCondition/wall', namespaces=_nsmap):
+        if p.find('heatTransfer', namespaces=_nsmap) is None:
+            logger.debug(f'    Replace "temperature" to "heatTransfer" in {p}')
+            e = p.find('temperature', namespaces=_nsmap)
+            e.tag = f'{{{_ns}}}heatTransfer'
+            e.insert(3,
+                     etree.fromstring(f'<temperatureDistributionName xmlns="{_ns}">00000000-0000-0000-0000-000000000000</temperatureDistributionName>'))
+
+
 _fTable = [
     None,
     _version_1,
@@ -1281,7 +1295,8 @@ _fTable = [
     _version_8,
     _version_9,
     _version_10,
-    _version_11
+    _version_11,
+    _version_12
 ]
 
 currentVersion = int(etree.parse(resource.file('configurations/baram.cfg.xsd')).getroot().get('version'))

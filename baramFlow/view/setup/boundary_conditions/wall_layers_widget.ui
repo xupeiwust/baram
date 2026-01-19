@@ -70,6 +70,9 @@
          <property name="styleSheet">
           <string notr="true"/>
          </property>
+         <property name="frameShadow">
+          <enum>QFrame::Plain</enum>
+         </property>
          <layout class="QGridLayout" name="gridLayout_3">
           <property name="verticalSpacing">
            <number>2</number>

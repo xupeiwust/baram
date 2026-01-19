@@ -1,9 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import qasync
-from PySide6.QtWidgets import QWidget, QGridLayout, QLabel
+from uuid import uuid4
 
+import qasync
+from PySide6.QtWidgets import QWidget, QGridLayout, QLabel, QVBoxLayout
+
+from libbaram.natural_name_uuid import uuidToNnstr
 from widgets.async_message_box import AsyncMessageBox
 from widgets.enum_button_group import EnumButtonGroup
 
@@ -12,16 +15,18 @@ from baramFlow.base.model.DPM_model import DPMModelManager
 from baramFlow.coredb import coredb
 from baramFlow.coredb.coredb_writer import boolToDBText
 from baramFlow.coredb.libdb import ValueException, dbErrorToMessage
-from baramFlow.coredb.boundary_db import BoundaryDB, WallTemperature, ContactAngleModel, ContactAngleLimit
+from baramFlow.coredb.boundary_db import BoundaryDB, ContactAngleModel, ContactAngleLimit
 from baramFlow.coredb.boundary_db import WallMotion, ShearCondition, MovingWallMotion
 from baramFlow.coredb.general_db import GeneralDB
 from baramFlow.coredb.material_db import MaterialDB
 from baramFlow.coredb.models_db import ModelsDB
+from baramFlow.coredb.project import Project
 from baramFlow.coredb.region_db import RegionDB
 from baramFlow.view.widgets.batchable_float_edit import BatchableFloatEdit
 from baramFlow.view.widgets.resizable_dialog import ResizableDialog
 from .wall_dialog_ui import Ui_WallDialog
 from .patch_interaction_widget import PatchInteractionWidget
+from .wall_heat_transfer_content import WallHeatTransferContent
 
 
 class ContactAnglesWidget(QWidget):
@@ -88,6 +93,7 @@ class WallDialog(ResizableDialog):
         self._constantContactAngles = None
         self._dynamicContactAngles = None
 
+        self._heatTransferContent = None
         self._patchInteractionWidget = None
 
         self._xpath = BoundaryDB.getXPath(bcid)
@@ -104,6 +110,12 @@ class WallDialog(ResizableDialog):
         self._shearConditionRadios.addEnumButton(self._ui.noSlip,   ShearCondition.NO_SLIP)
         self._shearConditionRadios.addEnumButton(self._ui.slip,     ShearCondition.SLIP)
 
+        if ModelsDB.isEnergyModelOn():
+            self._ui.heatTransfer.setLayout(QVBoxLayout())
+            self._heatTransferContent = WallHeatTransferContent(self._ui.heatTransfer)
+        else:
+            self._ui.heatTransfer.hide()
+
         if DPMModelManager.isModelOn():
             self._patchInteractionWidget = PatchInteractionWidget(self._bcid)
             self._ui.dialogContents.layout().addWidget(self._patchInteractionWidget)
@@ -118,7 +130,6 @@ class WallDialog(ResizableDialog):
         movingMotion = self._ui.movingWallMotion.currentData()
         wallRoughnessEnabled = (not (self._ui.stationaryWall.isChecked() and self._ui.atmosphericWall.isChecked())
                                 and self._ui.noSlip.isChecked())
-        temparatureType = self._ui.temperatureType.currentData()
         contactAngleModel = self._ui.contactAngleModel.currentData()
 
         try:
@@ -140,15 +151,8 @@ class WallDialog(ResizableDialog):
                 self._ui.roughnessHeight.validate(self.tr('Wall Roughness Height'), low=0)
                 self._ui.roughnessConstant.validate(self.tr('Wall Roughness Constant'), low=0.5, high=1)
 
-            if temparatureType == WallTemperature.CONSTANT_TEMPERATURE:
-                self._ui.temperature.validate(self.tr('Temperature'))
-            elif temparatureType == WallTemperature.CONSTANT_HEAT_FLUX:
-                self._ui.heatFlux.validate(self.tr('Heat Flux'))
-            elif temparatureType == WallTemperature.CONVECTION:
-                self._ui.heatTransferCoefficient.validate(self.tr('Heat Transfer Coefficient'))
-                self._ui.freeStreamTemperature.validate(self.tr('Free Stream Temperature'))
-                self._ui.externalEmissivity.validate(self.tr('External Emissivity'))
-                self._ui.wallLayers.validate()
+            if ModelsDB.isEnergyModelOn():
+                self._heatTransferContent.validate()
 
             if self._ui.contactAngleGroup.isVisible():
                 if contactAngleModel == ContactAngleModel.CONSTANT:
@@ -202,17 +206,20 @@ class WallDialog(ResizableDialog):
                     db.setValue(xpath + '/velocity/wallRoughness/constant', self._ui.roughnessConstant.text())
 
                 if ModelsDB.isEnergyModelOn():
-                    db.setValue(xpath + '/temperature/type', temparatureType.value)
-                    if temparatureType == WallTemperature.CONSTANT_TEMPERATURE:
-                        db.setValue(xpath + '/temperature/temperature', self._ui.temperature.text())
-                    elif temparatureType == WallTemperature.CONSTANT_HEAT_FLUX:
-                        db.setValue(xpath + '/temperature/heatFlux', self._ui.heatFlux.text())
-                    elif temparatureType == WallTemperature.CONVECTION:
-                        db.setValue(xpath + '/temperature/heatTransferCoefficient',
-                                    self._ui.heatTransferCoefficient.text())
-                        db.setValue(xpath + '/temperature/freeStreamTemperature', self._ui.freeStreamTemperature.text())
-                        db.setValue(xpath + '/temperature/externalEmissivity', self._ui.externalEmissivity.text())
-                        await self._ui.wallLayers.updateDB(db, xpath + '/temperature/wallLayers')
+                    heatTransferData = self._heatTransferContent.data()
+                    if heatTransferData.temperatureDistribution is not None:
+                        dfName = uuid4()
+                        Project.instance().fileDB().putDataFrame(uuidToNnstr(dfName),
+                                                                 heatTransferData.temperatureDistribution)
+                        db.setValue(xpath + '/heatTransfer/temperatureDistributionName', str(dfName))
+
+                    data, attributes = heatTransferData.toUpdateListForCoreDB(xpath + '/heatTransfer')
+                    for p, value in data:
+                        db.setValue(p, value)
+
+                    for p, name, value in attributes:
+                        db.setAttribute(p, name, value)
+
 
                 if self._ui.contactAngleGroup.isVisible():
                     contactAngleModel = self._ui.contactAngleModel.currentData()
@@ -251,7 +258,6 @@ class WallDialog(ResizableDialog):
         self._ui.atmosphericWall.stateChanged.connect(self._atomospericWallToggled)
         self._ui.movingWallMotion.currentIndexChanged.connect(self._updateMovingWallParameters)
         self._shearConditionRadios.dataChecked.connect(self._updateRoughnessEnabled)
-        self._ui.temperatureType.currentIndexChanged.connect(self._temperatureTypeChanged)
         self._ui.contactAngleModel.currentIndexChanged.connect(self._contactAngleTypeChanged)
         self._ui.ok.clicked.connect(self._accept)
 
@@ -283,18 +289,7 @@ class WallDialog(ResizableDialog):
             db.getValue(xpath + '/velocity/rotationalMovingWall/rotationAxisDirection/z'))
 
         if ModelsDB.isEnergyModelOn():
-            self._setupTemperatureCombo()
-            self._ui.temperatureType.setCurrentIndex(
-                self._ui.temperatureType.findData(WallTemperature(db.getValue(xpath + '/temperature/type'))))
-            self._ui.temperature.setText(db.getValue(xpath + '/temperature/temperature'))
-            self._ui.heatFlux.setText(db.getValue(xpath + '/temperature/heatFlux'))
-            self._ui.heatTransferCoefficient.setText(db.getValue(xpath + '/temperature/heatTransferCoefficient'))
-            self._ui.freeStreamTemperature.setText(db.getValue(xpath + '/temperature/freeStreamTemperature'))
-            self._ui.externalEmissivity.setText(db.getValue(xpath + '/temperature/externalEmissivity'))
-            self._ui.wallLayers.load(xpath + '/temperature/wallLayers')
-            self._temperatureTypeChanged()
-        else:
-            self._ui.temperatureGroup.hide()
+            self._heatTransferContent.load(xpath + '/heatTransfer')
 
         rname = BoundaryDB.getBoundaryRegion(self._bcid)
         secondaryMaterials = RegionDB.getSecondaryMaterials(rname) if ModelsDB.isMultiphaseModelOn() else None
@@ -320,7 +315,6 @@ class WallDialog(ResizableDialog):
 
         if self._patchInteractionWidget is not None:
             self._patchInteractionWidget.setData(BoundaryManager.patchInteraction(self._bcid))
-
 
     def _loadContactAngles(self, rname, secondaryMaterials):
         def addAdhesionRows(mid1, mid2):
@@ -357,12 +351,6 @@ class WallDialog(ResizableDialog):
         for i in range(count):
             for j in range(i + 1, count):
                 addAdhesionRows(secondaryMaterials[i], secondaryMaterials[j])
-
-    def _setupTemperatureCombo(self):
-        self._ui.temperatureType.addItem(self.tr('Adiabatic'), WallTemperature.ADIABATIC)
-        self._ui.temperatureType.addItem(self.tr('Constant Temperature'), WallTemperature.CONSTANT_TEMPERATURE)
-        self._ui.temperatureType.addItem(self.tr('Constant Heat Flux'), WallTemperature.CONSTANT_HEAT_FLUX)
-        self._ui.temperatureType.addItem(self.tr('Convection and Radiation'), WallTemperature.CONVECTION)
 
     def _setupContactAngleModelCombo(self):
         self._ui.contactAngleModel.addItem(self.tr('Disable'), ContactAngleModel.DISABLE)
@@ -413,13 +401,6 @@ class WallDialog(ResizableDialog):
         self._ui.wallRoughness.setEnabled(
             not (self._ui.stationaryWall.isChecked() and self._ui.atmosphericWall.isChecked())
             and self._ui.noSlip.isChecked())
-
-    def _temperatureTypeChanged(self):
-        temparatureType = self._ui.temperatureType.currentData()
-
-        self._ui.constantTemperature.setVisible(temparatureType == WallTemperature.CONSTANT_TEMPERATURE)
-        self._ui.constantHeatFlux.setVisible(temparatureType == WallTemperature.CONSTANT_HEAT_FLUX)
-        self._ui.convection.setVisible(temparatureType == WallTemperature.CONVECTION)
 
     def _contactAngleTypeChanged(self):
         contactAngleModel = self._ui.contactAngleModel.currentData()

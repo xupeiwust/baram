@@ -1,12 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+from uuid import UUID
 
-from baramFlow.coredb.boundary_db import BoundaryDB, BoundaryType, FlowRateInletSpecification, WallTemperature
+from baramFlow.coredb.boundary_db import BoundaryDB, BoundaryType, FlowRateInletSpecification, WallHeatTransferMode
 from baramFlow.coredb.boundary_db import TemperatureProfile, TemperatureTemporalDistribution, InterfaceMode
 from baramFlow.coredb.material_db import MaterialDB
 from baramFlow.coredb.models_db import ModelsDB
 from baramFlow.coredb.project import Project
 from baramFlow.openfoam.boundary_conditions.boundary_condition import BoundaryCondition
+from libbaram.natural_name_uuid import uuidToNnstr
 
 
 class T(BoundaryCondition):
@@ -33,7 +35,14 @@ class T(BoundaryCondition):
             xpath = BoundaryDB.getXPath(bcid)
 
             profile = self._db.getValue(xpath + '/temperature/profile')
-            if profile == TemperatureProfile.CONSTANT.value:
+
+            if type_ == BoundaryType.WALL.value:
+                if WallHeatTransferMode(self._db.getValue(xpath + '/wall/heatTransfer/type')) == WallHeatTransferMode.TEMPERATURE_DISTRIBUTION:
+                    df = Project.instance().fileDB().getDataFrame(uuidToNnstr(UUID(self._db.getValue(xpath + '/wall/heatTransfer/temperatureDistributionName'))))
+                    field[name] = self._constructTimeVaryingMappedFixedValue(self._region.rname, name, 'T', df)
+                else:
+                    field[name] = self._constructWallT(xpath, float(self._db.getValue(xpath + '/temperature/constant')))
+            elif profile == TemperatureProfile.CONSTANT.value:
                 constant = float(self._db.getValue(xpath + '/temperature/constant'))
 
                 field[name] = {
@@ -54,7 +63,6 @@ class T(BoundaryCondition):
                     BoundaryType.SUBSONIC_OUTFLOW.value:    (lambda: self._constructSubsonicOutflow(xpath + '/subsonicOutflow')),
                     BoundaryType.SUPERSONIC_INFLOW.value:   (lambda: self._constructFixedValue(float(self._db.getValue(xpath + '/supersonicInflow/staticTemperature')))),
                     BoundaryType.SUPERSONIC_OUTFLOW.value:  (lambda: self._constructZeroGradient()),
-                    BoundaryType.WALL.value:                (lambda: self._constructWallT(xpath, constant)),
                     BoundaryType.THERMO_COUPLED_WALL.value: (lambda: self._constructCompressibleturbulentTemperatureRadCoupledMixed(xpath, type_)),
                     BoundaryType.SYMMETRY.value:            (lambda: self._constructSymmetry()),
                     BoundaryType.INTERFACE.value:           (lambda: self._constructInterfaceT(xpath)),
@@ -135,14 +143,14 @@ class T(BoundaryCondition):
         if self._isAtmosphericWall(xpath):
             return self._constructFixedValue(constant)
         else:
-            spec = self._db.getValue(xpath + '/wall/temperature/type')
-            if spec == WallTemperature.ADIABATIC.value:
+            spec = self._db.getValue(xpath + '/wall/heatTransfer/type')
+            if spec == WallHeatTransferMode.ADIABATIC.value:
                 return self._constructZeroGradient()
-            elif spec == WallTemperature.CONSTANT_TEMPERATURE.value:
-                t = self._db.getValue(xpath + '/wall/temperature/temperature')
+            elif spec == WallHeatTransferMode.CONSTANT_TEMPERATURE.value:
+                t = self._db.getValue(xpath + '/wall/heatTransfer/temperature')
                 return self._constructFixedValue(t)
-            elif spec == WallTemperature.CONSTANT_HEAT_FLUX.value:
-                q = self._db.getValue(xpath + '/wall/temperature/heatFlux')
+            elif spec == WallHeatTransferMode.CONSTANT_HEAT_FLUX.value:
+                q = self._db.getValue(xpath + '/wall/heatTransfer/heatFlux')
                 return {
                     'type': 'externalWallHeatFluxTemperature',
                     'mode': 'flux',
@@ -150,18 +158,18 @@ class T(BoundaryCondition):
                     'kappaMethod': 'fluidThermo' if self._region.isFluid() else 'solidThermo',
                     'value': self._initialValueByTime()
                 }
-            elif spec == WallTemperature.CONVECTION.value:
+            elif spec == WallHeatTransferMode.CONVECTION.value:
                 data = {
                     'type': 'externalWallHeatFluxTemperature',
                     'mode': 'coefficient',
-                    'h': ('constant', self._db.getValue(xpath + '/wall/temperature/heatTransferCoefficient')),
-                    'Ta': ('constant', self._db.getValue(xpath + '/wall/temperature/freeStreamTemperature')),
-                    'emissivity': self._db.getValue(xpath + '/wall/temperature/externalEmissivity'),
+                    'h': ('constant', self._db.getValue(xpath + '/wall/heatTransfer/heatTransferCoefficient')),
+                    'Ta': ('constant', self._db.getValue(xpath + '/wall/heatTransfer/freeStreamTemperature')),
+                    'emissivity': self._db.getValue(xpath + '/wall/heatTransfer/externalEmissivity'),
                     'kappaMethod': 'fluidThermo' if self._region.isFluid() else 'solidThermo',
                     'value': self._initialValueByTime()
                 }
 
-                wallLayersXpath = xpath + '/wall/temperature/wallLayers'
+                wallLayersXpath = xpath + '/wall/heatTransfer/wallLayers'
                 if self._db.getAttribute(wallLayersXpath, 'disabled') == 'false':
                     data['thicknessLayers'] = self._db.getValue(wallLayersXpath + '/thicknessLayers').split()
                     data['kappaLayers'] = self._db.getValue(wallLayersXpath + '/thermalConductivityLayers').split()

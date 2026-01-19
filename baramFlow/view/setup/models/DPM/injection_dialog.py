@@ -335,7 +335,7 @@ class InjectionDialog(QDialog):
             self._positions = self._injection.injector.pointInjection.positions
 
         dialog = SimpleSheetDialog(
-            self, ['x', 'y', 'z'],
+            self, self.tr('Injection Positions'), ['x', 'y', 'z'],
             [[float(row.x.text), float(row.y.text), float(row.z.text)] for row in self._positions])
         try:
             self._positions = [Vector.new(str(x), str(y), str(z)) for x, y, z in await dialog.show()]

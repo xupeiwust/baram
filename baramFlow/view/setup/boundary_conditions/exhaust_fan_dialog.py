@@ -7,6 +7,7 @@ import qasync
 from PySide6.QtCore import Qt
 import pandas as pd
 
+from baramFlow.base.base import TrackedData
 from baramFlow.coredb.libdb import ValueException, dbErrorToMessage
 from libbaram.natural_name_uuid import uuidToNnstr
 from widgets.async_message_box import AsyncMessageBox
@@ -28,7 +29,7 @@ class ExhaustFanDialog(ResizableDialog):
 
         self._dialog: PiecewiseLinearDialog
         self._fanCurveName: UUID
-        self._fanCurve: list[list[float]] = []
+        self._fanCurve = TrackedData()
 
         self._xpath = BoundaryDB.getXPath(bcid)
 
@@ -48,8 +49,7 @@ class ExhaustFanDialog(ResizableDialog):
 
     @qasync.asyncSlot()
     async def _accept(self):
-        df = pd.DataFrame(self._fanCurve)
-        if df.empty:
+        if self._fanCurve.isNone() and self._fanCurveName.int == 0:
             await AsyncMessageBox().information(self, self.tr('Input Error'), self.tr('Edit Fan Curve'))
             return
 
@@ -57,13 +57,13 @@ class ExhaustFanDialog(ResizableDialog):
             with coredb.CoreDB() as db:
                 db.setValue(self._xpath + '/pressure', self._ui.totalPressure.text(), self.tr("Total Pressure"))
 
-                if self._fanCurveName.int == 0:
+                if self._fanCurve.isModified():
                     self._fanCurveName = uuid4()
                     db.setValue(self._xpath + '/fanCurveName', str(self._fanCurveName), self.tr("Fan Curve Name"))
         except ValueException as ve:
             await AsyncMessageBox().information(self, self.tr('Input Error'), dbErrorToMessage(ve))
 
-        Project.instance().fileDB().putDataFrame(uuidToNnstr(self._fanCurveName), df)
+        Project.instance().fileDB().putDataFrame(uuidToNnstr(self._fanCurveName), pd.DataFrame(self._fanCurve.data()))
 
         self.accept()
 
@@ -79,10 +79,6 @@ class ExhaustFanDialog(ResizableDialog):
         self._ui.totalPressure.setText(db.getValue(self._xpath + '/pressure'))
 
         self._fanCurveName = UUID(db.getValue(self._xpath + '/fanCurveName'))
-        if self._fanCurveName.int != 0:
-            df = Project.instance().fileDB().getDataFrame(uuidToNnstr(self._fanCurveName))
-            if df is not None:
-                self._fanCurve = df.values.tolist()
 
     def _connectSignalsSlots(self):
         self._ui.editFanCurve.clicked.connect(self._editFanCurve)
@@ -90,9 +86,14 @@ class ExhaustFanDialog(ResizableDialog):
         self._ui.cancel.clicked.connect(self._reject)
 
     def _editFanCurve(self):
-        self._dialog = PiecewiseLinearDialog(self, self.tr('Fan Curve'), 'Q', 'm3/s', ['P'], 'Pa', self._fanCurve)
+        if self._fanCurve.isNone() and self._fanCurveName.int != 0:
+            df = Project.instance().fileDB().getDataFrame(uuidToNnstr(self._fanCurveName))
+            if df is not None:
+                self._fanCurve = TrackedData(df.values.tolist())
+
+        self._dialog = PiecewiseLinearDialog(self, self.tr('Fan Curve'), 'Q', 'm3/s', ['P'], 'Pa', self._fanCurve.data())
         self._dialog.accepted.connect(self._fanCurveAccepted)
         self._dialog.open()
 
     def _fanCurveAccepted(self):
-        self._fanCurve = self._dialog.getData()
+        self._fanCurve.setData(self._dialog.getData())

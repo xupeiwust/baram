@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>469</width>
-    <height>1115</height>
+    <height>869</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -428,192 +428,11 @@
        </widget>
       </item>
       <item>
-       <widget class="QGroupBox" name="temperatureGroup">
+       <widget class="QGroupBox" name="heatTransfer">
         <property name="title">
-         <string>Temperature</string>
+         <string>Heat Transfer</string>
         </property>
-        <layout class="QVBoxLayout" name="verticalLayout_5">
-         <item>
-          <widget class="QWidget" name="widget" native="true">
-           <layout class="QFormLayout" name="formLayout_8">
-            <property name="leftMargin">
-             <number>0</number>
-            </property>
-            <property name="topMargin">
-             <number>0</number>
-            </property>
-            <property name="rightMargin">
-             <number>0</number>
-            </property>
-            <property name="bottomMargin">
-             <number>0</number>
-            </property>
-            <item row="0" column="0">
-             <widget class="QLabel" name="label_12">
-              <property name="text">
-               <string>Temperature</string>
-              </property>
-             </widget>
-            </item>
-            <item row="0" column="1">
-             <widget class="PythonComboBox" name="temperatureType"/>
-            </item>
-           </layout>
-          </widget>
-         </item>
-         <item>
-          <widget class="QWidget" name="constantTemperature" native="true">
-           <layout class="QFormLayout" name="formLayout_9">
-            <property name="leftMargin">
-             <number>0</number>
-            </property>
-            <property name="rightMargin">
-             <number>0</number>
-            </property>
-            <item row="0" column="0">
-             <widget class="QLabel" name="temperatureLabel">
-              <property name="text">
-               <string>Temperature (K)</string>
-              </property>
-             </widget>
-            </item>
-            <item row="0" column="1">
-             <widget class="BatchableFloatEdit" name="temperature">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </widget>
-         </item>
-         <item>
-          <widget class="QWidget" name="constantHeatFlux" native="true">
-           <layout class="QFormLayout" name="formLayout_10">
-            <property name="leftMargin">
-             <number>0</number>
-            </property>
-            <property name="rightMargin">
-             <number>0</number>
-            </property>
-            <item row="0" column="0">
-             <widget class="QLabel" name="heatFluxLabel">
-              <property name="text">
-               <string>Heat Flux (W/㎡)</string>
-              </property>
-             </widget>
-            </item>
-            <item row="0" column="1">
-             <widget class="BatchableFloatEdit" name="heatFlux">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </widget>
-         </item>
-         <item>
-          <widget class="QWidget" name="convection" native="true">
-           <layout class="QVBoxLayout" name="verticalLayout_7">
-            <property name="leftMargin">
-             <number>0</number>
-            </property>
-            <property name="topMargin">
-             <number>0</number>
-            </property>
-            <property name="rightMargin">
-             <number>0</number>
-            </property>
-            <property name="bottomMargin">
-             <number>0</number>
-            </property>
-            <item>
-             <widget class="QWidget" name="widget_5" native="true">
-              <layout class="QFormLayout" name="formLayout_11">
-               <property name="leftMargin">
-                <number>0</number>
-               </property>
-               <property name="rightMargin">
-                <number>0</number>
-               </property>
-               <item row="0" column="0">
-                <widget class="QLabel" name="heatTransferCoefficientLabel">
-                 <property name="text">
-                  <string>Heat Transfer Coefficient (W/㎡⋅K)</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="0" column="1">
-                <widget class="BatchableFloatEdit" name="heatTransferCoefficient">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                </widget>
-               </item>
-               <item row="1" column="0">
-                <widget class="QLabel" name="freeStreamTemperatureLabel">
-                 <property name="text">
-                  <string>Free Stream Temperature (K)</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="1" column="1">
-                <widget class="BatchableFloatEdit" name="freeStreamTemperature">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                </widget>
-               </item>
-               <item row="2" column="0">
-                <widget class="QLabel" name="label_15">
-                 <property name="text">
-                  <string>External Emissivity (0~1)</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="2" column="1">
-                <widget class="BatchableFloatEdit" name="externalEmissivity">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                </widget>
-               </item>
-              </layout>
-             </widget>
-            </item>
-            <item>
-             <widget class="WallLayersBox" name="wallLayers">
-              <property name="title">
-               <string>Wall Layers</string>
-              </property>
-              <property name="checkable">
-               <bool>true</bool>
-              </property>
-              <property name="checked">
-               <bool>false</bool>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </widget>
-         </item>
-        </layout>
+        <layout class="QVBoxLayout" name="verticalLayout_5"/>
        </widget>
       </item>
       <item>
@@ -715,11 +534,11 @@
       <item>
        <spacer name="horizontalSpacer">
         <property name="orientation">
-         <enum>Qt::Orientation::Horizontal</enum>
+         <enum>Qt::Horizontal</enum>
         </property>
         <property name="sizeHint" stdset="0">
          <size>
-          <width>208</width>
+          <width>40</width>
           <height>20</height>
          </size>
         </property>
@@ -749,20 +568,14 @@
  </widget>
  <customwidgets>
   <customwidget>
+   <class>BatchableFloatEdit</class>
+   <extends>QLineEdit</extends>
+   <header>baramFlow.view.widgets.batchable_float_edit</header>
+  </customwidget>
+  <customwidget>
    <class>PythonComboBox</class>
    <extends>QComboBox</extends>
    <header location="global">widgets.python_combo_box</header>
-  </customwidget>
-  <customwidget>
-   <class>BatchableFloatEdit</class>
-   <extends>QLineEdit</extends>
-   <header location="global">baramFlow.view.widgets.batchable_float_edit</header>
-  </customwidget>
-  <customwidget>
-   <class>WallLayersBox</class>
-   <extends>QGroupBox</extends>
-   <header>baramFlow.view.setup.boundary_conditions.wall_layers_widget</header>
-   <container>1</container>
   </customwidget>
  </customwidgets>
  <resources>

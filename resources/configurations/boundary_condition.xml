@@ -176,10 +176,11 @@
                 </rotationAxisDirection>
             </rotationalMovingWall>
         </velocity>
-        <temperature>
+        <heatTransfer>
             <type>adiabatic</type>
             <temperature>300</temperature>
             <heatFlux>1000</heatFlux>
+            <temperatureDistributionName>00000000-0000-0000-0000-000000000000</temperatureDistributionName>
             <heatTransferCoefficient>100</heatTransferCoefficient>
             <freeStreamTemperature>300</freeStreamTemperature>
             <externalEmissivity>0</externalEmissivity>
@@ -187,7 +188,7 @@
                 <thicknessLayers>0.001</thicknessLayers>
                 <thermalConductivityLayers>10</thermalConductivityLayers>
             </wallLayers>
-        </temperature>
+        </heatTransfer>
         <radiation>
             <wallEmissivity>1</wallEmissivity>
             <radiativeFluxRelaxation>1</radiativeFluxRelaxation>

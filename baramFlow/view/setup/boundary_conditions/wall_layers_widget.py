@@ -7,6 +7,7 @@ from PySide6.QtCore import QObject, Signal
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QLabel, QGroupBox, QWidget, QVBoxLayout
 
+from baramFlow.base.boundary.boundary import TemperatureLayers, TemperatureLayer
 from widgets.async_message_box import AsyncMessageBox
 from widgets.flat_push_button import FlatPushButton
 
@@ -88,6 +89,10 @@ class WallLayersWidget(QWidget):
         
         self._connectSignalsSlots()
 
+    def data(self):
+        return [TemperatureLayer(thickness=row.thickness(), thermalConductivity=row.thermalConductivity())
+                for row in self._rows if not row.isHidden()]
+
     def addRow(self, thickness='', thermalConductivity=''):
         index = len(self._rows)
         lastNO = 0
@@ -120,7 +125,6 @@ class WallLayersWidget(QWidget):
         try:
             for row in self._rows:
                 if not row.isHidden():
-
                     thicknessLayers += row.thickness() + ' '
                     thermalConductivityLayers += row.thermalConductivity() + ' '
         except ValueError as e:
@@ -156,6 +160,10 @@ class WallLayersBox(QGroupBox):
 
     def isChecked(self):
         return super().isChecked() or not super().isCheckable()
+
+    def data(self):
+        return TemperatureLayers(disabled=not self.isChecked(),
+                                 layers=self._layers.data() if self.isChecked else None)
 
     def load(self, xpath):
         self.setChecked(coredb.CoreDB().getAttribute(xpath, 'disabled') == 'false')

@@ -116,7 +116,9 @@ class ChartWidget(QWidget):
         if self._data is None or self._data.empty:
             return
 
-        dialog = SimpleSheetDialog(self, ['Time step'] + self._data.columns.tolist(), self._data.reset_index().values.tolist(), readOnly=False)
+        dialog = SimpleSheetDialog(
+            self, self.tr('Export Chart Data')
+            ['Time step'] + self._data.columns.tolist(), self._data.reset_index().values.tolist(), readOnly=False)
         try:
             await dialog.show()
         except asyncio.exceptions.CancelledError:

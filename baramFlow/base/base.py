@@ -2,10 +2,14 @@
 # -*- coding: utf-8 -*-
 
 from dataclasses import dataclass, field
+from uuid import UUID
 
 from baramFlow.coredb.libdb import nsmap
 from baramFlow.base.constants import Function1Type
 from baramFlow.coredb.libdb import E
+
+
+UUID_ZERO = UUID('00000000-0000-0000-0000-000000000000')
 
 
 class BatchableNumber:
@@ -184,3 +188,21 @@ class Function1Vector:
                  self.type.toElement('type'),
                  self.constant.toElement('constant'),
                  tableElement)
+
+
+class TrackedData:
+    def __init__(self, init=None):
+        self._initData = init
+        self._data = init
+
+    def data(self):
+        return self._data
+
+    def setData(self, data):
+        self._data = data
+
+    def isModified(self):
+        return self._initData != self._data
+
+    def isNone(self):
+        return self._data is None

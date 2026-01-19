@@ -10,7 +10,7 @@ from lxml import etree
 from baramFlow.base.base import BatchableNumber
 from baramFlow.coredb import coredb
 from baramFlow.coredb.boundary_db import BoundaryDB, BoundaryType
-from baramFlow.coredb.libdb import nsmap
+from baramFlow.coredb.libdb import nsmap, xmlToBool
 
 
 class PatchInteractionType(Enum):
@@ -93,6 +93,33 @@ class SpecieValue:
 class SpecieRatios:
     mid: str
     ratios: list[SpecieValue]
+
+
+@dataclass
+class TemperatureLayer:
+    thickness: str
+    thermalConductivity : str
+
+
+@dataclass
+class TemperatureLayers:
+    disabled: bool
+    layers: list[TemperatureLayer] = None
+
+    def toUpdateListForCoreDB(self, xpath):
+        data = []
+
+        if not self.disabled:
+            thicknessLayers = ''
+            thermalConductivityLayers = ''
+            for row in self.layers:
+                thicknessLayers += row.thickness + ' '
+                thermalConductivityLayers += row.thermalConductivity + ' '
+
+            data.append((xpath + '/thicknessLayers', thicknessLayers))
+            data.append((xpath + '/thermalConductivityLayers', thermalConductivityLayers))
+
+        return data, [(xpath, 'disabled', xmlToBool(self.disabled))]    # data, attributes
 
 
 @dataclass
