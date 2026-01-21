@@ -22,12 +22,12 @@ class PFloat():
 
         if self._text.startswith('$'):  # Parametric value
             if len(self._text) < 2:
-                raise ValueError(f"{name} - {QApplication.translate(b'PFloat', b'Invalid Parameter Name')}")
+                raise ValueError(f"{name} - {QApplication.translate('PFloat', 'Invalid Parameter Name')}")
 
             try:
                 value = float(BatchParametersDB.defaultValue(self._text[1:]))
             except LookupError:
-                raise ValueError(f"{name} - {self.tr('Invalid User Parameter')}")
+                raise ValueError(f"{name} - {QApplication.translate('PFloat', 'Invalid User Parameter')}")
 
         else:
             try:
@@ -36,14 +36,14 @@ class PFloat():
                 raise ValueError(f'{name} - {str(e)}')
 
         if value < low:
-            raise ValueError(f"{name} {QApplication.translate(b'PFloat', b'is less than ')} {low}")
+            raise ValueError(f"{name} {QApplication.translate('PFloat', 'is less than ')} {low}")
         elif value == low and not lowInclusive:
-            raise ValueError(f"{name} {QApplication.translate(b'PFloat', b'should be greater than ')} {low}")
+            raise ValueError(f"{name} {QApplication.translate('PFloat', 'should be greater than ')} {low}")
 
         if value > high:
-            raise ValueError(f"{name} {QApplication.translate(b'PFloat', b'is greater than ')} {high}")
+            raise ValueError(f"{name} {QApplication.translate('PFloat', 'is greater than ')} {high}")
         elif value == high and not highInclusive:
-            raise ValueError(f"{name} {QApplication.translate(b'PFloat', b'should be less than ')} {high}")
+            raise ValueError(f"{name} {QApplication.translate('PFloat', 'should be less than ')} {high}")
 
         self._value = value
 

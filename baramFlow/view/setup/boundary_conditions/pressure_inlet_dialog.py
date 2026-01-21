@@ -26,7 +26,6 @@ class PressureInletDialog(ResizableDialog):
 
         self._turbulenceWidget = None
         self._temperatureWidget = None
-        self._volumeFractionWidget = None
         self._scalarsWidget = None
         self._speciesWidget = None
 
@@ -46,9 +45,11 @@ class PressureInletDialog(ResizableDialog):
         #
         # Validation check for parameters
         #
-        valid, msg = self._volumeFractionWidget.validate()
-        if not valid:
-            await AsyncMessageBox().warning(self, self.tr('Warning'), msg)
+        try:
+            with coredb.CoreDB() as db:
+                self._volumeFractionWidget.accept(self._xpath + '/volumeFractions')
+        except ValueError as e:
+            await AsyncMessageBox().warning(self, self.tr('Warning'), str(e))
             return
         # ToDo: Add validation for other parameters
 
@@ -61,9 +62,6 @@ class PressureInletDialog(ResizableDialog):
             return
 
         if not self._temperatureWidget.appendToWriter(writer):
-            return
-
-        if not await self._volumeFractionWidget.appendToWriter(writer, self._xpath + '/volumeFractions'):
             return
 
         if not self._scalarsWidget.appendToWriter(writer, self._xpath + '/userDefinedScalars'):
