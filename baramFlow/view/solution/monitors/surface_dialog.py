@@ -9,7 +9,7 @@ from widgets.async_message_box import AsyncMessageBox
 from widgets.selector_dialog import SelectorDialog
 
 from baramFlow.base.constants import FieldCategory, VectorComponent
-from baramFlow.base.field import VELOCITY, TEMPERATURE
+from baramFlow.base.field import Field, FieldType, VELOCITY, TEMPERATURE
 from baramFlow.base.material.material import Phase
 from baramFlow.case_manager import CaseManager
 from baramFlow.coredb import coredb
@@ -75,10 +75,9 @@ class SurfaceDialog(QDialog):
 
     def _connectSignalsSlots(self):
         self._ui.select.clicked.connect(self._selectSurface)
-        self._ui.reportType.currentIndexChanged.connect(self._reportTypeChanged)
+        self._ui.reportType.currentIndexChanged.connect(self._updateInputFields)
+        self._ui.field.currentIndexChanged.connect(self._updateInputFields)
         self._ui.ok.clicked.connect(self._accept)
-
-        connectFieldsToComponents(self._ui.field, self._ui.fieldComponent)
 
     def _load(self):
         db = coredb.CoreDB()
@@ -135,7 +134,7 @@ class SurfaceDialog(QDialog):
                 db.setValue(self._xpath + '/fieldComponent', str(self._ui.fieldComponent.currentData().value))
                 db.setValue(self._xpath + '/surface', self._surface, self.tr("Surface"))
                 print(field.codeName)
-        
+
                 if self._isNew:
                     db.setValue(self._xpath + '/name', name, self.tr("Name"))
         except ValueException as ve:
@@ -159,12 +158,23 @@ class SurfaceDialog(QDialog):
     def _surfaceChanged(self):
         self._setSurface(self._dialog.selectedItem())
 
-    def _reportTypeChanged(self, index):
-        if self._ui.reportType.currentData() in (SurfaceReportType.MASS_FLOW_RATE, SurfaceReportType.VOLUME_FLOW_RATE):
+    def _updateInputFields(self, index):
+        reportType: SurfaceReportType = self._ui.reportType.currentData()
+
+        if reportType in [SurfaceReportType.MASS_FLOW_RATE, SurfaceReportType.VOLUME_FLOW_RATE]:
             self._ui.field.setEnabled(False)
+            index = self._ui.field.findData(VELOCITY)
+            self._ui.field.setCurrentIndex(index)
+
             self._ui.fieldComponent.setEnabled(False)
-            self._ui.field.setCurrentIndex(self._ui.field.findData(VELOCITY))
-            self._ui.fieldComponent.setCurrentIndex(self._ui.fieldComponent.findData(VectorComponent.MAGNITUDE))
+            index = self._ui.fieldComponent.findData(VectorComponent.MAGNITUDE)
+            self._ui.fieldComponent.setCurrentIndex(index)
+
         else:
             self._ui.field.setEnabled(True)
-            self._ui.fieldComponent.setEnabled(True)
+            field: Field = self._ui.field.currentData()
+
+            if field.type == FieldType.VECTOR:
+                self._ui.fieldComponent.setEnabled(True)
+            else:
+                self._ui.fieldComponent.setEnabled(False)
