@@ -94,6 +94,8 @@ class SurfaceDialog(QDialog):
         if surface != '0':
             self._setSurface(surface)
 
+        self._updateInputFields()
+
     @qasync.asyncSlot()
     async def _accept(self):
         name = self._name
@@ -158,7 +160,7 @@ class SurfaceDialog(QDialog):
     def _surfaceChanged(self):
         self._setSurface(self._dialog.selectedItem())
 
-    def _updateInputFields(self, index):
+    def _updateInputFields(self):
         reportType: SurfaceReportType = self._ui.reportType.currentData()
 
         if reportType in [SurfaceReportType.MASS_FLOW_RATE, SurfaceReportType.VOLUME_FLOW_RATE]:

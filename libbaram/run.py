@@ -282,7 +282,7 @@ async def openTerminal(cwd: Path):
         except FileNotFoundError:
             # Fallback to PowerShell
             process = await asyncio.create_subprocess_exec("powershell.exe", env=env, cwd=cwd)
-            
+
         await process.wait()
 
     elif system == "Darwin":  # macOS
@@ -295,10 +295,14 @@ async def openTerminal(cwd: Path):
         env.pop('PS1', None)
 
         process = None
-        terminals = ["gnome-terminal", "konsole", "xfce4-terminal", "xterm"]
+        terminals = [
+                ['gnome-terminal', '--', '/bin/bash', '--norc'],
+                ['konsole', '-e', '/bin/bash', '--norc'],
+                ['xfce4-terminal', '-e', '/bin/bash', '--norc'],
+                ['xterm', '-e', '/bin/bash --norc']]
         for terminal in terminals:
             try:
-                process = await asyncio.create_subprocess_exec(terminal, env=env, cwd=cwd)
+                process = await asyncio.create_subprocess_exec(*terminal, env=env, cwd=cwd)
                 await process.wait()
                 break
             except FileNotFoundError:
