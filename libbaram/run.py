@@ -260,11 +260,11 @@ class RunParallelUtility(RunUtility):
 
 async def openTerminal(cwd: Path):
     env = ENV.copy()
-    paths = env['PATH'].split(os.pathsep)
-    paths.append(str(OPENFOAM/'bin'))
+    env['PATH'] = env['PATH'] + os.pathsep + str(OPENFOAM/'bin')
 
     if 'VIRTUAL_ENV' in env:
         vpath = env['VIRTUAL_ENV']
+        paths = env['PATH'].split(os.pathsep)
         env['PATH'] = os.pathsep.join([p for p in paths if not p.startswith(vpath)])
 
     vvars = ['VIRTUAL_ENV', 'PYTHONHOME', 'CONDA_PREFIX', 'CONDA_DEFAULT_ENV']
