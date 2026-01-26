@@ -1098,6 +1098,9 @@ class PODROMPage(ContentPage):
         progressLabel.setText(
             self.tr(f"Evaluating ROM for {caseName} ({enhanceIndex+1}/{numCase})")
         )
+        runParams = {k: str(v) for k, v in paramsAll.items()}
+        case = BatchCase(caseName, runParams)
+        case.load()
         rom_metrics = await self._computeEvalMetricsForCurrentCase(settings, paramsAll)
 
         rom_map = {
@@ -1109,15 +1112,14 @@ class PODROMPage(ContentPage):
             self.tr(f"Running CFD case {caseName} ({enhanceIndex+1}/{numCase})")
         )
         runParams = {k: str(v) for k, v in paramsAll.items()}
-        await self._caseManager.batchRun([BatchCase(caseName, runParams)])
+        await self._caseManager.batchRun([case])
         if self._caseManager.status() == SolverStatus.ERROR:
             progressLabel.setText(
                 self.tr(f"Retrying CFD case {caseName} ({enhanceIndex+1}/{numCase})")
             )
-            retryCase = BatchCase(caseName, runParams)
-            retryCase.load()
-            await retryCase.initialize()
-            await self._caseManager.batchRun([retryCase])
+            case.load()
+            await case.initialize()
+            await self._caseManager.batchRun([case])
             if self._caseManager.status() == SolverStatus.ERROR:
                 progressLabel.setText(
                     self.tr(f"Skipping CFD case {caseName} ({enhanceIndex+1}/{numCase})")
