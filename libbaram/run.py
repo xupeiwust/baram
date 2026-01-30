@@ -1,13 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import asyncio
 import os
 import platform
+import shlex
 import subprocess
 
-import psutil
 from pathlib import Path
-import asyncio
+
+import psutil
 
 from libbaram.mpi import ParallelEnvironment
 
@@ -288,7 +290,24 @@ async def openTerminal(cwd: Path):
     elif system == "Darwin":  # macOS
         env.pop('PS1', None)
 
-        process = await asyncio.create_subprocess_exec("open", "-a", "Terminal", env=env, cwd=cwd)
+        envExports = " ".join([f"export {k}={shlex.quote(v)}" for k, v in env.items()])
+
+        icmd = f"cd {shlex.quote(str(cwd))} && {envExports} && clear && exec /bin/zsh --no-rcs"
+
+        ecmd = icmd.replace('\\', '\\\\').replace('"', '\\"')
+
+        script = f'''
+                tell application "Terminal"
+                    activate
+                    do script "{ecmd}"
+                end tell
+                '''
+
+        process = await asyncio.create_subprocess_exec(
+            "osascript",
+            "-e", script,
+            cwd=cwd
+        )
         await process.wait()
 
     elif system == "Linux":
@@ -298,8 +317,8 @@ async def openTerminal(cwd: Path):
         terminals = [
                 ['gnome-terminal', '--', '/bin/bash', '--norc'],
                 ['konsole', '-e', '/bin/bash', '--norc'],
-                ['xfce4-terminal', '-e', '/bin/bash', '--norc'],
-                ['xterm', '-e', '/bin/bash --norc']]
+                ['xfce4-terminal', '-e', '/bin/bash --norc'],
+                ['xterm', '-e', '/bin/bash', '--norc']]
         for terminal in terminals:
             try:
                 process = await asyncio.create_subprocess_exec(*terminal, env=env, cwd=cwd)
