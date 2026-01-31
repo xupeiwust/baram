@@ -385,11 +385,23 @@ class PODCase(Case):
             stdout = open(self._path / STDOUT_FILE_NAME, 'w')
             stderr = open(self._path / STDERR_FILE_NAME, 'w')
 
+            controlDict = ControlDict().build()
+            d = controlDict.asDict()
+            original_write_format = d.get('writeFormat', None)
+            d['writeFormat'] = 'ascii'
+            controlDict.writeAtomic()
+
             self._process = await runParallelUtility('baramPODreconstruct', parallel=parallel.getEnvironment(), cwd=self._path,
                                                      stdout=stdout, stderr=stderr)
             self._setStatus(SolverStatus.RUNNING)
             result = await self._process.wait()
             self._process = None
+
+            if original_write_format is None:
+                d.pop('writeFormat', None)
+            else:
+                d['writeFormat'] = original_write_format
+            controlDict.writeAtomic()
 
             if result == 0:
                 self._setStatus(SolverStatus.ENDED)

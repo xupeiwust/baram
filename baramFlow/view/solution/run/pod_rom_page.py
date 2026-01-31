@@ -21,7 +21,7 @@ from widgets.multi_selector_dialog import MultiSelectorDialog, SelectorItem
 from baramFlow.case_manager import CaseManager, BatchCase
 from baramFlow.coredb.filedb import FileDB
 from baramFlow.coredb.general_db import GeneralDB
-from baramFlow.coredb.project import Project
+from baramFlow.coredb.project import Project, SolverStatus
 from baramFlow.view.widgets.content_page import ContentPage
 from .snapshot_case_list import SnapshotCaseList
 from .pod_rom_page_ui import Ui_PODROMPage
@@ -76,7 +76,7 @@ ROM_EVAL_RESULTS_KEY = "ROM_EVAL_RESULTS"
 
 
 class PODROMPage(ContentPage):
-    def __init__(self, parent):
+    def __init__(self, parent, navigatorView):
         super().__init__(parent)
         self._ui = Ui_PODROMPage()
         self._ui.setupUi(self)
@@ -96,6 +96,10 @@ class PODROMPage(ContentPage):
 
         self._caseManager = CaseManager()
 
+        self._romEnhancementRunning = False
+        self._romEnhancementCancelRequested = False
+        self._isGeneratingROM = False
+
         self._connectSignalsSlots()
 
         self._snapshotCaseList.load()
@@ -104,6 +108,8 @@ class PODROMPage(ContentPage):
 
         self._initEvalResultTable()
         self._loadEvalResultTable()
+
+        self._navigatorView = navigatorView
 
     def showEvent(self, ev):
         if not ev.spontaneous():
@@ -446,6 +452,12 @@ class PODROMPage(ContentPage):
         return inferred
 
     def _setEvalNEnhanceROM(self):
+        if self._romEnhancementRunning:
+            self._romEnhancementCancelRequested = True
+            self._setRomEnhancementRunning("CANCEL_REQUESTED")
+            if not self._isGeneratingROM: self._caseManager.cancel()
+            return
+
         self._dialog = EvalNEnhanceROMDialog(self)
         self._dialog.settingsCompleted.connect(self._EvalNEnhanceROM)
         self._dialog.open()
@@ -499,16 +511,30 @@ class PODROMPage(ContentPage):
             cfd_val = row.get("cfd", "")
             rel_val = row.get("relErrPercent", "")
 
-            table.setVerticalHeaderItem(i, QTableWidgetItem(label))
+            def fmt(v):
+                try:
+                    return f"{v:.4g}"
+                except:
+                    return "-"
+            
+            def fmt_rel(v):
+                try:
+                    if v > 10.0:
+                        return ">10"
+                    return f"{v:.4g}"
+                except:
+                    return "-"
+            
+            table.setItem(i, 0, QTableWidgetItem(fmt(rom_val)))
+            table.setItem(i, 1, QTableWidgetItem(fmt(cfd_val)))
+            table.setItem(i, 2, QTableWidgetItem(fmt_rel(rel_val)))
 
-            table.setItem(i, 0, QTableWidgetItem(f"{rom_val:.{4}g}"))
-            table.setItem(i, 1, QTableWidgetItem(f"{cfd_val:.{4}g}"))
-            table.setItem(i, 2, QTableWidgetItem(f"{rel_val:.{4}g}"))
+            table.setVerticalHeaderItem(i, QTableWidgetItem(label))
 
         table.setVisible(nrow > 0)
         button.setVisible(nrow > 0)
 
-    async def _computeForceCoeffsForCurrentCase(self, cfg: dict) -> dict:
+    async def _computeForceCoeffsForCurrentCase(self, cfg: dict, paramsAll) -> dict:
         rname = cfg.get("region")
         boundaries_ids = cfg.get("boundaryIds")
 
@@ -521,14 +547,30 @@ class PODROMPage(ContentPage):
         magUInf = float(db.getValue(ReferenceValuesDB.REFERENCE_VALUES_XPATH + "/velocity"))
         rhoInf = float(db.getValue(ReferenceValuesDB.REFERENCE_VALUES_XPATH + "/density"))
 
-        dragDir = cfg.get("dragDir") or [1.0, 0.0, 0.0]
-        liftDir = cfg.get("liftDir") or [0.0, 1.0, 0.0]
+        dragDir = cfg.get("dragDirection") or [1.0, 0.0, 0.0]
+        liftDir = cfg.get("liftDirection") or [0.0, 1.0, 0.0]
         cofr = cfg.get("centerOfRotation") or [0.0, 0.0, 0.0]
 
         method = cfg.get("directionMethod")
 
-        aoa = float(cfg.get("aoa", 0.0))
-        aos = float(cfg.get("aos", 0.0))
+        def _eval_angle(expr: str, params: dict[str, str]) -> float:
+            expr = (expr or "").strip()
+            if not expr:
+                return 0.0
+
+            if expr.startswith("$"):
+                name = expr[1:]
+                if name not in params:
+                    raise ValueError(f"Parameter '{name}' not found in current case.")
+                return float(params[name])
+
+            return float(expr)
+
+        aoa_text = cfg.get("AoA", 0.0)
+        aos_text = cfg.get("AoS", 0.0)
+
+        aoa = _eval_angle(aoa_text, paramsAll)
+        aos = _eval_angle(aos_text, paramsAll)
 
         if method == DirectionSpecificationMethod.AOA_AOS:
             dragDir, liftDir = calucateDirectionsByRotation(
@@ -898,7 +940,7 @@ class PODROMPage(ContentPage):
             except Exception:
                 logger.exception("ROM eval: failed to cleanup volume postProcessing folder")
 
-    async def _computeEvalMetricsForCurrentCase(self, settings) -> list[dict]:
+    async def _computeEvalMetricsForCurrentCase(self, settings, paramsAll) -> list[dict]:
         items = settings.get("items", [])
 
         results: list[dict] = []
@@ -917,9 +959,26 @@ class PODROMPage(ContentPage):
                     continue
 
                 try:
-                    coeffs = await self._computeForceCoeffsForCurrentCase(cfg)
+                    coeffs = await self._computeForceCoeffsForCurrentCase(cfg, paramsAll)
                 except Exception as e:
-                    logger.exception("ROM eval: forceCoeff calculation failed: %s", e)
+                    for key, enabled in metrics.items():
+                        if not enabled:
+                            continue
+            
+                        suffix = {
+                            "lift": "Cl",
+                            "drag": "Cd",
+                            "moment": "Cm",
+                        }.get(key, key)
+            
+                        label = f"{suffix}"
+            
+                        results.append({
+                            "metricCategory": "forceCoeff",
+                            "metricKey": f"{item_id}:{key}",
+                            "metricLabel": label,
+                            "value": None,
+                        })
                     continue
 
                 for key, enabled in metrics.items():
@@ -944,6 +1003,12 @@ class PODROMPage(ContentPage):
                         val = None
 
                     if val is None:
+                        results.append({
+                            "metricCategory": "forceCoeff",
+                            "metricKey": f"{item_id}:{key}",
+                            "metricLabel": label,
+                            "value": None,
+                        })
                         continue
 
                     results.append({
@@ -957,10 +1022,15 @@ class PODROMPage(ContentPage):
                 try:
                     val = await self._computePointValueForCurrentCase(cfg)
                 except Exception:
-                    logger.exception("ROM eval: point calculation failed (cfg=%s)", cfg)
-                    continue
+                    val = None
 
                 if val is None:
+                    results.append({
+                        "metricCategory": "point",
+                        "metricKey": item_id,
+                        "metricLabel": "P",
+                        "value": None,
+                    })
                     continue
 
                 results.append({
@@ -975,10 +1045,15 @@ class PODROMPage(ContentPage):
                 try:
                     val = await self._computeSurfaceFieldValueForCurrentCase(cfg)
                 except Exception:
-                    logger.exception("ROM eval: surface calculation failed (cfg=%s)", cfg)
-                    continue
+                    val = None
 
                 if val is None:
+                    results.append({
+                        "metricCategory": "surface",
+                        "metricKey": item_id,
+                        "metricLabel": "S",
+                        "value": None,
+                    })
                     continue
 
                 results.append({
@@ -993,10 +1068,15 @@ class PODROMPage(ContentPage):
                 try:
                     val = await self._computeVolumeFieldValueForCurrentCase(cfg)
                 except Exception:
-                    logger.exception("ROM eval: volume calculation failed (cfg=%s)", cfg)
-                    continue
+                    val = None
 
                 if val is None:
+                    results.append({
+                        "metricCategory": "volume",
+                        "metricKey": item_id,
+                        "metricLabel": "V",
+                        "value": None,
+                    })
                     continue
 
                 results.append({
@@ -1013,40 +1093,64 @@ class PODROMPage(ContentPage):
         return results
 
     async def _evalRomCfdEvaluationForCase(self, caseName: str, paramsAll: dict,
-                                           settings, enhanceIndex: int,
-                                           progressDialog: ProgressDialog) -> list[dict]:
-        progressDialog.setLabelText(
-            self.tr(f"ROM Enhancement: evaluating ROM for {caseName} ({enhanceIndex+1})")
+                                           settings, enhanceIndex: int, numCase: int,
+                                           progressLabel: QLabel) -> list[dict]:
+        progressLabel.setText(
+            self.tr(f"Evaluating ROM for {caseName} ({enhanceIndex+1}/{numCase})")
         )
-        rom_metrics = await self._computeEvalMetricsForCurrentCase(settings)
+        runParams = {k: str(v) for k, v in paramsAll.items()}
+        case = BatchCase(caseName, runParams)
+        case.load()
+        rom_metrics = await self._computeEvalMetricsForCurrentCase(settings, paramsAll)
 
         rom_map = {
             (m["metricCategory"], m["metricKey"], m["metricLabel"]): m["value"]
             for m in rom_metrics
         }
 
-        progressDialog.setLabelText(
-            self.tr(f"ROM Enhancement: running CFD case {caseName} ({enhanceIndex+1})")
+        progressLabel.setText(
+            self.tr(f"Running CFD case {caseName} ({enhanceIndex+1}/{numCase})")
         )
         runParams = {k: str(v) for k, v in paramsAll.items()}
-        await self._caseManager.batchRun([BatchCase(caseName, runParams)])
+        await self._caseManager.batchRun([case])
+        if self._caseManager.status() == SolverStatus.ERROR:
+            progressLabel.setText(
+                self.tr(f"Retrying CFD case {caseName} ({enhanceIndex+1}/{numCase})")
+            )
+            case.load()
+            await case.initialize()
+            await self._caseManager.batchRun([case])
+            if self._caseManager.status() == SolverStatus.ERROR:
+                progressLabel.setText(
+                    self.tr(f"Skipping CFD case {caseName} ({enhanceIndex+1}/{numCase})")
+                )
+                return None
 
-        progressDialog.setLabelText(
-            self.tr(f"ROM Enhancement: evaluating CFD for {caseName} ({enhanceIndex+1})")
+        progressLabel.setText(
+            self.tr(f"Evaluating CFD for {caseName} ({enhanceIndex+1}/{numCase})")
         )
-        cfd_metrics = await self._computeEvalMetricsForCurrentCase(settings)
+        cfd_metrics = await self._computeEvalMetricsForCurrentCase(settings, paramsAll)
 
         rows = []
 
         for m in cfd_metrics:
             key = (m["metricCategory"], m["metricKey"], m["metricLabel"])
-            cfd_val = float(m["value"])
-            rom_val = float(rom_map.get(key, 0.0))
+            try:
+                cfd_val = float(m["value"])
+            except:
+                cfd_val = None
+            try:
+                rom_val = float(rom_map.get(key, 0.0))
+            except:
+                rom_val = None
 
-            if cfd_val != 0.0:
-                rel_err = abs(cfd_val - rom_val) / abs(cfd_val) * 100.0
+            if cfd_val is not None and rom_val is not None:
+                if cfd_val != 0.0:
+                    rel_err = abs(cfd_val - rom_val) / abs(cfd_val) * 100.0
+                else:
+                    rel_err = 0.0
             else:
-                rel_err = 0.0
+                rel_err = None
 
             label = f"{caseName}/{m['metricLabel']}"
 
@@ -1067,13 +1171,33 @@ class PODROMPage(ContentPage):
             return
 
         df = pd.DataFrame(rows)
+        for col in ("rom", "cfd", "relErrPercent"):
+            if col in df.columns:
+                df[col] = pd.to_numeric(df[col], errors="coerce")
 
         self._project.fileDB().putDataFrame(ROM_EVAL_RESULTS_KEY, df)
         self._updateEvalResultTableFromDataFrame(df)
 
+    def _setRomEnhancementRunning(self, mode):
+        if mode == "RUN":
+            self._romEnhancementRunning = True
+            self._romEnhancementCancelRequested = False
+            self._ui.EvalNEnhanceROM.setText(self.tr("Cancel"))
+            self._ui.labelEnhanceROM.setText(self.tr("Initializing"))
+        elif mode == "CANCEL_REQUESTED":
+            self._romEnhancementCancelRequested = True
+            self._ui.EvalNEnhanceROM.setEnabled(False)
+            self._ui.labelEnhanceROM.setText(self.tr("Cancel requested"))
+        else: # FINISHED
+            self._romEnhancementRunning = False
+            self._ui.EvalNEnhanceROM.setText(self.tr("Evaluate / Enhance ROM"))
+            self._ui.EvalNEnhanceROM.setEnabled(True)
+            self._ui.labelEnhanceROM.setText("")
+
     @qasync.asyncSlot()
     async def _EvalNEnhanceROM(self, num, evalSettings):
         ROMdate = self._project.fileDB().getText("ROMdate")
+        progressLabel = self._ui.labelEnhanceROM
         if not ROMdate:
             await AsyncMessageBox().warning(
                 self, self.tr('Reduced Order Model'),
@@ -1089,15 +1213,18 @@ class PODROMPage(ContentPage):
             if confirm != QMessageBox.StandardButton.Yes:
                 return
 
-        progressDialog = ProgressDialog(self, self.tr('Reduced Order Model'), cancelable=True)
-        self._caseManager.progress.connect(progressDialog.setLabelText)
-        progressDialog.setLabelText(self.tr('ROM Enhancement: initializing'))
-        progressDialog.cancelClicked.connect(self._caseManager.cancel)
-        progressDialog.open()
+        self._setRomEnhancementRunning("RUN")
+        AsyncMessageBox().information(self, self.tr("Reduced Order Model"),
+                                      self.tr("ROM enhancement has started."))
 
         allEvalRows = []
 
+        def _check_canceled():
+            if self._romEnhancementCancelRequested:
+                raise RuntimeError("ROM enhancement canceled by user")
+
         try:
+            self._navigatorView._view.setEnabled(False)
             self._snapshotCaseList.clear()
             self._snapshotCaseList.load()
 
@@ -1110,8 +1237,9 @@ class PODROMPage(ContentPage):
             self._paramActive = {name: True for name in activeNames}
 
             for iEnh in range(num):
-                progressDialog.setLabelText(
-                    self.tr(f'ROM Enhancement: selecting sample {iEnh+1}/{num}')
+                _check_canceled()
+                progressLabel.setText(
+                    self.tr(f'Selecting sample {iEnh+1}/{num}')
                 )
 
                 self._snapshotCaseList.clear()
@@ -1138,25 +1266,36 @@ class PODROMPage(ContentPage):
 
                 caseName = self._nextEnhancementCaseName()
 
-                progressDialog.setLabelText(
-                    self.tr(f'ROM Enhancement: reconstructing {caseName} ({iEnh+1}/{num})')
+                progressLabel.setText(
+                    self.tr(f'Reconstructing {caseName} ({iEnh+1}/{num})')
                 )
 
                 paramsActive = {p: paramsAll[p] for p in activeNames if p in paramsAll}
 
+                _check_canceled()
                 await self._caseManager.podInitReconstructedCase(caseName, paramsAll)
+
+                _check_canceled()
                 await self._caseManager.podRunReconstruct(caseName, listSnapshotCase, paramsActive, isBatchRunning=True)
+
+                _check_canceled()
                 await self._caseManager.podSaveToBatchCase(caseName)
                 await self._caseManager.podAddToBatchList(caseName, paramsAll)
 
+                _check_canceled()
                 caseEvalRows = await self._evalRomCfdEvaluationForCase(
                     caseName=caseName,
                     paramsAll=paramsAll,
                     settings=evalSettings,
                     enhanceIndex=iEnh,
-                    progressDialog=progressDialog
+                    numCase=num,
+                    progressLabel=progressLabel
                 )
+                if caseEvalRows is None: continue
+
                 allEvalRows.extend(caseEvalRows)
+                if allEvalRows:
+                    self._storeEvalResults(allEvalRows)
 
                 snapshotDF = self._project.fileDB().getDataFrame(FileDB.Key.SNAPSHOT_CASES.value)
                 if snapshotDF is None:
@@ -1170,32 +1309,49 @@ class PODROMPage(ContentPage):
                 snapshotDF.loc[caseName] = row
                 self._project.fileDB().putDataFrame(FileDB.Key.SNAPSHOT_CASES.value, snapshotDF)
 
-                progressDialog.setLabelText(
-                    self.tr(f'ROM Enhancement: rebuilding ROM ({iEnh+1}/{num})')
+                progressLabel.setText(
+                    self.tr(f'Rebuilding ROM ({iEnh+1}/{num})')
                 )
                 listSnapshotNames = snapshotDF.index.astype(str).tolist()
-                await self._caseManager.podRunGenerateROM(listSnapshotNames, isBatchRunning=True)
+
+                _check_canceled()
+                self._isGeneratingROM = True
+                try:
+                    await self._caseManager.podRunGenerateROM(listSnapshotNames, isBatchRunning=True)
+                finally:
+                    self._isGeneratingROM = False
 
                 ROMdate = time.strftime("%Y-%m-%d, %H:%M:%S", time.localtime())
                 ROMaccuracy = self._caseManager.podGetROMAccuracy()
                 self._project.fileDB().putText("ROMdate", ROMdate)
                 self._project.fileDB().putText("ROMaccuracy", ROMaccuracy)
                 self._project.fileDB().putText("ROMparams", "\n".join(activeNames))
+                self.loadSnapshotCases(overwriteSlider=False)
 
-            if allEvalRows:
-                self._storeEvalResults(allEvalRows)
-
-            self.loadSnapshotCases(overwriteSlider=True)
-            progressDialog.finish(self.tr('ROM enhancement finished'))
+            await AsyncMessageBox().information(
+                self,
+                self.tr('Reduced Order Model'),
+                self.tr('ROM enhancement finished.')
+            )
 
         except Exception as e:
-            logging.exception("ROM enhancement error")
-            progressDialog.finish(self.tr('ROM enhancement error : ') + str(e))
+            if "canceled by user" in str(e):
+                await AsyncMessageBox().warning(
+                    self,
+                    self.tr('Reduced Order Model'),
+                    self.tr('ROM enhancement was canceled by user.')
+                )
+            else:
+                logging.exception("ROM enhancement error")
+                await AsyncMessageBox().warning(
+                    self,
+                    self.tr('Reduced Order Model'),
+                    self.tr('ROM enhancement error : ') + str(e)
+                )
         finally:
-            try:
-                self._caseManager.progress.disconnect(progressDialog.setLabelText)
-            except Exception:
-                pass
+            self._navigatorView._view.setEnabled(True)
+
+        self._setRomEnhancementRunning("FINISHED")
 
     def _pickAdditionalSampleSimpleGP(self, activeParams, nCandidates=512):
         snapshotCasesDataFrame = self._project.fileDB().getDataFrame(FileDB.Key.SNAPSHOT_CASES.value)
