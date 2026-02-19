@@ -254,6 +254,7 @@ async def pointDataToCellData(mBlock: vtkMultiBlockDataSet, arrayNames: list[str
         if isinstance(block, vtkDataSet):
             conv = vtkPointDataToCellData()
             conv.PassPointDataOn()
+            conv.ProcessAllArraysOff()
             conv.SetInputData(block)
             for name in arrayNames:
                 conv.AddPointDataArray(name)
