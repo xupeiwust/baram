@@ -9,8 +9,10 @@
             "type": "debugpy",
             "request": "launch",
             "module": "baramFlow.main",
-            "env": {
-                "QT_QPA_PLATFORM": "xcb"
+            "linux" : {
+                "env": {
+                    "QT_QPA_PLATFORM": "xcb"
+                }
             }
         },
         {
@@ -18,8 +20,11 @@
             "type": "debugpy",
             "request": "launch",
             "module": "baramMesh.main",
-            "env": {
-                "QT_QPA_PLATFORM": "xcb"
-            }        }
+            "linux" : {
+                "env": {
+                    "QT_QPA_PLATFORM": "xcb"
+                }
+            }
+        }
     ]
 }
