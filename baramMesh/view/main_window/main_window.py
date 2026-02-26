@@ -3,6 +3,7 @@
 
 import asyncio
 import logging
+import platform
 import webbrowser
 
 import qasync
@@ -203,6 +204,9 @@ class MainWindow(QMainWindow):
 
     def _actionOpen(self):
         self._dialog = QFileDialog(self, self.tr('Select Project Directory'), app.settings.getRecentLocation())
+        if platform.system() == 'Darwin':  # "show()" for native File dialog does not seem to work on macOS
+            self._dialog.setOption(QFileDialog.Option.DontUseNativeDialog)
+
         self._dialog.setFileMode(QFileDialog.FileMode.Directory)
         self._dialog.fileSelected.connect(self._openProject)
         self._dialog.setWindowModality(Qt.WindowModality.ApplicationModal)
