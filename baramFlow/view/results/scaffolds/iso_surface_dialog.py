@@ -92,15 +92,13 @@ class IsoSurfaceDialog(QDialog):
         progressDialog.open()
 
         if isinstance(field, CollateralField):
-            solverFieldName = getSolverFieldName(field)
-            if not FileSystem.fieldExists(time, solverFieldName):
-                progressDialog.setLabelText(self.tr('Calculating Collateral Field...'))
+            progressDialog.setLabelText(self.tr('Calculating Collateral Field...'))
 
-                rc = await calculateCollateralField([field], [time])
+            rc = await calculateCollateralField([field], [time])
 
-                if rc != 0:
-                    progressDialog.finish(self.tr('Calculation failed'))
-                    return
+            if rc != 0:
+                progressDialog.finish(self.tr('Calculation failed'))
+                return
 
         progressDialog.setLabelText(self.tr('Computing range...'))
 

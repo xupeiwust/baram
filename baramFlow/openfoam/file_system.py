@@ -169,23 +169,6 @@ class FileSystem:
         return sorted(times, key=lambda x: float(x))
 
     @classmethod
-    def fieldExists(cls, time: str, fieldStr: str) -> bool:
-        parent = cls.processorPath(0)
-        if parent is None:
-            parent = cls._casePath
-
-        path = parent / time / fieldStr
-        if path.is_file():
-            return True
-
-        # in case it is multi-region case
-        for path in parent.joinpath(time).glob(f'*/{fieldStr}'):
-            if path.is_file():
-                return True
-
-        return False
-
-    @classmethod
     def polyMeshPath(cls, rname=''):
         return cls.constantPath(rname) / Directory.POLY_MESH_DIRECTORY_NAME
 

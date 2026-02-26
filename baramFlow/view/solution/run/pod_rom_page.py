@@ -654,11 +654,7 @@ class PODROMPage(ContentPage):
         solverFieldName = getSolverFieldName(field)
 
         if isinstance(field, CollateralField):
-            time = FileSystem.latestTime()
-            if FileSystem.fieldExists(time, solverFieldName):
-                functions[f'readField_{solverFieldName}'] = foReadFieldsReport([solverFieldName], rname)  # FO for reading the collateral field
-            else:
-                functions.update(collateralFieldDict([field]))  # FO for generating the collateral field
+            functions.update(collateralFieldDict([field]))  # FO for generating the collateral field
 
         elif isinstance(field, SpecieField):
             if field.codeName not in RegionDB.getSecondaryMaterials(rname):
@@ -761,11 +757,7 @@ class PODROMPage(ContentPage):
             solverFieldName = getSolverFieldName(field)
 
             if isinstance(field, CollateralField):
-                time = FileSystem.latestTime()
-                if FileSystem.fieldExists(time, solverFieldName):
-                    functions[f'readField_{solverFieldName}'] = foReadFieldsReport([solverFieldName], rname)  # FO for reading the collateral field
-                else:
-                    functions.update(collateralFieldDict([field]))  # FO for generating the collateral field
+                functions.update(collateralFieldDict([field]))  # FO for generating the collateral field
 
             elif isinstance(field, SpecieField):
                 if field.codeName not in RegionDB.getSecondaryMaterials(rname):
@@ -854,11 +846,7 @@ class PODROMPage(ContentPage):
         solverFieldName = getSolverFieldName(field)
 
         if isinstance(field, CollateralField):
-            time = FileSystem.latestTime()
-            if FileSystem.fieldExists(time, solverFieldName):
-                functions[f'readField_{solverFieldName}'] = foReadFieldsReport([solverFieldName], rname)  # FO for reading the collateral field
-            else:
-                functions.update(collateralFieldDict([field]))  # FO for generating the collateral field
+            functions.update(collateralFieldDict([field]))  # FO for generating the collateral field
 
         elif isinstance(field, SpecieField):
             if field.codeName not in RegionDB.getSecondaryMaterials(rname):

@@ -123,10 +123,6 @@ def getAvailableFields(includeCoordinate=False) -> list[Field]:
                 continue
 
             field = PhaseField(mid)
-            # solverFieldName = getSolverFieldName(field)
-            # if not FileSystem.fieldExists('0', solverFieldName):
-            #     continue
-            #
             fields.append(field)
 
     elif ModelsDB.isSpeciesModelOn():
