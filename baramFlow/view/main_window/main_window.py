@@ -167,7 +167,7 @@ class MainWindow(QMainWindow, expert_mode.IExpertModeObserver):
             MenuItem.MENU_SOLUTION_INITIALIZATION.value: MenuPage(InitializationPage),
             MenuItem.MENU_SOLUTION_RUN_CONDITIONS.value: MenuPage(RunConditionsPage),
             MenuItem.MENU_SOLUTION_RUN.value: MenuPage(ProcessInformationPage),
-            MenuItem.MENU_SOLUTION_PODROM.value: MenuPage(PODROMPage),
+            MenuItem.MENU_SOLUTION_PODROM.value: MenuPage(lambda parent: PODROMPage(parent, self._navigatorView)),
 
             MenuItem.MENU_RESULTS_SCAFFOLDS.value: MenuPage(ScaffoldsPage),
             MenuItem.MENU_RESULTS_GRAPHICS.value: MenuPage(GraphicsPage),

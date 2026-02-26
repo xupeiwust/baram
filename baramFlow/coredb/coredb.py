@@ -95,8 +95,7 @@ class _CoreDB(object):
 
         self._configCount = 0
         self._configCountAtSave = self._configCount
-        self._inContext = False
-        self._backupTree = None
+        self._backupTree = []
         self._lastError = None
         self._lastNote = None
 
@@ -110,18 +109,19 @@ class _CoreDB(object):
 
     def __enter__(self):
         logger.debug('enter')
-        self._backupTree = copy.deepcopy(self._xmlTree)
+        self._backupTree.append(copy.deepcopy(self._xmlTree))
         self._lastError = None
-        self._inContext = True
+
         return self
 
     def __exit__(self, eType, eValue, eTraceback):
+        assert len(self._backupTree) > 0
+        tree = self._backupTree.pop()
+
         if self._lastError is not None or eType is not None:
-            self._xmlTree = self._backupTree
+            self._xmlTree = tree
 
         self._lastError = None
-        self._backupTree = None
-        self._inContext = False
 
         if eType == Cancel:
             logger.debug('exit with Cancel')
@@ -428,7 +428,7 @@ class _CoreDB(object):
                 else:
                     etree.SubElement(element, f'{{{ns}}}{k}').text = str(v)
 
-        if not self._inContext:
+        if len(self._backupTree) == 0:  # not in context
             raise RuntimeError
 
         if not isinstance(value, dict):

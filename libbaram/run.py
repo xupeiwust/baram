@@ -1,13 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import asyncio
 import os
 import platform
+import shlex
 import subprocess
 
-import psutil
 from pathlib import Path
-import asyncio
+
+import psutil
 
 from libbaram.mpi import ParallelEnvironment
 
@@ -260,11 +262,11 @@ class RunParallelUtility(RunUtility):
 
 async def openTerminal(cwd: Path):
     env = ENV.copy()
-    paths = env['PATH'].split(os.pathsep)
-    paths.append(str(OPENFOAM/'bin'))
+    env['PATH'] = env['PATH'] + os.pathsep + str(OPENFOAM/'bin')
 
     if 'VIRTUAL_ENV' in env:
         vpath = env['VIRTUAL_ENV']
+        paths = env['PATH'].split(os.pathsep)
         env['PATH'] = os.pathsep.join([p for p in paths if not p.startswith(vpath)])
 
     vvars = ['VIRTUAL_ENV', 'PYTHONHOME', 'CONDA_PREFIX', 'CONDA_DEFAULT_ENV']
@@ -282,23 +284,44 @@ async def openTerminal(cwd: Path):
         except FileNotFoundError:
             # Fallback to PowerShell
             process = await asyncio.create_subprocess_exec("powershell.exe", env=env, cwd=cwd)
-            
+
         await process.wait()
 
     elif system == "Darwin":  # macOS
         env.pop('PS1', None)
 
-        process = await asyncio.create_subprocess_exec("open", "-a", "Terminal", env=env, cwd=cwd)
+        envExports = " ".join([f"export {k}={shlex.quote(v)}" for k, v in env.items()])
+
+        icmd = f"cd {shlex.quote(str(cwd))} && {envExports} && clear && exec /bin/zsh --no-rcs"
+
+        ecmd = icmd.replace('\\', '\\\\').replace('"', '\\"')
+
+        script = f'''
+                tell application "Terminal"
+                    activate
+                    do script "{ecmd}"
+                end tell
+                '''
+
+        process = await asyncio.create_subprocess_exec(
+            "osascript",
+            "-e", script,
+            cwd=cwd
+        )
         await process.wait()
 
     elif system == "Linux":
         env.pop('PS1', None)
 
         process = None
-        terminals = ["gnome-terminal", "konsole", "xfce4-terminal", "xterm"]
+        terminals = [
+                ['gnome-terminal', '--', '/bin/bash', '--norc'],
+                ['konsole', '-e', '/bin/bash', '--norc'],
+                ['xfce4-terminal', '-e', '/bin/bash --norc'],
+                ['xterm', '-e', '/bin/bash', '--norc']]
         for terminal in terminals:
             try:
-                process = await asyncio.create_subprocess_exec(terminal, env=env, cwd=cwd)
+                process = await asyncio.create_subprocess_exec(*terminal, env=env, cwd=cwd)
                 await process.wait()
                 break
             except FileNotFoundError:

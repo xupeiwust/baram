@@ -8,13 +8,23 @@
             "name": "baramFlow",
             "type": "debugpy",
             "request": "launch",
-            "module": "baramFlow.main"
+            "module": "baramFlow.main",
+            "linux" : {
+                "env": {
+                    "QT_QPA_PLATFORM": "xcb"
+                }
+            }
         },
         {
             "name": "baramMesh",
             "type": "debugpy",
             "request": "launch",
-            "module": "baramMesh.main"
+            "module": "baramMesh.main",
+            "linux" : {
+                "env": {
+                    "QT_QPA_PLATFORM": "xcb"
+                }
+            }
         }
     ]
 }

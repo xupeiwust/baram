@@ -22,6 +22,7 @@ from PySide6.QtGui import QDoubleValidator
 
 from baramFlow.base.constants import VectorComponent
 from baramFlow.base.field import Field
+from baramFlow.coredb.coredb_reader import CoreDBReader
 from baramFlow.coredb.boundary_db import BoundaryDB
 from baramFlow.coredb.cell_zone_db import CellZoneDB
 from baramFlow.coredb.monitor_db import MonitorDB
@@ -114,7 +115,6 @@ class ForceTargetDialog(QDialog):
         self._aoaEdit = QLineEdit(self)
         self._aosEdit = QLineEdit(self)
         for w in (self._aoaEdit, self._aosEdit):
-            w.setValidator(validator)
             w.setText("0.0")
 
         anglesRowWidget = QWidget(self)
@@ -205,6 +205,13 @@ class ForceTargetDialog(QDialog):
                 self.tr("Please select at least one boundary."),
             )
             return
+        if not self._validateAngles():
+            AsyncMessageBox().warning(
+                self,
+                self.tr("Invalid AoA/AoS"),
+                self.tr("AoA/AoS must be a number or a valid user parameter (e.g. $AOA)."),
+            )
+            return
         super().accept()
 
     def config(self) -> Dict[str, Any]:
@@ -226,8 +233,8 @@ class ForceTargetDialog(QDialog):
 
         method = self._methodCombo.currentData()
 
-        aoa = float(self._aoaEdit.text())
-        aos = float(self._aosEdit.text())
+        aoa_text = self._aoaEdit.text()
+        aos_text = self._aosEdit.text()
 
         boundaryNames = [
             BoundaryDB.getBoundaryName(bcid) for bcid in self._boundaries
@@ -241,8 +248,8 @@ class ForceTargetDialog(QDialog):
             "dragDirection": dragDir,
             "liftDirection": liftDir,
             "centerOfRotation": cofr,
-            "AoA": aoa,
-            "AoS": aos,
+            "AoA": aoa_text,
+            "AoS": aos_text,
             "metrics": {
                 "lift": self._chkLift.isChecked(),
                 "drag": self._chkDrag.isChecked(),
@@ -277,6 +284,47 @@ class ForceTargetDialog(QDialog):
             mtxt = self.tr("none")
 
         return f"{location}  [{mtxt}]"
+
+    def _resolveUserParameterText(self, text: str) -> str:
+        text = text.strip()
+        if not text:
+            return text
+
+        try:
+            value = float(text)
+            return text
+        except ValueError:
+            pass
+
+        if text[0] != '$':
+            raise ValueError(f'Neither a number nor a user parameter')
+
+        name = text[1:]
+        db = CoreDBReader()
+        value = db.parameters().get(name)
+
+        if value is None:
+            raise ValueError(f'Unknown user parameter: {name}')
+
+        return value
+
+    def _validateAngles(self) -> bool:
+        method = self._methodCombo.currentData()
+        if method != DirectionSpecificationMethod.AOA_AOS:
+            return True
+
+        checks = [
+            ("AoA", self._aoaEdit.text()),
+            ("AoS", self._aosEdit.text()),
+        ]
+
+        for label, text in checks:
+            try:
+                self._resolveUserParameterText(text)
+            except ValueError as e:
+                return False
+
+        return True
 
 
 class PointTargetDialog(QDialog):

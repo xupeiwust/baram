@@ -5,10 +5,12 @@ from PySide6.QtGui import QDoubleValidator
 from PySide6.QtWidgets import QGroupBox, QFormLayout, QLineEdit
 
 from baramFlow.coredb import coredb
+from baramFlow.coredb.libdb import E
 from baramFlow.coredb.models_db import ModelsDB
 from baramFlow.coredb.region_db import RegionDB
 from baramFlow.coredb.material_db import MaterialDB
 from baramFlow.coredb.coredb_writer import CoreDBWriter
+from libbaram.pfloat import PFloat
 
 
 MIN_FRACTION = 0.0
@@ -42,7 +44,7 @@ class VolumeFractionWidget(QGroupBox):
         super().__init__(self.tr('Volume Fraction'))
 
         self._on = ModelsDB.isMultiphaseModelOn()
-        self._fractions = {}
+        self._fractions: dict[str, FractionRow]= {}
 
         self._rname = rname
 
@@ -109,3 +111,32 @@ class VolumeFractionWidget(QGroupBox):
                         writer.append(fractionPath, inputValue, self._fractions[mid].label)
 
         return True
+
+    def accept(self, xpath):
+        if not self._on:
+            return
+
+        with coredb.CoreDB() as db:
+            sumFraction = 0.0  # Sum of secondary material fractions
+            for mid in self._fractions:
+                value = PFloat(self._fractions[mid].value,
+                               self.tr('Volume fraction of {0}').format(self._fractions[mid].label),
+                               MIN_FRACTION, MAX_FRACTION)
+                sumFraction += float(value)
+
+                fractionPath = xpath + f'/volumeFraction/[material="{mid}"]/fraction'
+
+                try:
+                    savedValue = db.getValue(fractionPath)
+                except LookupError:  # the material should be added if it is not there
+                    db.addElement(xpath,
+                                  E('volumeFraction',
+                                    E('material', mid),
+                                    E('fraction', str(value))))
+                else:
+                    if savedValue != str(value):
+                        db.setValue(fractionPath, str(value))
+
+            if sumFraction > MAX_FRACTION:
+                raise ValueError(self.tr('Sum of fractions should be less than or equal to 1.0'))
+
