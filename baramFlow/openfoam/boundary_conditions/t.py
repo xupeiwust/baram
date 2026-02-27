@@ -42,6 +42,8 @@ class T(BoundaryCondition):
                     field[name] = self._constructTimeVaryingMappedFixedValue(self._region.rname, name, 'T', df)
                 else:
                     field[name] = self._constructWallT(xpath, float(self._db.getValue(xpath + '/temperature/constant')))
+            elif type_ == BoundaryType.THERMO_COUPLED_WALL.value:
+                field[name] = self._constructCompressibleturbulentTemperatureRadCoupledMixed(xpath, type_)
             elif profile == TemperatureProfile.CONSTANT.value:
                 constant = float(self._db.getValue(xpath + '/temperature/constant'))
 
@@ -63,7 +65,6 @@ class T(BoundaryCondition):
                     BoundaryType.SUBSONIC_OUTFLOW.value:    (lambda: self._constructSubsonicOutflow(xpath + '/subsonicOutflow')),
                     BoundaryType.SUPERSONIC_INFLOW.value:   (lambda: self._constructFixedValue(float(self._db.getValue(xpath + '/supersonicInflow/staticTemperature')))),
                     BoundaryType.SUPERSONIC_OUTFLOW.value:  (lambda: self._constructZeroGradient()),
-                    BoundaryType.THERMO_COUPLED_WALL.value: (lambda: self._constructCompressibleturbulentTemperatureRadCoupledMixed(xpath, type_)),
                     BoundaryType.SYMMETRY.value:            (lambda: self._constructSymmetry()),
                     BoundaryType.INTERFACE.value:           (lambda: self._constructInterfaceT(xpath)),
                     BoundaryType.POROUS_JUMP.value:         (lambda: self._constructCyclic()),
