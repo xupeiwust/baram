@@ -121,18 +121,16 @@ class GraphicDialog(QDialog):
         progressDialog.open()
 
         if isinstance(field, CollateralField):
-            solverFieldName = getSolverFieldName(field)
-            if not FileSystem.fieldExists(time, solverFieldName):
-                progressDialog.setLabelText(self.tr('Calculating Collateral Field...'))
+            progressDialog.setLabelText(self.tr('Calculating Collateral Field...'))
 
-                rc = await calculateCollateralField([field], [time])
+            rc = await calculateCollateralField([field], [time])
 
-                if rc != 0:
-                    progressDialog.abort(self.tr('Calculation failed'))
-                    self._ui.update.setEnabled(True)
-                    return
+            if rc != 0:
+                progressDialog.abort(self.tr('Calculation failed'))
+                self._ui.update.setEnabled(True)
+                return
 
-                fieldValueNeedUpdate = True
+            fieldValueNeedUpdate = True
 
         progressDialog.setLabelText(self.tr('Applying Graphics parameters...'))
 
