@@ -2,13 +2,13 @@
 # -*- coding: utf-8 -*-
 
 import qasync
-from PySide6.QtWidgets import QMessageBox
 
 from baramFlow.coredb import coredb
 from baramFlow.coredb.coredb_writer import CoreDBWriter
 from baramFlow.coredb.boundary_db import BoundaryDB, DirectionSpecificationMethod, DirectionSpecificationMethodTexts
 from baramFlow.coredb.region_db import RegionDB
 from baramFlow.view.widgets.resizable_dialog import ResizableDialog
+from widgets.async_message_box import AsyncMessageBox
 from .free_stream_dialog_ui import Ui_FreeStreamDialog
 from .conditional_widget_helper import ConditionalWidgetHelper
 
@@ -92,10 +92,8 @@ class FreeStreamDialog(ResizableDialog):
 
         errorCount = writer.write()
         if errorCount > 0:
-            self._temperatureWidget.rollbackWriting()
-            QMessageBox.critical(self, self.tr("Input Error"), writer.firstError().toMessage())
+            await AsyncMessageBox().information(self, self.tr("Input Error"), writer.firstError().toMessage())
         else:
-            self._temperatureWidget.completeWriting()
             self.accept()
 
     def _load(self):

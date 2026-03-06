@@ -90,17 +90,6 @@ TYPE_MAP = {
 }
 
 
-class VelocitySpecification(Enum):
-    COMPONENT = 'component'
-    MAGNITUDE = 'magnitudeNormal'
-
-
-class VelocityProfile(Enum):
-    CONSTANT = 'constant'
-    SPATIAL_DISTRIBUTION = 'spatialDistribution'
-    TEMPORAL_DISTRIBUTION = 'temporalDistribution'
-
-
 class FlowRateInletSpecification(Enum):
     VOLUME_FLOW_RATE = 'volumeFlowRate'
     MASS_FLOW_RATE = 'massFlowRate'
@@ -150,17 +139,6 @@ class KEpsilonSpecification(Enum):
 class KOmegaSpecification(Enum):
     K_AND_OMEGA = 'kAndOmega'
     INTENSITY_AND_VISCOSITY_RATIO = 'intensityAndViscosityRatio'
-
-
-class TemperatureProfile(Enum):
-    CONSTANT = 'constant'
-    SPATIAL_DISTRIBUTION = 'spatialDistribution'
-    TEMPORAL_DISTRIBUTION = 'temporalDistribution'
-
-
-class TemperatureTemporalDistribution(Enum):
-    PIECEWISE_LINEAR = 'piecewiseLinear'
-    POLYNOMIAL = 'polynomial'
 
 
 class ContactAngleModel(Enum):

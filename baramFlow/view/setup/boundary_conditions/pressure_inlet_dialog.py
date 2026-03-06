@@ -72,10 +72,8 @@ class PressureInletDialog(ResizableDialog):
 
         errorCount = writer.write()
         if errorCount > 0:
-            self._temperatureWidget.rollbackWriting()
             await AsyncMessageBox().information(self, self.tr("Input Error"), writer.firstError().toMessage())
         else:
-            self._temperatureWidget.completeWriting()
             self.accept()
 
     def _load(self):

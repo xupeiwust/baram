@@ -34,7 +34,19 @@ def _addShowChartAndWriteIntervalV1(parent):
         parent.insert(2, child)
 
 
-def _version_1(root: etree.Element):
+def getFileData(path, key):
+    if key is None:
+        return None
+
+    key = key.strip()
+    with pd.HDFStore(path) as store:
+        if f'/{key}' in store.keys():
+            return store.get(key).astype(str)
+        else:
+            return None
+
+
+def _version_1(root: etree.Element, path):
     logger.debug('  Upgrading to v2')
     # print(etree.tostring(root, xml_declaration=True, encoding='UTF-8'))
     root.set('version', '2')
@@ -76,7 +88,7 @@ def _version_1(root: etree.Element):
     # print(etree.tostring(root, xml_declaration=True, encoding='UTF-8'))
 
 
-def _version_2(root: etree.Element):
+def _version_2(root: etree.Element, path):
     logger.debug('  Upgrading to v3')
 
     # print(etree.tostring(root, xml_declaration=True, encoding='UTF-8'))
@@ -198,7 +210,7 @@ def _version_2(root: etree.Element):
         p.set('disabled', 'false')
 
 
-def _version_3(root: etree.Element):
+def _version_3(root: etree.Element, path):
     logger.debug('  Upgrading to v4')
 
     root.set('version', '4')
@@ -243,7 +255,7 @@ def _version_3(root: etree.Element):
                     p.append(e)
 
 
-def _version_4(root: etree.Element):
+def _version_4(root: etree.Element, path):
     logger.debug('  Upgrading to v5')
 
     root.set('version', '5')
@@ -328,7 +340,7 @@ def _version_4(root: etree.Element):
             p.insert(3, e)
 
 
-def _version_5(root: etree.Element):
+def _version_5(root: etree.Element, path):
     logger.debug('  Upgrading to v6')
 
     root.set('version', '6')
@@ -498,7 +510,7 @@ def _version_5(root: etree.Element):
             p.insert(1, e)
 
 
-def _version_6(root: etree.Element):
+def _version_6(root: etree.Element, path):
     logger.debug('  Upgrading to v7')
 
     root.set('version', '7')
@@ -627,7 +639,7 @@ def _version_6(root: etree.Element):
             p.append(e)
 
 
-def _version_7(root: etree.Element):
+def _version_7(root: etree.Element, path):
     logger.debug('  Upgrading to v8')
 
     root.set('version', '8')
@@ -754,7 +766,7 @@ def _version_7(root: etree.Element):
             p.insert(5, e)
 
 
-def _version_8(root: etree.Element):
+def _version_8(root: etree.Element, path):
     logger.debug('  Upgrading to v9')
 
     root.set('version', '9')
@@ -824,7 +836,7 @@ def _version_8(root: etree.Element):
             p.append(e)
 
 
-def _version_9(root: etree.Element):
+def _version_9(root: etree.Element, path):
     logger.debug('  Upgrading to v10')
 
     root.set('version', '10')
@@ -914,7 +926,7 @@ def _version_9(root: etree.Element):
             p.insert(8, e)
 
 
-def _version_10(root: etree.Element):
+def _version_10(root: etree.Element, path):
     logger.debug('  Upgrading to v11')
 
     root.set('version', '11')
@@ -1009,7 +1021,7 @@ def _version_10(root: etree.Element):
                 type_.text = 'cyclic'
 
 
-def _version_11(root: etree.Element):
+def _version_11(root: etree.Element, path):
     logger.debug('  Upgrading to v12')
 
     root.set('version', '12')
@@ -1269,18 +1281,108 @@ def _version_11(root: etree.Element):
                 materialNode.append(etree.fromstring(f'<dropletSurfaceTension xmlns="{_ns}"><type>constant</type><constant>0.0</constant></dropletSurfaceTension>'))
 
 
-def _version_12(root: etree.Element):
+def _version_12(root: etree.Element, path):
     logger.debug('  Upgrading to v13')
 
     # root.set('version', '13')
 
     for p in root.findall(f'regions/region/boundaryConditions/boundaryCondition/wall', namespaces=_nsmap):
         if p.find('heatTransfer', namespaces=_nsmap) is None:
-            logger.debug(f'    Replace "temperature" to "heatTransfer" in {p}')
+            logger.debug(f'    Replacing "temperature" to "heatTransfer" in {p}')
             e = p.find('temperature', namespaces=_nsmap)
             e.tag = f'{{{_ns}}}heatTransfer'
             e.insert(3,
                      etree.fromstring(f'<temperatureDistributionName xmlns="{_ns}">00000000-0000-0000-0000-000000000000</temperatureDistributionName>'))
+
+    for p in root.findall(f'regions/region/boundaryConditions/boundaryCondition/velocityInlet/velocity', namespaces=_nsmap):
+        if p.find('coordinateSystem', namespaces=_nsmap) is None:
+            logger.debug(f'    Adding "coordinateSystem" to {p}')
+            child = etree.Element(f'{{{_ns}}}coordinateSystem')
+            child.text = 'cartesian'
+            p.insert(1, child)
+
+            t = p.find('component', namespaces=_nsmap)
+            logger.debug(f'    Replacing "spatialDistribution" in {t}')
+            old = t.find('spatialDistribution', namespaces=_nsmap)
+            table = getFileData(path, old.text)
+            if table is not None:
+                e = etree.fromstring(f'''
+                    <spatialDistribution xmlns="http://www.baramcfd.org/baram">
+                        <x>{" ".join(table[0])}</x>
+                        <y>{" ".join(table[1])}</y>
+                        <z>{" ".join(table[2])}</z>
+                        <vx>{" ".join(table[3])}</vx>
+                        <vy>{" ".join(table[4])}</vy>
+                        <vz>{" ".join(table[5])}</vz>
+                    </spatialDistribution>
+                ''')
+            else:
+                e = etree.fromstring('''
+                    <spatialDistribution xmlns="http://www.baramcfd.org/baram">
+                        <x>0</x>
+                        <y>0</y>
+                        <z>0</z>
+                        <vx>0</vx>
+                        <vy>0</vy>
+                        <vz>0</vz>
+                    </spatialDistribution>
+                ''')
+            t.replace(old, e)
+
+            t = p.find('magnitudeNormal', namespaces=_nsmap)
+            logger.debug(f'    Removing "spatialDistribution" from {t}')
+            t.remove(t.find('spatialDistribution', namespaces=_nsmap))
+
+            e = etree.fromstring('''
+                <localCylindrical xmlns="http://www.baramcfd.org/baram">
+                    <profile>constant</profile>
+                    <constant>
+                        <axialVelocity>0</axialVelocity>
+                        <radialVelocity>0</radialVelocity>
+                        <angularSpeed>0</angularSpeed>
+                    </constant>
+                    <temporalDistribution>
+                        <t>0</t>
+                        <u>0</u>
+                        <v>0</v>
+                        <omega>0</omega>
+                    </temporalDistribution>
+                    <axisOrigin>
+                        <x>0</x>
+                        <y>0</y>
+                        <z>0</z>
+                    </axisOrigin>
+                    <axisDirection>
+                        <x>0</x>
+                        <y>0</y>
+                        <z>1</z>
+                    </axisDirection>
+                </localCylindrical>
+            ''')
+            p.append(e)
+
+    for p in root.findall(f'regions/region/boundaryConditions/boundaryCondition/temperature', namespaces=_nsmap):
+        old = p.find('spatialDistribution', namespaces=_nsmap)
+        table = getFileData(path, old.text)
+        if table is not None:
+            e = etree.fromstring(f'''
+                <spatialDistribution xmlns="http://www.baramcfd.org/baram">
+                    <x>{" ".join(table[0])}</x>
+                    <y>{" ".join(table[1])}</y>
+                    <z>{" ".join(table[2])}</z>
+                    <v>{" ".join(table[3])}</v>
+                </spatialDistribution>
+            ''')
+        else:
+            e = etree.fromstring('''
+                <spatialDistribution xmlns="http://www.baramcfd.org/baram">
+                    <x>0</x>
+                    <y>0</y>
+                    <z>0</z>
+                    <v>0</v>
+                </spatialDistribution>
+            ''')
+        p.replace(old, e)
 
 
 _fTable = [
@@ -1302,7 +1404,7 @@ _fTable = [
 currentVersion = int(etree.parse(resource.file('configurations/baram.cfg.xsd')).getroot().get('version'))
 
 
-def migrate(root: etree.Element):
+def migrate(root: etree.Element, path):
     version = int(root.get('version'))
     logger.debug(f'Migrating from v{version} to v{currentVersion}')
 
@@ -1315,4 +1417,4 @@ def migrate(root: etree.Element):
     else:
         for i in range(version, currentVersion):
             if i < len(_fTable):
-                _fTable[i](root)
+                _fTable[i](root, path)

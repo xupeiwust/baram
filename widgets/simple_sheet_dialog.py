@@ -31,11 +31,15 @@ class SimpleSheetDialog(QDialog):
 
         self.setWindowModality(Qt.WindowModality.ApplicationModal)
 
+        columns = len(labels)
+        if columns > 2:
+            self.resize(100 * columns + 80, self.size().height())
+
         self._connectSignalsSlots()
 
     def _connectSignalsSlots(self):
         self._ui.ok.clicked.connect(self._okClicked)
-        self._ui.cancel.clicked.connect(self._cancelClicked)
+        self._ui.cancel.clicked.connect(self.reject)
 
     def show(self) -> asyncio.Future:
 
@@ -56,11 +60,11 @@ class SimpleSheetDialog(QDialog):
 
         self.close()
 
-    def _cancelClicked(self):
+    def reject(self):
         if not self._future.cancelled():
             self._future.cancel()
 
-        self.close()
+        super().reject()
 
     def closeEvent(self, event):
         if not self._future.done():

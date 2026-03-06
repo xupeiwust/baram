@@ -4,7 +4,6 @@
 from uuid import UUID, uuid4
 import qasync
 
-import pandas as pd
 from PySide6.QtCore import Qt
 
 from libbaram.natural_name_uuid import uuidToNnstr
@@ -96,13 +95,9 @@ class IntakeFanDialog(ResizableDialog):
 
         errorCount = writer.write()
         if errorCount > 0:
-            self._temperatureWidget.rollbackWriting()
             await AsyncMessageBox().information(self, self.tr("Input Error"), writer.firstError().toMessage())
         else:
-            Project.instance().fileDB().putDataFrame(uuidToNnstr(self._fanCurveName), pd.DataFrame(self._fanCurve.data()))
-
-            self._temperatureWidget.completeWriting()
-            super().accept()
+            self.accept()
 
     @qasync.asyncSlot()
     async def _reject(self):

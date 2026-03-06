@@ -937,11 +937,12 @@ class _CoreDB(object):
                 raise ValueError
 
             root = etree.fromstring(ds[()])
-            migrate.migrate(root)
 
-            tree = etree.ElementTree(root)
-            self._xmlSchema.assertValid(tree)
-            self._xmlTree = tree
+        migrate.migrate(root, path)
+
+        tree = etree.ElementTree(root)
+        self._xmlSchema.assertValid(tree)
+        self._xmlTree = tree
 
         self._configCountAtSave = self._configCount
 

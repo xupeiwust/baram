@@ -8,6 +8,7 @@
     <velocityInlet>
         <velocity>
             <specification>magnitudeNormal</specification>
+            <coordinateSystem>cartesian</coordinateSystem>
             <component>
                 <profile>constant</profile>
                 <constant>
@@ -15,7 +16,14 @@
                     <y>0</y>
                     <z>0</z>
                 </constant>
-                <spatialDistribution></spatialDistribution>
+                <spatialDistribution>
+                    <x>0</x>
+                    <y>0</y>
+                    <z>0</z>
+                    <vx>0</vx>
+                    <vy>0</vy>
+                    <vz>0</vz>
+                </spatialDistribution>
                 <temporalDistribution>
                     <specification>piecewiseLinear</specification>
                     <piecewiseLinear>
@@ -29,7 +37,6 @@
             <magnitudeNormal>
                 <profile>constant</profile>
                 <constant>1</constant>
-                <spatialDistribution></spatialDistribution>
                 <temporalDistribution>
                     <specification>piecewiseLinear</specification>
                     <piecewiseLinear>
@@ -38,6 +45,30 @@
                     </piecewiseLinear>
                 </temporalDistribution>
             </magnitudeNormal>
+            <localCylindrical>
+                <profile>constant</profile>
+                <constant>
+                    <axialVelocity>0</axialVelocity>
+                    <radialVelocity>0</radialVelocity>
+                    <angularSpeed>0</angularSpeed>
+                </constant>
+                <temporalDistribution>
+                    <t>0</t>
+                    <u>0</u>
+                    <v>0</v>
+                    <omega>0</omega>
+                </temporalDistribution>
+                <axisOrigin>
+                    <x>0</x>
+                    <y>0</y>
+                    <z>0</z>
+                </axisOrigin>
+                <axisDirection>
+                    <x>0</x>
+                    <y>0</y>
+                    <z>1</z>
+                </axisDirection>
+            </localCylindrical>
         </velocity>
     </velocityInlet>
     <flowRateInlet>
@@ -259,7 +290,12 @@
     <temperature>
         <profile>constant</profile>
         <constant>300</constant>
-        <spatialDistribution></spatialDistribution>
+        <spatialDistribution>
+            <x>0</x>
+            <y>0</y>
+            <z>0</z>
+            <v>0</v>
+        </spatialDistribution>
         <temporalDistribution>
             <specification>piecewiseLinear</specification>
             <piecewiseLinear>

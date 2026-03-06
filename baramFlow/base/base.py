@@ -4,6 +4,8 @@
 from dataclasses import dataclass, field
 from uuid import UUID
 
+import pandas as pd
+
 from baramFlow.coredb.libdb import nsmap
 from baramFlow.base.constants import Function1Type
 from baramFlow.coredb.libdb import E
@@ -49,6 +51,7 @@ class BatchableNumber:
         else:
             return E(tag, self._text)
 
+
 @dataclass
 class Vector:
     x: BatchableNumber
@@ -73,6 +76,7 @@ class Vector:
                  self.x.toElement('x'),
                  self.y.toElement('y'),
                  self.z.toElement('z'))
+
 
 @dataclass
 class Function1ScalarRow:
@@ -117,6 +121,7 @@ class Function1VectorRow:
                  E('y', self.y),
                  E('z', self.z))
 
+
 @dataclass
 class Function1Scalar:
     type: Function1Type = Function1Type.CONSTANT
@@ -153,6 +158,7 @@ class Function1Scalar:
                  self.constant.toElement('constant'),
                  tableElement)
 
+
 @dataclass
 class Function1Vector:
     type: Function1Type = Function1Type.CONSTANT
@@ -188,6 +194,53 @@ class Function1Vector:
                  self.type.toElement('type'),
                  self.constant.toElement('constant'),
                  tableElement)
+
+
+class SimpleSheetData:
+    columns = None
+
+    def __init__(self, data: list[list[float]]):
+        self._data = data
+
+    def data(self):
+        return self._data
+
+    def dataFrame(self):
+        return pd.DataFrame(self._data)
+
+    def columnDataString(self, index):
+        return ' '.join([str(self._data[row][index]) for row in range(len(self._data))])
+
+    def columnDataElement(self, index):
+        return E(self.columns[index],
+                 self.columnDataString(index))
+
+    @classmethod
+    def fromElement(cls, e):
+        data = [e.find(c, namespaces=nsmap).text.split() for c in cls.columns]
+
+        return cls(
+            [[float(data[column][row]) for column in range(len(data))] for row in range(len(data[0]))])
+
+    def toElement(self, tag: str):
+        return E(tag,
+                 *[self.columnDataElement(i) for i in range(len(self.columns))])
+
+
+class TemporalScalarList(SimpleSheetData):
+    columns = ['t', 'v']
+
+
+class TemporalVectorList(SimpleSheetData):
+    columns = ['t', 'x', 'y', 'z']
+
+
+class SpatialScalarList(SimpleSheetData):
+    columns = ['x', 'y', 'z', 'v']
+
+
+class SpatialVectorList(SimpleSheetData):
+    columns = ['x', 'y', 'z', 'vx', 'vy', 'vz']
 
 
 class TrackedData:

@@ -240,6 +240,3 @@ class PolynomialDialog(PiecewiseLinearDialog):
             values = values + field.value(0) + ' '
 
         return values[:-1]
-
-    def resizeEvent(self, arg__1):
-        print(self.size())

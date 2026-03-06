@@ -8,6 +8,8 @@ from xml.etree.ElementTree import Element
 from lxml import etree
 
 from baramFlow.base.base import BatchableNumber
+from baramFlow.base.boundary.temperature import BoundaryTemperature, TemperatureProfile
+from baramFlow.base.boundary.temperature import TemperatureTemporalDistributionSpecification
 from baramFlow.coredb import coredb
 from baramFlow.coredb.boundary_db import BoundaryDB, BoundaryType
 from baramFlow.coredb.libdb import nsmap, xmlToBool
@@ -159,6 +161,35 @@ class BoundaryManager:
             assert False
 
         db.increaseConfigCount()
+
+    @staticmethod
+    def updateTemperature(db, bcid, temperature: BoundaryTemperature):
+        if temperature is None:
+            return
+
+        xpath = BoundaryDB.getXPath(bcid) + '/temperature'
+        element = db.getElement(xpath)
+
+        db.setValue(xpath + '/profile', temperature.profile.value)
+        if temperature.profile == TemperatureProfile.CONSTANT:
+            db.setValue(xpath + '/constant', temperature.constant)
+        elif temperature.profile == TemperatureProfile.SPATIAL_DISTRIBUTION:
+            if temperature.spatialDistribution is not None:
+                old = element.find('spatialDistribution', namespaces=nsmap)
+                new = temperature.spatialDistribution.toElement('spatialDistribution')
+                element.replace(old, new)
+        elif temperature.profile == TemperatureProfile.TEMPORAL_DISTRIBUTION:
+            db.setValue(xpath + '/temporalDistribution/specification',
+                        temperature.temporalDistribution.specification.value)
+            if temperature.temporalDistribution.specification == TemperatureTemporalDistributionSpecification.PIECEWISE_LINEAR:
+                if temperature.temporalDistribution.piecewiseLinear is not None:
+                    temporalDistributionElement = element.find('temporalDistribution', namespaces=nsmap)
+                    old = temporalDistributionElement.find('piecewiseLinear', namespaces=nsmap)
+                    new = temperature.temporalDistribution.piecewiseLinear.toElement('piecewiseLinear')
+                    temporalDistributionElement.replace(old, new)
+            elif temperature.temporalDistribution.specification == TemperatureTemporalDistributionSpecification.POLYNOMIAL:
+                if temperature.temporalDistribution.polynomial is not None:
+                    db.setValue(xpath + '/temporalDistribution/polynomial', temperature.temporalDistribution.polynomial)
 
     @staticmethod
     def updateUserDefinedScalars(db, bcid, scalars):

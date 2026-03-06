@@ -607,7 +607,7 @@
   <customwidget>
    <class>VectorWidget</class>
    <extends>QWidget</extends>
-   <header>baramFlow.view.setup.models.DPM.vector_widget</header>
+   <header>baramFlow.view.widgets.vector_widget</header>
    <container>1</container>
   </customwidget>
   <customwidget>

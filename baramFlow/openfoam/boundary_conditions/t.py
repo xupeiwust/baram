@@ -2,8 +2,10 @@
 # -*- coding: utf-8 -*-
 from uuid import UUID
 
+from baramFlow.base.base import SpatialScalarList
+from baramFlow.base.boundary.temperature import TemperatureProfile, TemperatureTemporalDistributionSpecification
 from baramFlow.coredb.boundary_db import BoundaryDB, BoundaryType, FlowRateInletSpecification, WallHeatTransferMode
-from baramFlow.coredb.boundary_db import TemperatureProfile, TemperatureTemporalDistribution, InterfaceMode
+from baramFlow.coredb.boundary_db import InterfaceMode
 from baramFlow.coredb.material_db import MaterialDB
 from baramFlow.coredb.models_db import ModelsDB
 from baramFlow.coredb.project import Project
@@ -76,15 +78,15 @@ class T(BoundaryCondition):
             elif profile == TemperatureProfile.SPATIAL_DISTRIBUTION.value:
                 field[name] = self._constructTimeVaryingMappedFixedValue(
                     self._region.rname, name, 'T',
-                    Project.instance().fileDB().getFileContents(
-                        self._db.getValue(xpath + '/temperature/spatialDistribution')))
+                    SpatialScalarList.fromElement(
+                        self._db.getElement(xpath + '/temperature/spatialDistribution')).dataFrame())
             elif profile == TemperatureProfile.TEMPORAL_DISTRIBUTION.value:
                 spec = self._db.getValue(xpath + '/temperature/temporalDistribution/specification')
-                if spec == TemperatureTemporalDistribution.PIECEWISE_LINEAR.value:
+                if spec == TemperatureTemporalDistributionSpecification.PIECEWISE_LINEAR.value:
                     field[name] = self._constructUniformFixedValue(
                         xpath + '/temperature/temporalDistribution/piecewiseLinear', self.TableType.TEMPORAL_SCALAR_LIST
                     )
-                elif spec == TemperatureTemporalDistribution.POLYNOMIAL.value:
+                elif spec == TemperatureTemporalDistributionSpecification.POLYNOMIAL.value:
                     field[name] = self._constructUniformFixedValue(
                         xpath + '/temperature/temporalDistribution/polynomial', self.TableType.POLYNOMIAL)
 
