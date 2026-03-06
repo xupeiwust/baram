@@ -4,6 +4,7 @@
 import logging
 
 from baramFlow.coredb.region_db import RegionDB
+from baramFlow.coredb.turbulence_model_db import TurbulenceModelsDB, TurbulenceModel
 from libbaram.openfoam.dictionary.dictionary_file import DictionaryFile
 
 from baramFlow.base.material.material import MaterialType
@@ -258,19 +259,15 @@ class FvOptions(DictionaryFile):
 
         self._generateSourceFields(czname, xpath + '/energy', 'h')
 
-        modelsType = self._db.getValue('/models/turbulenceModels/model')
-        if modelsType == 'spalartAllmaras':
+        modelsType = TurbulenceModelsDB.getRASModel()
+        if modelsType == TurbulenceModel.SPALART_ALLMARAS:
             self._generateSourceFields(czname, xpath + '/modifiedTurbulentViscosity', 'nuTilda')
-
-        elif modelsType == 'k-epsilon':
+        elif modelsType == TurbulenceModel.K_EPSILON:
             self._generateSourceFields(czname, xpath + '/turbulentKineticEnergy', 'k')
             self._generateSourceFields(czname, xpath + '/turbulentDissipationRate', 'epsilon')
-
-        elif modelsType == 'k-omega':
+        elif modelsType == TurbulenceModel.K_OMEGA:
             self._generateSourceFields(czname, xpath + '/turbulentKineticEnergy', 'k')
             self._generateSourceFields(czname, xpath + '/specificDissipationRate', 'omega')
-        else:
-            logger.debug('Error Model Type')
 
     def _generateSourceFields(self, czname, xpath, fieldType):
         if self._db.getAttribute(xpath, 'disabled') == 'false':
@@ -286,19 +283,15 @@ class FvOptions(DictionaryFile):
         self._generateFixedVelocity(czname, xpath + '/velocity')
         self._generateFixedTemperature(czname, xpath + '/temperature')
 
-        modelsType = self._db.getValue('/models/turbulenceModels/model')
-        if modelsType == 'spalartAllmaras':
+        modelsType = TurbulenceModelsDB.getRASModel()
+        if modelsType == TurbulenceModel.SPALART_ALLMARAS:
             self._generateFixedFields(czname, xpath + '/modifiedTurbulentViscosity', 'nuTilda')
-
-        elif modelsType == 'k-epsilon':
+        elif modelsType == TurbulenceModel.K_EPSILON:
             self._generateFixedFields(czname, xpath + '/turbulentKineticEnergy', 'k')
             self._generateFixedFields(czname, xpath + '/turbulentDissipationRate', 'epsilon')
-
-        elif modelsType == 'k-omega':
+        elif modelsType == TurbulenceModel.K_OMEGA:
             self._generateFixedFields(czname, xpath + '/turbulentKineticEnergy', 'k')
             self._generateFixedFields(czname, xpath + '/specificDissipationRate', 'omega')
-        else:
-            logger.debug('Error Model Type')
 
         if ModelsDB.isSpeciesModelOn():
             material = RegionDB.getMaterial(self._rname)
