@@ -8,8 +8,6 @@ from typing import ClassVar
 from uuid import UUID
 
 from PySide6.QtGui import QColor
-from lxml import etree
-
 from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet, vtkUnstructuredGrid
 from vtkmodules.vtkFiltersFlowPaths import vtkStreamTracer
 
@@ -18,7 +16,7 @@ from baramFlow.base.field import COORDINATE, VECTOR_COMPONENT_TEXTS, VELOCITY, F
 from baramFlow.base.scaffold.scaffolds_db import ScaffoldsDB
 from baramFlow.coredb import coredb
 from baramFlow.base.graphic.display_item import DisplayItem
-from baramFlow.coredb.libdb import nsmap
+from baramFlow.coredb.libdb import E, nsmap
 from baramFlow.base.graphic.color_scheme import ColormapScheme
 from baramFlow.openfoam.openfoam_reader import OpenFOAMReader
 from baramFlow.openfoam.solver_field import getSolverFieldName
@@ -197,49 +195,43 @@ class Graphic:
         return graphic
 
     def toElement(self):
-        string =   ('<graphic xmlns="http://www.baramcfd.org/baram">'
-                   f'    <uuid>{str(self.uuid)}</uuid>'
-                   f'    <name>{self.name}</name>'
-                   f'    <fieldCategory>{self.field.category.value}</fieldCategory>'
-                   f'    <fieldCodeName>{self.field.codeName}</fieldCodeName>'
-                   f'    <fieldComponent>{self.fieldComponent.value}</fieldComponent>'
-                   f'    <time>{self.time}</time>'
-                   f'    <fieldDisplayName>{self.fieldDisplayName}</fieldDisplayName>'
-                   f'    <numberOfLevels>{str(self.numberOfLevels)}</numberOfLevels>'
-                   f'    <useNodeValues>{"true" if self.useNodeValues else "false"}</useNodeValues>'
-                   f'    <relevantScaffoldsOnly>{"true" if self.relevantScaffoldsOnly else "false"}</relevantScaffoldsOnly>'
-                   f'    <useCustomRange>{"true" if self.useCustomRange else "false"}</useCustomRange>'
-                   f'    <customRangeMin>{self.customRangeMin}</customRangeMin>'
-                   f'    <customRangeMax>{self.customRangeMax}</customRangeMax>'
-                   f'    <clipToRange>{"true" if self.clipToRange else "false"}</clipToRange>'
-                   f'    <useCustomColorScheme>{"true" if self.useCustomColorScheme else "false"}</useCustomColorScheme>'
-                   f'    <colorScheme>{self.colorScheme.value}</colorScheme>'
-                   f'    <customMinColor>{self.customMinColor.name()}</customMinColor>'
-                   f'    <customMaxColor>{self.customMaxColor.name()}</customMaxColor>'
-                   f'    <includeVectors>{"true" if self.includeVectors else "false"}</includeVectors>'
-                   f'    <vectorFieldCategory>{self.vectorField.category.value}</vectorFieldCategory>'
-                   f'    <vectorFieldCodeName>{self.vectorField.codeName}</vectorFieldCodeName>'
-                   f'    <vectorScaleFactor>{self.vectorScaleFactor}</vectorScaleFactor>'
-                   f'    <vectorNumMax>{str(self.vectorNumMax)}</vectorNumMax>'
-                   f'    <vectorFixedLength>{"true" if self.vectorFixedLength else "false"}</vectorFixedLength>'
-                   f'    <stepSize>{self.stepSize}</stepSize>'
-                   f'    <maxSteps>{str(self.maxSteps)}</maxSteps>'
-                   f'    <maxLength>{self.maxLength}</maxLength>'
-                   f'    <accuracyControl>{"true" if self.accuracyControl else "false"}</accuracyControl>'
-                   f'    <tolerance>{self.tolerance}</tolerance>'
-                   f'    <streamlineType>{self.streamlineType.value}</streamlineType>'
-                   f'    <lineWidth>{self.lineWidth}</lineWidth>'
-                   f'    <displayItems/>'
-                   f'</graphic>')
-
-        element = etree.fromstring(string)
-
-        scaffoldsElement = element.find('displayItems', namespaces=nsmap)
-
+        displayItemsElement = E('displayItems')
         for item in self.displayItems.values():
-            scaffoldsElement.append(item.toElement())
+            displayItemsElement.append(item.toElement())
 
-        return element
+        return E('graphic',
+                 E('uuid', str(self.uuid)),
+                 E('name', self.name),
+                 E('fieldCategory', self.field.category.value),
+                 E('fieldCodeName', self.field.codeName),
+                 E('fieldComponent', str(self.fieldComponent.value)),
+                 E('time', self.time),
+                 E('fieldDisplayName', self.fieldDisplayName),
+                 E('numberOfLevels', str(self.numberOfLevels)),
+                 E('useNodeValues', self.useNodeValues),
+                 E('relevantScaffoldsOnly', self.relevantScaffoldsOnly),
+                 E('useCustomRange', self.useCustomRange),
+                 E('customRangeMin', self.customRangeMin),
+                 E('customRangeMax', self.customRangeMax),
+                 E('clipToRange', self.clipToRange),
+                 E('useCustomColorScheme', self.useCustomColorScheme),
+                 E('colorScheme', self.colorScheme.value),
+                 E('customMinColor', self.customMinColor.name()),
+                 E('customMaxColor', self.customMaxColor.name()),
+                 E('includeVectors', self.includeVectors),
+                 E('vectorFieldCategory', self.vectorField.category.value),
+                 E('vectorFieldCodeName', self.vectorField.codeName),
+                 E('vectorScaleFactor', self.vectorScaleFactor),
+                 E('vectorNumMax', str(self.vectorNumMax)),
+                 E('vectorFixedLength', self.vectorFixedLength),
+                 E('stepSize', self.stepSize),
+                 E('maxSteps', str(self.maxSteps)),
+                 E('maxLength', self.maxLength),
+                 E('accuracyControl', self.accuracyControl),
+                 E('tolerance', self.tolerance),
+                 E('streamlineType', self.streamlineType.value),
+                 E('lineWidth', self.lineWidth),
+                 displayItemsElement)
 
     def xpath(self):
         return f'/graphic[uuid="{str(self.uuid)}"]'

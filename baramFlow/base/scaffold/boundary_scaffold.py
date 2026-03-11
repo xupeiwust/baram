@@ -5,12 +5,11 @@ from dataclasses import dataclass
 from dataclasses import field as dataClassField
 from uuid import UUID
 
-from lxml import etree
 from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet, vtkPolyData
 
 from baramFlow.coredb import coredb
 from baramFlow.coredb.boundary_db import BoundaryDB
-from baramFlow.coredb.libdb import nsmap
+from baramFlow.coredb.libdb import E, nsmap
 from baramFlow.base.scaffold.scaffold import Scaffold
 from libbaram.openfoam.polymesh import collectBoundaryMesh
 
@@ -48,13 +47,10 @@ class BoundaryScaffold(Scaffold):
                           boundaries=boundaries)
 
     def toElement(self):
-        string = ('<boundary xmlns="http://www.baramcfd.org/baram">'
-                 f'    <uuid>{str(self.uuid)}</uuid>'
-                 f'    <name>{self.name}</name>'
-                 f'    <boundaries>{" ".join(self.boundaries)}</boundaries>'
-                  '</boundary>')
-
-        return etree.fromstring(string)
+        return E('boundary',
+                 E('uuid', str(self.uuid)),
+                 E('name', self.name),
+                 E('boundaries', ' '.join(self.boundaries)))
 
     def xpath(self):
         return f'/boundary[uuid="{str(self.uuid)}"]'

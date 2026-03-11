@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 from dataclasses import dataclass
-from lxml import etree
 from uuid import UUID
 
 from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet, vtkPolyData, vtkStaticCellLocator
@@ -10,7 +9,7 @@ from vtkmodules.vtkFiltersCore import vtkPointDataToCellData, vtkResampleWithDat
 from vtkmodules.vtkFiltersSources import vtkSphereSource
 
 from baramFlow.coredb import coredb
-from baramFlow.coredb.libdb import nsmap
+from baramFlow.coredb.libdb import E, nsmap
 from baramFlow.base.scaffold.scaffold import Scaffold
 from libbaram.openfoam.polymesh import collectInternalMesh
 from libbaram.vtk_threads import vtk_run_in_thread
@@ -61,19 +60,16 @@ class SphereScaffold(Scaffold):
                           latitudeSamples=latitudeSamples)
 
     def toElement(self):
-        string = ('<sphereScaffold xmlns="http://www.baramcfd.org/baram">'
-                 f'    <uuid>{str(self.uuid)}</uuid>'
-                 f'    <name>{self.name}</name>'
-                 f'    <center>'
-                 f'        <x>{self.centerX}</x>'
-                 f'        <y>{self.centerY}</y>'
-                 f'        <z>{self.centerZ}</z>'
-                 f'    </center>'
-                 f'    <radius>{self.radius}</radius>'
-                 f'    <longitudeSamples>{str(self.longitudeSamples)}</longitudeSamples>'
-                 f'    <latitudeSamples>{str(self.latitudeSamples)}</latitudeSamples>'
-                  '</sphereScaffold>')
-        return etree.fromstring(string)
+        return E('sphereScaffold',
+                 E('uuid', str(self.uuid)),
+                 E('name', self.name),
+                 E('center',
+                     E('x', self.centerX),
+                     E('y', self.centerY),
+                     E('z', self.centerZ)),
+                 E('radius', self.radius),
+                 E('longitudeSamples', str(self.longitudeSamples)),
+                 E('latitudeSamples', str(self.latitudeSamples)))
 
     def xpath(self):
         return f'/sphereScaffold[uuid="{str(self.uuid)}"]'
