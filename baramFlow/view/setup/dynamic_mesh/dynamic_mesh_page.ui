@@ -1,0 +1,470 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>DynamicMeshPage</class>
+ <widget class="QWidget" name="DynamicMeshPage">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>600</width>
+    <height>700</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QVBoxLayout" name="mainLayout">
+   <item>
+    <widget class="QLabel" name="title">
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>24</height>
+      </size>
+     </property>
+     <property name="font">
+      <font>
+       <pointsize>12</pointsize>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="text">
+      <string>Dynamic Mesh</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="Line" name="line">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QWidget" name="typeWidget" native="true">
+     <layout class="QHBoxLayout" name="typeLayout">
+      <item>
+       <widget class="QLabel" name="typeTextLabel">
+        <property name="text">
+         <string>Motion Type :</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="motionTypeLabel">
+        <property name="styleSheet">
+         <string notr="true">font-weight:bold</string>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="changeTypeButton">
+        <property name="text">
+         <string>Change</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <spacer name="typeSpacer">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QStackedWidget" name="stack">
+     <property name="currentIndex">
+      <number>0</number>
+     </property>
+     <!-- Page 0: None -->
+     <widget class="QWidget" name="nonePage"/>
+     <!-- Page 1: Moving Cell Zone -->
+     <widget class="QWidget" name="movingCellZonePage">
+      <layout class="QVBoxLayout" name="mczLayout">
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>0</number>
+       </property>
+       <property name="bottomMargin">
+        <number>0</number>
+       </property>
+       <item>
+        <widget class="QGroupBox" name="mdGroup">
+         <property name="title">
+          <string>Motion Definitions</string>
+         </property>
+         <layout class="QVBoxLayout" name="mdGroupLayout">
+          <item>
+           <widget class="QListWidget" name="mdList">
+            <property name="contextMenuPolicy">
+             <enum>Qt::CustomContextMenu</enum>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QWidget" name="addMdWidget" native="true">
+            <layout class="QHBoxLayout" name="addMdLayout">
+             <item>
+              <widget class="QPushButton" name="addMdButton">
+               <property name="text">
+                <string>Add Motion</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="addMdSpacer">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+            </layout>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <!-- Page 2: Moving Boundary -->
+     <widget class="QWidget" name="movingBoundaryPage">
+      <layout class="QVBoxLayout" name="mbLayout">
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>0</number>
+       </property>
+       <property name="bottomMargin">
+        <number>0</number>
+       </property>
+       <item>
+        <widget class="QGroupBox" name="mbGroup">
+         <property name="title">
+          <string>Boundaries</string>
+         </property>
+         <layout class="QVBoxLayout" name="mbGroupLayout">
+          <item>
+           <widget class="QListWidget" name="mbList"/>
+          </item>
+          <item>
+           <widget class="QWidget" name="editMbWidget" native="true">
+            <layout class="QHBoxLayout" name="editMbLayout">
+             <item>
+              <widget class="QPushButton" name="editBoundaryButton">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
+               <property name="text">
+                <string>Edit</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="editMbSpacer">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+            </layout>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <!-- Page 3: Rigid Body Dynamics -->
+     <widget class="QWidget" name="rigidBodyDynamicsPage">
+      <layout class="QVBoxLayout" name="rbdLayout">
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>0</number>
+       </property>
+       <property name="bottomMargin">
+        <number>0</number>
+       </property>
+       <item>
+        <widget class="QGroupBox" name="solverGroup">
+         <property name="title">
+          <string>Solver</string>
+         </property>
+         <layout class="QFormLayout" name="solverFormLayout">
+          <item row="0" column="0">
+           <widget class="QLabel" name="solverLabel">
+            <property name="text">
+             <string>Solver</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="PythonComboBox" name="rbdSolverCombo"/>
+          </item>
+          <item row="1" column="0" colspan="2">
+           <widget class="QStackedWidget" name="rbdSolverStack">
+            <property name="currentIndex">
+             <number>0</number>
+            </property>
+            <widget class="QWidget" name="integrationPage">
+             <layout class="QFormLayout" name="integFormLayout">
+              <property name="leftMargin">
+               <number>0</number>
+              </property>
+              <property name="topMargin">
+               <number>0</number>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <property name="bottomMargin">
+               <number>0</number>
+              </property>
+              <item row="0" column="0">
+               <widget class="QLabel" name="velCoeffLabel">
+                <property name="text">
+                 <string>For Velocity</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <widget class="QLineEdit" name="rbdVelCoeff"/>
+              </item>
+              <item row="1" column="0">
+               <widget class="QLabel" name="posCoeffLabel">
+                <property name="text">
+                 <string>For Position &amp;&amp; Orientation</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="1">
+               <widget class="QLineEdit" name="rbdPosCoeff"/>
+              </item>
+             </layout>
+            </widget>
+            <widget class="QWidget" name="offCenteringPage">
+             <layout class="QFormLayout" name="offFormLayout">
+              <property name="leftMargin">
+               <number>0</number>
+              </property>
+              <property name="topMargin">
+               <number>0</number>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <property name="bottomMargin">
+               <number>0</number>
+              </property>
+              <item row="0" column="0">
+               <widget class="QLabel" name="accOffCoeffLabel">
+                <property name="text">
+                 <string>Acceleration</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <widget class="QLineEdit" name="rbdAccOffCoeff"/>
+              </item>
+              <item row="1" column="0">
+               <widget class="QLabel" name="velOffCoeffLabel">
+                <property name="text">
+                 <string>Velocity</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="1">
+               <widget class="QLineEdit" name="rbdVelOffCoeff"/>
+              </item>
+             </layout>
+            </widget>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="accGroup">
+         <property name="title">
+          <string>Acceleration Factors</string>
+         </property>
+         <layout class="QFormLayout" name="accFormLayout">
+          <item row="0" column="0">
+           <widget class="QLabel" name="relaxationLabel">
+            <property name="text">
+             <string>Relaxation</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QLineEdit" name="rbdRelaxation"/>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="dampingLabel">
+            <property name="text">
+             <string>Damping</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QLineEdit" name="rbdDamping"/>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="bodiesGroup">
+         <property name="title">
+          <string>Rigid Bodies</string>
+         </property>
+         <layout class="QVBoxLayout" name="bodiesGroupLayout">
+          <item>
+           <widget class="QListWidget" name="bodyList"/>
+          </item>
+          <item>
+           <widget class="QWidget" name="bodyButtonWidget" native="true">
+            <layout class="QHBoxLayout" name="bodyButtonLayout">
+             <item>
+              <widget class="QPushButton" name="addBodyButton">
+               <property name="text">
+                <string>Add</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="editBodyButton">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
+               <property name="text">
+                <string>Edit</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="removeBodyButton">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
+               <property name="text">
+                <string>Remove</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="bodyButtonSpacer">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+            </layout>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="restraintsGroup">
+         <property name="title">
+          <string>Restraints</string>
+         </property>
+         <layout class="QVBoxLayout" name="restraintsGroupLayout">
+          <item>
+           <widget class="QListWidget" name="rbdRestraintList">
+            <property name="contextMenuPolicy">
+             <enum>Qt::CustomContextMenu</enum>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QWidget" name="addRestraintWidget" native="true">
+            <layout class="QHBoxLayout" name="addRestraintLayout">
+             <item>
+              <widget class="QToolButton" name="addRestraintButton">
+               <property name="popupMode">
+                <enum>QToolButton::InstantPopup</enum>
+               </property>
+               <property name="text">
+                <string>Add Restraint</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="addRestraintSpacer">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+            </layout>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>PythonComboBox</class>
+   <extends>QComboBox</extends>
+   <header location="global">widgets.python_combo_box</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

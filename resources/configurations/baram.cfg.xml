@@ -233,6 +233,25 @@
 
     <regions/>
 
+    <dynamicMesh>
+        <motionType>none</motionType>
+        <movingCellZone/>
+        <movingBoundary/>
+        <rigidBodyDynamics>
+            <rigidBodySolverType>
+                <solverType>newmark</solverType>
+                <velocityIntegrationCoefficient>0.5</velocityIntegrationCoefficient>
+                <positionIntegrationCoefficient>0.25</positionIntegrationCoefficient>
+                <offCenteringAccelerationCoefficient>0.5</offCenteringAccelerationCoefficient>
+                <offCenteringVelocityCoefficient>0.5</offCenteringVelocityCoefficient>
+            </rigidBodySolverType>
+            <accelerationRelaxationFactor>0.7</accelerationRelaxationFactor>
+            <accelerationDampingFactor>1.0</accelerationDampingFactor>
+            <bodies/>
+            <rigidBodyRestraints/>
+        </rigidBodyDynamics>
+    </dynamicMesh>
+
     <numericalConditions>
         <pressureVelocityCouplingScheme>SIMPLE</pressureVelocityCouplingScheme>
         <densityBasedSolverParameters>
