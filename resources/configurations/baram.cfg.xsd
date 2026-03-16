@@ -2259,6 +2259,7 @@
     <xs:element name="forceMonitor">
         <xs:complexType>
             <xs:sequence>
+                <xs:element name="uuid" type="xs:string"/>
                 <xs:element name="name" type="xs:string"/>
                 <xs:element name="showChart" type="xs:boolean" default="true"/>
                 <xs:element name="writeInterval" type="inputNumberType"/>
@@ -2288,6 +2289,7 @@
                         <xs:list itemType="xs:positiveInteger"/> <!-- boundary condition bcid -->
                     </xs:simpleType>
                 </xs:element>
+                <xs:element name="functionName" type="xs:string"/>
             </xs:sequence>
         </xs:complexType>
     </xs:element>
@@ -2295,6 +2297,7 @@
     <xs:element name="pointMonitor">
         <xs:complexType>
             <xs:sequence>
+                <xs:element name="uuid" type="xs:string"/>
                 <xs:element name="name" type="xs:string"/>
                 <xs:element name="showChart" type="xs:boolean" default="true"/>
                 <xs:element name="writeInterval" type="inputNumberType"/>
@@ -2307,6 +2310,7 @@
                 <!-- Boundary ID if snapOntoBoundary is true -->
                 <xs:element name="boundary" type="xs:nonNegativeInteger" default="0"/>  <!-- boundary condition bcid -->
                 <xs:element name="region" type="xs:string"/>
+                <xs:element name="functionName" type="xs:string"/>
             </xs:sequence>
         </xs:complexType>
     </xs:element>
@@ -2314,6 +2318,7 @@
     <xs:element name="surfaceMonitor">
         <xs:complexType>
             <xs:sequence>
+                <xs:element name="uuid" type="xs:string"/>
                 <xs:element name="name" type="xs:string"/>
                 <xs:element name="showChart" type="xs:boolean" default="true"/>
                 <xs:element name="writeInterval" type="inputNumberType"/>
@@ -2335,6 +2340,7 @@
                 <xs:element name="fieldCodeName" type="xs:string"/>
                 <xs:element name="fieldComponent" type="xs:nonNegativeInteger" default="0"/>
                 <xs:element name="surface" type="xs:nonNegativeInteger"/>  <!-- boundary condition bcid -->
+                <xs:element name="functionName" type="xs:string"/>
             </xs:sequence>
         </xs:complexType>
     </xs:element>
@@ -2342,6 +2348,7 @@
     <xs:element name="volumeMonitor">
         <xs:complexType>
             <xs:sequence>
+                <xs:element name="uuid" type="xs:string"/>
                 <xs:element name="name" type="xs:string" default="volumeAverage"/>
                 <xs:element name="showChart" type="xs:boolean" default="true"/>
                 <xs:element name="writeInterval" type="inputNumberType"/>
@@ -2360,6 +2367,7 @@
                 <xs:element name="fieldCodeName" type="xs:string"/>
                 <xs:element name="fieldComponent" type="xs:nonNegativeInteger" default="0"/>
                 <xs:element name="volume" type="xs:nonNegativeInteger"/>   <!-- cellZone czid -->
+                <xs:element name="functionName" type="xs:string"/>
             </xs:sequence>
         </xs:complexType>
     </xs:element>

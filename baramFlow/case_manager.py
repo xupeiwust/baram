@@ -647,6 +647,10 @@ class CaseManager(QObject):
         case = await self.loadLiveCase()
         await case.initialize()
 
+    def latestTimeToZero(self):
+        FileSystem.latestTimeToZero()
+        self.resultCleared.emit()
+
     def saveAndStop(self):
         controlDict = ControlDict().build()
         controlDict.asDict()['stopAt'] = 'writeNow'

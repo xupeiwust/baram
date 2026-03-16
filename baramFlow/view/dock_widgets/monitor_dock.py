@@ -7,8 +7,8 @@ from PySide6.QtGui import QPalette
 from PySide6.QtWidgets import QWidget, QScrollArea, QVBoxLayout
 from PySide6QtAds import CDockWidget
 
+from baramFlow.base.monitor.monitor import MonitorManager
 from baramFlow.case_manager import CaseManager
-from baramFlow.coredb import coredb
 from baramFlow.coredb.project import Project, SolverStatus
 from baramFlow.view.widgets.flow_layout import FlowLayout
 from baramFlow.view.widgets.chart_wigdet import ChartWidget
@@ -69,45 +69,35 @@ class MonitorView(QWidget):
             self._deletedMonitors = self._monitors
             self._clear()
         elif status == SolverStatus.RUNNING:
+            self._clear()
             self._startMonitor()
         elif status == SolverStatus.ENDED or status == SolverStatus.ERROR:
             self._stopMonitor()
 
     def _clear(self):
-        self._quitMonitor()
-
-        while item := self._chartsLayout.takeAt(0):
-            item.widget().deleteLater()
+        for monitor in self._monitors.values():
+            monitor.stop()
+            monitor.deleteChart()
 
         self._monitors = {}
 
     def _startMonitor(self):
-        if self._monitors:
-            for name in self._monitors:
-                self._monitors[name].start()
-        else:
-            maxX = calculateMaxX()
+        maxX = calculateMaxX()
 
-            db = coredb.CoreDB()
-            for name in db.getForceMonitors():
-                self._addMonitor(
-                    ForceMonitor(name, self._createChart(maxX), self._createChart(maxX), self._createChart(maxX)))
-            for name in db.getPointMonitors():
-                self._addMonitor(PointMonitor(name, self._createChart(maxX)))
-            for name in db.getSurfaceMonitors():
-                self._addMonitor(SurfaceMonitor(name, self._createChart(maxX)))
-            for name in db.getVolumeMonitors():
-                self._addMonitor(VolumeMonitor(name, self._createChart(maxX)))
+        for configurations in MonitorManager.getForceMonitors():
+            self._addMonitor(
+                ForceMonitor(configurations, self._createChart(maxX), self._createChart(maxX), self._createChart(maxX)))
+        for configurations in MonitorManager.getPointMonitors():
+            self._addMonitor(PointMonitor(configurations, self._createChart(maxX)))
+        for configurations in MonitorManager.getSurfaceMonitors():
+            self._addMonitor(SurfaceMonitor(configurations, self._createChart(maxX)))
+        for configurations in MonitorManager.getVolumeMonitors():
+            self._addMonitor(VolumeMonitor(configurations, self._createChart(maxX)))
 
     def _stopMonitor(self):
         if self._monitors:
             for name in self._monitors:
                 self._monitors[name].stop()
-
-    def _quitMonitor(self):
-        if self._monitors:
-            for name in self._monitors:
-                self._monitors[name].quit()
 
     def _addMonitor(self, monitor):
         self._monitors[monitor.name] = monitor

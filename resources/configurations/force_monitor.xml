@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <forceMonitor xmlns="http://www.baramcfd.org/baram">
+    <uuid/>
     <name>default</name>
     <showChart>true</showChart>
     <writeInterval>1</writeInterval>
@@ -30,4 +31,5 @@
     </centerOfRotation>
     <region></region>
     <boundaries></boundaries>
+    <functionName/>
 </forceMonitor>

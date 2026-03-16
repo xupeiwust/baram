@@ -3,8 +3,9 @@
 
 from PySide6.QtWidgets import QMessageBox
 
+from baramFlow.base.base import DirectionSpecificationMethod, DirectionSpecificationMethodTexts
 from baramFlow.coredb import coredb
-from baramFlow.coredb.boundary_db import BoundaryDB, DirectionSpecificationMethod, DirectionSpecificationMethodTexts
+from baramFlow.coredb.boundary_db import BoundaryDB
 from baramFlow.coredb.coredb_writer import CoreDBWriter
 from baramFlow.view.widgets.resizable_dialog import ResizableDialog
 from .farfield_riemann_dialog_ui import Ui_FarfieldRiemannDialog

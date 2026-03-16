@@ -10,11 +10,11 @@ import qasync
 from PySide6.QtGui import QDoubleValidator
 from PySide6.QtWidgets import QDialog
 
+from baramFlow.base.base import DirectionSpecificationMethod
 from baramFlow.coredb import coredb
 from baramFlow.coredb.boundary_db import BoundaryDB
 from baramFlow.coredb.coredb_reader import CoreDBReader
 from baramFlow.coredb.general_db import GeneralDB
-from baramFlow.coredb.monitor_db import DirectionSpecificationMethod
 from baramFlow.coredb.reference_values_db import ReferenceValuesDB
 from baramFlow.openfoam import parallel
 from baramFlow.openfoam.file_system import FileSystem

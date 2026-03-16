@@ -5,11 +5,12 @@ from __future__ import annotations
 from math import sqrt
 
 import logging
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from lxml import etree
 import pandas as pd
 
+from baramFlow.coredb.libdb import E
 from resources import resource
 
 logger = logging.getLogger(__name__)
@@ -1383,6 +1384,14 @@ def _version_12(root: etree.Element, path):
                 </spatialDistribution>
             ''')
         p.replace(old, e)
+
+    for p in root.findall('monitors/*/*', namespaces=_nsmap):
+        if p.find('uuid', namespaces=_nsmap) is None:
+            logger.debug(f'    Adding "uuid", "functionName" to {p}')
+            p.insert(0, E('uuid',
+                          str(uuid4())))
+            p.append(E('functionName',
+                       p.find('name', namespaces=_nsmap).text))
 
 
 _fTable = [

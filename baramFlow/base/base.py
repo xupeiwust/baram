@@ -2,9 +2,11 @@
 # -*- coding: utf-8 -*-
 
 from dataclasses import dataclass, field
+from enum import Enum
 from uuid import UUID
 
 import pandas as pd
+from PySide6.QtCore import QCoreApplication
 
 from baramFlow.coredb.libdb import nsmap
 from baramFlow.base.constants import Function1Type
@@ -12,6 +14,17 @@ from baramFlow.coredb.libdb import E
 
 
 UUID_ZERO = UUID('00000000-0000-0000-0000-000000000000')
+
+
+class DirectionSpecificationMethod(Enum):
+    DIRECT = 'direct'
+    AOA_AOS = 'AoA_AoS'
+
+
+DirectionSpecificationMethodTexts = {
+    DirectionSpecificationMethod.DIRECT:    QCoreApplication.translate('base', 'Direct'),
+    DirectionSpecificationMethod.AOA_AOS:   QCoreApplication.translate('base', 'AOA and AOS')
+}
 
 
 class BatchableNumber:

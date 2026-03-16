@@ -7,11 +7,11 @@ from PySide6.QtCore import QCoreApplication
 
 from libbaram.math import calucateDirectionsByRotation
 
+from baramFlow.base.base import DirectionSpecificationMethod
 from baramFlow.base.material.material import UNIVERSAL_GAS_CONSTANT, Phase, DensitySpecification, TransportSpecification
 from baramFlow.libbaram.calculation import AverageCalculator
 
 from . import coredb
-from .boundary_db import DirectionSpecificationMethod
 from .coredb import ValueException, DBError, _CoreDB
 from .general_db import GeneralDB
 from .initialization_db import InitializationDB
@@ -186,7 +186,7 @@ class CoreDBReader(_CoreDB):
                 message = 'a float is required'
 
             raise ValueException(
-                error,
+                error, xpath,
                 QCoreApplication.translate('CoreDBReader', 'Invalid value({0}) for parameter {1} - {2} for {3}')
                 .format(value, parameter, message, xpath))
 

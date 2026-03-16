@@ -154,20 +154,9 @@ class ContactAngleLimit(Enum):
     ALPHA = 'alpha'
 
 
-class DirectionSpecificationMethod(Enum):
-    DIRECT = 'direct'
-    AOA_AOS = 'AoA_AoS'
-
-
 class FlowDirectionSpecificationMethod(Enum):
     DIRECT = 'direct'
     SURFACE_NORMAL = 'surfaceNormal'
-
-
-DirectionSpecificationMethodTexts = {
-    DirectionSpecificationMethod.DIRECT:    QCoreApplication.translate('BoundaryDB', 'Direct'),
-    DirectionSpecificationMethod.AOA_AOS:   QCoreApplication.translate('BoundaryDB', 'AOA and AOS')
-}
 
 
 class BoundaryDB:

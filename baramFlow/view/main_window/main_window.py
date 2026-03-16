@@ -33,6 +33,7 @@ from widgets.progress_dialog import ProgressDialog
 from widgets.parallel.parallel_environment_dialog import ParallelEnvironmentDialog
 
 from baramFlow.app import app
+from baramFlow.base.monitor.monitor import MonitorManager
 from baramFlow.base.model.model import ModelManager
 from baramFlow.case_manager import CaseManager, LiveCase
 from baramFlow.coredb import coredb
@@ -935,7 +936,7 @@ class MainWindow(QMainWindow, expert_mode.IExpertModeObserver):
     def _deleteMeshFilesAndData(self):
         db = coredb.CoreDB()
         db.clearRegions()
-        db.clearMonitors()
+        MonitorManager.clearMonitors()
         FileSystem.deleteMesh()
         self.meshUpdated()
 

@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from enum import Enum
-
 from PySide6.QtCore import QCoreApplication, QObject, Signal
 
 from baramFlow.base.constants import FieldCategory
@@ -11,11 +9,6 @@ from baramFlow.coredb.material_db import MaterialDB, IMaterialObserver
 from baramFlow.coredb.models_db import ModelsDB
 from baramFlow.openfoam.function_objects.surface_field_value import SurfaceReportType
 from baramFlow.openfoam.function_objects.vol_field_value import VolumeReportType
-
-
-class DirectionSpecificationMethod(Enum):
-    DIRECT = 'direct'
-    AOA_AOS = 'AoA_AoS'
 
 
 class MonitorDBSignals(QObject):

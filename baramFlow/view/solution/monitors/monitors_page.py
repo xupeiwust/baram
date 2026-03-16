@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import qasync
-from PySide6.QtWidgets import QMenu, QListWidgetItem, QMessageBox
 
+import qasync
+from PySide6.QtWidgets import QMenu, QListWidgetItem
+
+from baramFlow.base.monitor.monitor import MonitorManager
 from widgets.async_message_box import AsyncMessageBox
 
 from baramFlow.case_manager import CaseManager
-from baramFlow.coredb import coredb
 from baramFlow.coredb.monitor_db import MonitorDB
 from baramFlow.coredb.project import Project
 from baramFlow.view.widgets.content_page import ContentPage
@@ -40,14 +41,13 @@ class MonitorsPage(ContentPage):
     def _load(self):
         self._ui.list.clear()
 
-        db = coredb.CoreDB()
-        for m in db.getForceMonitors():
+        for m in MonitorManager.getForceMonitors():
             self._addItem(ForceMonitorWidget(m))
-        for m in db.getPointMonitors():
+        for m in MonitorManager.getPointMonitors():
             self._addItem(PointMonitorWidget(m))
-        for m in db.getSurfaceMonitors():
+        for m in MonitorManager.getSurfaceMonitors():
             self._addItem(SurfaceMonitorWidget(m))
-        for m in db.getVolumeMonitors():
+        for m in MonitorManager.getVolumeMonitors():
             self._addItem(VolumeMonitorWidget(m))
 
     def _connectSignalsSlots(self):
@@ -88,16 +88,16 @@ class MonitorsPage(ContentPage):
         self._dialog.open()
 
     def _addForcesMonitor(self):
-        self._addItem(ForceMonitorWidget(self._dialog.getName()))
+        self._addItem(ForceMonitorWidget(MonitorManager.getForceMonitor(self._dialog.getID())))
 
     def _addPointsMonitor(self):
-        self._addItem(PointMonitorWidget(self._dialog.getName()))
+        self._addItem(PointMonitorWidget(MonitorManager.getPointMonitor(self._dialog.getID())))
 
     def _addSurfacesMonitor(self):
-        self._addItem(SurfaceMonitorWidget(self._dialog.getName()))
+        self._addItem(SurfaceMonitorWidget(MonitorManager.getSurfaceMonitor(self._dialog.getID())))
 
     def _addVolumesMonitor(self):
-        self._addItem(VolumeMonitorWidget(self._dialog.getName()))
+        self._addItem(VolumeMonitorWidget(MonitorManager.getVolumeMonitor(self._dialog.getID())))
 
     def _addItem(self, widget):
         item = QListWidgetItem()
@@ -119,9 +119,8 @@ class MonitorsPage(ContentPage):
     @qasync.asyncSlot()
     async def _delete(self):
         widget = self._currentWidget()
-        confirm = await AsyncMessageBox().question(self, self.tr("Remove monitor item"),
-                                                   self.tr('Remove "{}"?'.format(widget.name)))
-        if confirm == QMessageBox.StandardButton.Yes:
+        if await AsyncMessageBox().confirm(self, self.tr("Remove monitor item"),
+                                           self.tr('Remove "{}"?'.format(widget.name))):
             widget.delete()
             self._ui.list.takeItem(self._ui.list.currentRow())
 

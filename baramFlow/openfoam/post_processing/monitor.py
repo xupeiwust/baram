@@ -1,24 +1,21 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import time
 
 import pandas as pd
 from PySide6.QtCore import QThread, QObject, QTimer, Signal, Qt
 
-from baramFlow.base.monitor.monitor import getMonitorField
 from baramFlow.case_manager import CaseManager
 from baramFlow.coredb import coredb
 from baramFlow.coredb.boundary_db import BoundaryDB
 from baramFlow.coredb.cell_zone_db import CellZoneDB
+from baramFlow.coredb.coredb import CoreDB
 from baramFlow.coredb.general_db import GeneralDB
 from baramFlow.coredb.monitor_db import MonitorDB
 from baramFlow.coredb.project import Project
 from baramFlow.coredb.run_calculation_db import RunCalculationDB, TimeSteppingMethod
 from baramFlow.openfoam.function_objects.surface_field_value import SurfaceReportType
-from baramFlow.openfoam.function_objects.vol_field_value import VolumeReportType
 from baramFlow.openfoam.post_processing.post_file_reader import PostFileReader
-from baramFlow.view.widgets.chart_wigdet import ChartWidget
 
 
 def calculateMaxX():
@@ -52,32 +49,30 @@ class Worker(QObject):
         self._name = name
         self._reader = None
         self._timer = None
+        self._appending = False
 
-    def createReader(self, rname, fileName, extension):
-        self._reader = PostFileReader(self._name, rname, fileName, extension)
+    def createReader(self, rname, functionName, fileName, extension):
+        self._reader = PostFileReader(self._name, rname, functionName, fileName, extension)
 
     def startMonitor(self):
-        changedFiles = self._reader.chagedFiles()
-        while not changedFiles and CaseManager().isRunning():
-            time.sleep(0.5)
-            changedFiles = self._reader.chagedFiles()
+        if self._timer is not None:
+            return
 
+        changedFiles = self._reader.changedFiles()
         if changedFiles:
-            for path in changedFiles[1:]:
+            for path in changedFiles:
                 data = self._reader.readDataFrame(path)
                 self.dataUpdated.emit(data)
 
-            self._reader.openMonitor()
-            self._monitor()
+        self._appending = False
 
-            if CaseManager().isRunning():
-                self._timer = QTimer()
-                self._timer.setInterval(500)
-                self._timer.timeout.connect(self._monitor)
-                self._timer.start()
-            else:
-                self.flushed.emit()
-                self._reader.closeMonitor()
+        if CaseManager().isRunning():
+            self._timer = QTimer()
+            self._timer.setInterval(500)
+            self._timer.timeout.connect(self._monitor)
+            self._timer.start()
+        else:
+            self.flushed.emit()
 
     def stopMonitor(self):
         if self._timer:
@@ -87,7 +82,19 @@ class Worker(QObject):
             self._reader.closeMonitor()
             self.stopped.emit()
 
+    def _findChangingFile(self):
+        if self._reader.changedFiles():
+            self._appending = True
+
+        return self._appending
+
     def _monitor(self):
+        if not self._appending:
+            if self._findChangingFile():
+                self._reader.openMonitor()
+            else:
+                return
+
         data = self._reader.readTailDataFrame()
         if data is not None:
             self.dataUpdated.emit(data)
@@ -98,10 +105,11 @@ class Monitor(QObject):
     stopWorker = Signal()
     stopped = Signal(str)
 
-    def __init__(self, name):
+    def __init__(self, name, functionName):
         super().__init__()
 
         self._name = name
+        self._functionName = functionName
         self._rname = ''
         self._thread = None
         self._worker = None
@@ -110,6 +118,10 @@ class Monitor(QObject):
     @property
     def name(self):
         return self._name
+
+    @property
+    def functionName(self):
+        return self._functionName
 
     @property
     def fileName(self):
@@ -122,36 +134,37 @@ class Monitor(QObject):
     def visibility(self):
         return self._showChart
 
-    def startThread(self):
+    def start(self):
+        if self._thread is not None:
+            self.stop()
+
         self._thread = QThread()
         self._worker = Worker(self.name)
         self._worker.moveToThread(self._thread)
-        self._worker.createReader(self._rname, self.fileName, self.extension)
+        self._worker.createReader(self._rname, self._functionName, self.fileName, self.extension)
         self._worker.dataUpdated.connect(self._updateChart, type=Qt.ConnectionType.QueuedConnection)
         self._worker.stopped.connect(self._stopped, type=Qt.ConnectionType.QueuedConnection)
         self._worker.flushed.connect(self._fitChart, type=Qt.ConnectionType.QueuedConnection)
 
-        self._thread.started.connect(self._worker.startMonitor, type=Qt.ConnectionType.QueuedConnection)
+        # self._thread.started.connect(self._worker.startMonitor, type=Qt.ConnectionType.QueuedConnection)
         self._thread.start()
 
         self.startWorker.connect(self._worker.startMonitor, type=Qt.ConnectionType.QueuedConnection)
         self.stopWorker.connect(self._worker.stopMonitor, type=Qt.ConnectionType.QueuedConnection)
 
-    def start(self):
-        if self._worker:
-            self.startWorker.emit()
-        else:
-            self.startThread()
+        self.startWorker.emit()
 
     def stop(self):
+        if self._thread is None:
+            return
+
         self.stopWorker.emit()
 
-    def quit(self):
-        self.stop()
-        if self._thread:
-            self._thread.quit()
-            self._thread.wait()
-            self._thread = None
+        self._thread.quit()
+        self._thread.wait()
+
+        self._worker = None
+        self._thread = None
 
     def _updateChart(self, data):
         pass
@@ -164,25 +177,36 @@ class Monitor(QObject):
 
 
 class ForceMonitor(Monitor):
-    def __init__(self, name, chart1: ChartWidget, chart2: ChartWidget, chart3: ChartWidget):
-        super().__init__(name)
+    def __init__(self, configuration, chart1, chart2, chart3):
+        super().__init__(configuration.monitorBase.name, configuration.monitorBase.functionName)
 
-        db = coredb.CoreDB()
-        xpath = MonitorDB.getForceMonitorXPath(name)
+        self._showChart = configuration.monitorBase.showChart
+        self._rname = configuration.region
 
-        self._showChart = db.getValue(xpath + '/showChart') == 'true'
-        self._rname = db.getValue(xpath + '/region')
         self._chart1 = chart1
         self._chart2 = chart2
         self._chart3 = chart3
 
-        chart1.setTitle(f'{name} - Cd')
-        chart2.setTitle(f'{name} - Cl')
-        chart3.setTitle(f'{name} - Cm')
+        self._chart1.setTitle(f'{self._name} - Cd')
+        self._chart2.setTitle(f'{self._name} - Cl')
+        self._chart3.setTitle(f'{self._name} - Cm')
 
     @property
     def fileName(self):
         return 'coefficient'
+
+    def deleteChart(self):
+        if self._chart1 is not None:
+            self._chart1.deleteLater()
+            self._chart1 = None
+
+        if self._chart2 is not None:
+            self._chart2.deleteLater()
+            self._chart2 = None
+
+        if self._chart3 is not None:
+            self._chart3.deleteLater()
+            self._chart3 = None
 
     def _updateChart(self, data):
         self._chart1.dataAppended(pd.DataFrame(data, columns=['Cd']))
@@ -196,20 +220,17 @@ class ForceMonitor(Monitor):
 
 
 class PointMonitor(Monitor):
-    def __init__(self, name, chart: ChartWidget):
-        super().__init__(name)
+    def __init__(self, configuration, chart):
+        super().__init__(configuration.monitorBase.name, configuration.monitorBase.functionName)
 
-        db = coredb.CoreDB()
-        self._xpath = MonitorDB.getPointMonitorXPath(name)
+        self._showChart = configuration.monitorBase.showChart
+        self._rname = configuration.region
 
-        self._showChart = db.getValue(self._xpath + '/showChart') == 'true'
-        self._rname = db.getValue(self._xpath + '/region')
-        self._chart = chart
-
-        self._field = getMonitorField(MonitorDB.getPointMonitorXPath(name))
+        self._field = configuration.field
         self._legend = self._field.displayText()
 
-        self._chart.setTitle(name)
+        self._chart = chart
+        self._chart.setTitle(self._name)
 
     @property
     def fileName(self):
@@ -218,6 +239,11 @@ class PointMonitor(Monitor):
         # if field.type == FieldType.VECTOR:
         #     return getSolverComponentName(field, self._field.component)
         # return getSolverFieldName(field)
+
+    def deleteChart(self):
+        if self._chart is not None:
+            self._chart.deleteLater()
+            self._chart = None
 
     @property
     def extension(self):
@@ -232,26 +258,29 @@ class PointMonitor(Monitor):
 
 
 class SurfaceMonitor(Monitor):
-    def __init__(self, name, chart: ChartWidget):
-        super().__init__(name)
+    def __init__(self, configuration, chart):
+        super().__init__(configuration.monitorBase.name, configuration.monitorBase.functionName)
 
-        db = coredb.CoreDB()
-        xpath = MonitorDB.getSurfaceMonitorXPath(name)
+        self._showChart = configuration.monitorBase.showChart
+        self._rname = BoundaryDB.getBoundaryRegion(
+            CoreDB().getValue(MonitorDB.getSurfaceMonitorXPath(self._name) + '/surface'))
 
-        self._showChart = db.getValue(xpath + '/showChart') == 'true'
-        self._rname = BoundaryDB.getBoundaryRegion(db.getValue(xpath + '/surface'))
         self._chart = chart
+        self._chart.setTitle(self._name)
 
-        reportType = SurfaceReportType(db.getValue(xpath + '/reportType'))
+        reportType = configuration.reportType
         self._legend = MonitorDB.surfaceReportTypeToText(reportType)
         if reportType not in (SurfaceReportType.MASS_FLOW_RATE, SurfaceReportType.VOLUME_FLOW_RATE):
-            self._legend += ' ' + getMonitorField(MonitorDB.getSurfaceMonitorXPath(name)).displayText()
-
-        self._chart.setTitle(name)
+            self._legend += ' ' + configuration.field.displayText()
 
     @property
     def fileName(self):
         return 'surfaceFieldValue'
+
+    def deleteChart(self):
+        if self._chart is not None:
+            self._chart.deleteLater()
+            self._chart = None
 
     def _updateChart(self, data):
         data.columns = [self._legend]
@@ -262,24 +291,27 @@ class SurfaceMonitor(Monitor):
 
 
 class VolumeMonitor(Monitor):
-    def __init__(self, name, chart: ChartWidget):
-        super().__init__(name)
+    def __init__(self, configuration, chart):
+        super().__init__(configuration.monitorBase.name, configuration.monitorBase.functionName)
 
-        db = coredb.CoreDB()
-        xpath = MonitorDB.getVolumeMonitorXPath(name)
+        self._showChart = configuration.monitorBase.showChart
+        self._rname = CellZoneDB.getCellZoneRegion(
+            CoreDB().getValue(MonitorDB.getVolumeMonitorXPath(self._name) + '/volume'))
 
-        self._showChart = db.getValue(xpath + '/showChart') == 'true'
-        self._rname = CellZoneDB.getCellZoneRegion(db.getValue(xpath + '/volume'))
+        self._legend = (f"{MonitorDB.volumeReportTypeToText(configuration.reportType)}"
+                        f" {configuration.field.displayText()}")
+
         self._chart = chart
-
-        self._legend = (f"{MonitorDB.volumeReportTypeToText(VolumeReportType(db.getValue(xpath + '/reportType')))}"
-                        f" {getMonitorField(MonitorDB.getVolumeMonitorXPath(name)).displayText()}")
-
-        self._chart.setTitle(name)
+        self._chart.setTitle(self._name)
 
     @property
     def fileName(self):
         return 'volFieldValue'
+
+    def deleteChart(self):
+        if self._chart is not None:
+            self._chart.deleteLater()
+            self._chart = None
 
     def _updateChart(self, data):
         data.columns = [self._legend]

@@ -3,9 +3,10 @@
 
 import qasync
 
+from baramFlow.base.base import DirectionSpecificationMethod, DirectionSpecificationMethodTexts
 from baramFlow.coredb import coredb
 from baramFlow.coredb.coredb_writer import CoreDBWriter
-from baramFlow.coredb.boundary_db import BoundaryDB, DirectionSpecificationMethod, DirectionSpecificationMethodTexts
+from baramFlow.coredb.boundary_db import BoundaryDB
 from baramFlow.coredb.region_db import RegionDB
 from baramFlow.view.widgets.resizable_dialog import ResizableDialog
 from widgets.async_message_box import AsyncMessageBox

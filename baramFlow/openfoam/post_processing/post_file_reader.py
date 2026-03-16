@@ -33,10 +33,10 @@ def readPostFile(path) -> pd.DataFrame:
 
 
 class PostFileReader(QObject):
-    def __init__(self, name, rname, fileName, extension=None):
+    def __init__(self, name, rname, functionName, fileName, extension=None):
         super().__init__()
         self._name = name
-        self._path = FileSystem.postProcessingPath(rname) / name
+        self._path = FileSystem.postProcessingPath(rname) / functionName
         self._fileName = f'{fileName}{extension}'
         self._pattern = f'{fileName}_*{extension}'
         self._nameLen = len(fileName) + 1
@@ -47,7 +47,7 @@ class PostFileReader(QObject):
         self._newLine = ''
         self._cols = None
 
-    def chagedFiles(self):
+    def changedFiles(self):
         self._currentFilePath = None
         changedFiles = []
 
@@ -56,14 +56,14 @@ class PostFileReader(QObject):
         for dirTime, dirPath in dirs:
             path = dirPath / self._fileName
             if path.is_file() and self._updateFileInfo(path):
-                changedFiles.append(self._currentFilePath)
                 self._currentFilePath = path
+                changedFiles.append(self._currentFilePath)
 
             files = [(f.stem[self._nameLen:], f) for f in dirPath.glob(self._pattern)]
-            for time, path in sorted(files, key=lambda x: int(x[0])):
+            for time, path in sorted(files, key=lambda x: float(x[0])):
                 if self._updateFileInfo(path):
-                    changedFiles.append(self._currentFilePath)
                     self._currentFilePath = path
+                    changedFiles.append(self._currentFilePath)
 
         return changedFiles
 
