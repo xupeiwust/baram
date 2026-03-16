@@ -43,21 +43,20 @@ class MonitorView(QWidget):
         self._project.projectClosed.connect(self._projectClosed)
         self._project.solverStatusChanged.connect(self._solverStatusChanged)
         CaseManager().caseLoaded.connect(self._caseLoaded)
-        CaseManager().caseCleared.connect(self._caseCleared)
+        CaseManager().caseCleared.connect(self._clear)
+        CaseManager().resultCleared.connect(self._clear)
 
     def _disconnectSignalsSlots(self):
         self._project.projectClosed.disconnect(self._projectClosed)
         self._project.solverStatusChanged.disconnect(self._solverStatusChanged)
         CaseManager().caseLoaded.disconnect(self._caseLoaded)
-        CaseManager().caseCleared.disconnect(self._caseCleared)
+        CaseManager().caseCleared.disconnect(self._clear)
+        CaseManager().resultCleared.disconnect(self._clear)
 
     @qasync.asyncSlot()
     async def _caseLoaded(self):
         self._clear()
         self._startMonitor()
-
-    def _caseCleared(self):
-        self._clear()
 
     def _projectClosed(self):
         self._stopMonitor()

@@ -62,7 +62,8 @@ class ChartView(QWidget):
         self._project.solverStatusChanged.connect(self._solverStatusChanged)
 
         CaseManager().caseLoaded.connect(self._caseLoaded)
-        CaseManager().caseCleared.connect(self._caseCleared)
+        CaseManager().caseCleared.connect(self._clear)
+        CaseManager().resultCleared.connect(self._clear)
 
     def _disconnectSignalsSlots(self):
         self._solverInfoManager.residualsUpdated.disconnect(self._updated)
@@ -72,7 +73,8 @@ class ChartView(QWidget):
         self._project.solverStatusChanged.disconnect(self._solverStatusChanged)
 
         CaseManager().caseLoaded.disconnect(self._caseLoaded)
-        CaseManager().caseCleared.disconnect(self._caseCleared)
+        CaseManager().caseCleared.disconnect(self._clear)
+        CaseManager().resultCleared.disconnect(self._clear)
 
     def startDrawing(self):
         self._solverInfoManager.startCollecting(Path(FileSystem.caseRoot()).resolve(), coredb.CoreDB().getRegions())
@@ -86,7 +88,7 @@ class ChartView(QWidget):
         if CaseManager().isRunning() or CaseManager().isEnded():
             self.startDrawing()
 
-    def _caseCleared(self):
+    def _clear(self):
         self._chart.clear()
 
     def _projectClosed(self):

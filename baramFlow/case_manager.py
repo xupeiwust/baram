@@ -497,6 +497,7 @@ class CaseManager(QObject):
     caseLoaded = Signal(str)
     caseCleared = Signal()
     batchCleared = Signal()
+    resultCleared = Signal()
 
     def __new__(cls, *args, **kwargs):
         with _mutex:

@@ -56,13 +56,15 @@ class ConsoleView(QWidget):
         self._project.projectClosed.connect(self._projectClosed)
         self._project.solverStatusChanged.connect(self._solverStatusChanged)
         CaseManager().caseLoaded.connect(self._caseLoaded)
-        CaseManager().caseCleared.connect(self._caseCleared)
+        CaseManager().caseCleared.connect(self._clear)
+        CaseManager().resultCleared.connect(self._clear)
 
     def _disconnectSignalsSlots(self):
         self._project.projectClosed.disconnect(self._projectClosed)
         self._project.solverStatusChanged.disconnect(self._solverStatusChanged)
         CaseManager().caseLoaded.disconnect(self._caseLoaded)
-        CaseManager().caseCleared.disconnect(self._caseCleared)
+        CaseManager().caseCleared.disconnect(self._clear)
+        CaseManager().resultCleared.disconnect(self._clear)
 
     def startCollecting(self):
         if self.readTask is None:
@@ -135,7 +137,7 @@ class ConsoleView(QWidget):
             await self._readAllLog()
 
     @qasync.asyncSlot()
-    async def _caseCleared(self):
+    async def _clear(self):
         if self.readTask is not None:
             self.readTask.cancel()
         if self._textView is not None:
