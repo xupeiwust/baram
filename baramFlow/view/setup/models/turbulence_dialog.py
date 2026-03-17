@@ -82,13 +82,13 @@ class TurbulenceModelDialog(ResizableDialog):
         self._load()
 
     def _connectSignalsSlots(self):
-        self._modelRadios.dataChecked.connect(self._modelChanged)
-        self._kEpsilonModelRadios.dataChecked.connect(self._kEpsilonModelChanged)
-        self._nearWallTreatmentRadios.dataChecked.connect(self._nearWallTreatmentChanged)
-        self._RANSModelRadios.dataChecked.connect(self._RANSModelChanged)
+        self._modelRadios.selectionChanged.connect(self._modelChanged)
+        self._kEpsilonModelRadios.selectionChanged.connect(self._kEpsilonModelChanged)
+        self._nearWallTreatmentRadios.selectionChanged.connect(self._nearWallTreatmentChanged)
+        self._RANSModelRadios.selectionChanged.connect(self._RANSModelChanged)
         self._ui.delayedDES.stateChanged.connect(self._delayedDESChanged)
-        self._shieldingFunctionsRadios.dataChecked.connect(self._updateDESLengthScaleModelVisibility)
-        self._subgridScaleModelRadios.dataChecked.connect(self._updateLESConstantsVisibility)
+        self._shieldingFunctionsRadios.selectionChanged.connect(self._updateDESLengthScaleModelVisibility)
+        self._subgridScaleModelRadios.selectionChanged.connect(self._updateLESConstantsVisibility)
         self._ui.ok.clicked.connect(self._accept)
 
     @qasync.asyncSlot()

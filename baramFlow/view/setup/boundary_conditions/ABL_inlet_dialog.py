@@ -8,7 +8,8 @@ from libbaram.pfloat import PFloat
 from widgets.async_message_box import AsyncMessageBox
 
 from baramFlow.base.boundary.ABL_inlet import ABLFlowDirection, Vector, ABLInletCondition, AtmosphericBoundaryLayer
-from baramFlow.base.boundary.ABL_inlet import PasquillStability, updateABLInletBoundaryConditions
+from baramFlow.base.boundary.ABL_inlet import PasquillStability
+from baramFlow.base.boundary.boundary import BoundaryManager
 from baramFlow.coredb.libdb import xmlToBool
 from baramFlow.coredb import coredb
 from baramFlow.coredb.boundary_db import BoundaryDB, FlowDirectionSpecificationMethod
@@ -80,6 +81,7 @@ class ABLInletDialog(QDialog):
                 pasquillStability = PasquillStability(disabled=True)
 
             data = ABLInletCondition(
+                bcid=self._bcid,
                 abl= AtmosphericBoundaryLayer(
                     flowDirection=flowDirection,
                     groundNormalDirection=Vector(
@@ -97,11 +99,11 @@ class ABLInletDialog(QDialog):
                     pasquillStability=pasquillStability),
                 userDefinedScalars=self._scalarsWidget.data(),
                 species=self._speciesWidget.data())
+
+            BoundaryManager.updateBoundaryCondition(data)
         except ValueError as e:
             await AsyncMessageBox().information(self, self.tr('Input Error'), str(e))
             return
-
-        updateABLInletBoundaryConditions(self._bcid, data)
 
         self.accept()
 

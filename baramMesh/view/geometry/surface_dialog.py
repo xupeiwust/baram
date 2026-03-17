@@ -114,7 +114,7 @@ class SurfaceDialog(QDialog):
             await AsyncMessageBox().information(self, self.tr("Input Error"), e.toMessage())
 
     def _connectSignalsSlots(self):
-        self._typeRadios.dataChecked.connect(self._onTypeChanged)
+        self._typeRadios.selectionChanged.connect(self._onTypeChanged)
         self._transformWidget.transformed.connect(self._onTransformed)
         self._ui.ok.clicked.connect(self._accept)
         self._ui.cancel.clicked.connect(self.close)

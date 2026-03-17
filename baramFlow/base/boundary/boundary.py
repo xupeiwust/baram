@@ -8,11 +8,10 @@ from xml.etree.ElementTree import Element
 from lxml import etree
 
 from baramFlow.base.base import BatchableNumber
-from baramFlow.base.boundary.temperature import BoundaryTemperature, TemperatureProfile
-from baramFlow.base.boundary.temperature import TemperatureTemporalDistributionSpecification
-from baramFlow.coredb import coredb
-from baramFlow.coredb.boundary_db import BoundaryDB, BoundaryType
-from baramFlow.coredb.libdb import nsmap, xmlToBool
+from baramFlow.coredb.boundary_db import BoundaryDB, BoundaryType, GeometricalType
+from baramFlow.coredb.coredb import CoreDB
+from baramFlow.coredb.coredb_writer import CoreDBWriter
+from baramFlow.coredb.libdb import nsmap, xmlToBool, ValueException, dbErrorToMessage
 
 
 class PatchInteractionType(Enum):
@@ -21,6 +20,31 @@ class PatchInteractionType(Enum):
     ESCAPE  = 'escape'
     TRAP    = 'trap'
     RECYCLE = 'recycle'
+
+
+def _updateUserDefinedScalars(db, bcid, scalars):
+    if scalars is None:
+        return
+
+    element = db.getElement(BoundaryDB.getXPath(bcid) + '/userDefinedScalars')
+    element.clear()
+
+    for s in scalars:
+        element.append(
+            etree.fromstring(f'''
+                <scalar xmlns="http://www.baramcfd.org/baram">
+                    <scalarID>{s.scalarID}</scalarID>
+                    <value>{s.value}</value>
+                </scalar>
+            '''))
+
+def _updateSpecies(db, bcid, specieRatios):
+    if specieRatios is None:
+        return
+
+    element = db.getElement(f'{BoundaryDB.getXPath(bcid)}/species/mixture[mid="{specieRatios.mid}"]')
+    for s in specieRatios.ratios:
+        element.find(f'specie[mid="{s.mid}"]/value', namespaces=nsmap).text = s.value
 
 
 @dataclass
@@ -125,29 +149,47 @@ class TemperatureLayers:
 
 
 @dataclass
-class BoundaryTypeCondition:
-    pass
+class BoundaryBase:
+    bcid: str = ''
+    name: str = ''
+    geometricalType: GeometricalType = GeometricalType.PATCH
+    bctype: BoundaryType = BoundaryType.WALL
+    volumeFractions: list = None
+    userDefinedScalars: list = None
+    species: SpecieRatios = None
+    patchInteraction: PatchInteraction = None
 
+    def update(self, writer: CoreDBWriter = None):
+        try:
+            with CoreDB() as db:
+                _updateUserDefinedScalars(db, self.bcid, self.userDefinedScalars)
+                _updateSpecies(db, self.bcid, self.species)
 
-@dataclass
-class BoundaryCondition:
-    name: str
-    bctype: BoundaryType
-    condition: BoundaryTypeCondition
+                self._updateTypeConditionIn(db)
+
+                if writer is not None:
+                    writer.updateInDB(db)
+
+                db.increaseConfigCount()
+        except ValueException as e:
+            raise ValueError(dbErrorToMessage(e))
+
+    def _updateTypeConditionIn(self, db):
+        pass
 
 
 class BoundaryManager:
     @staticmethod
     def getElement(bcid, name):
         if name is None:
-            return coredb.CoreDB().getElement(BoundaryDB.getXPath(bcid))
+            return CoreDB().getElement(BoundaryDB.getXPath(bcid))
 
     @staticmethod
     def patchInteraction(bcid: str):
-        return PatchInteraction.fromElement(coredb.CoreDB().getElement(BoundaryDB.getXPath(bcid) + '/patchInteraction'))
+        return PatchInteraction.fromElement(CoreDB().getElement(BoundaryDB.getXPath(bcid) + '/patchInteraction'))
 
     @staticmethod
-    def updatePatchInteraction(db, bcid, patchInteraction):
+    def updatePatchInteractionIn(db, bcid, patchInteraction):
         p = db.getElement(BoundaryDB.getXPath(bcid))
 
         new: Element = patchInteraction.toElement()
@@ -163,56 +205,5 @@ class BoundaryManager:
         db.increaseConfigCount()
 
     @staticmethod
-    def updateTemperature(db, bcid, temperature: BoundaryTemperature):
-        if temperature is None:
-            return
-
-        xpath = BoundaryDB.getXPath(bcid) + '/temperature'
-        element = db.getElement(xpath)
-
-        db.setValue(xpath + '/profile', temperature.profile.value)
-        if temperature.profile == TemperatureProfile.CONSTANT:
-            db.setValue(xpath + '/constant', temperature.constant)
-        elif temperature.profile == TemperatureProfile.SPATIAL_DISTRIBUTION:
-            if temperature.spatialDistribution is not None:
-                old = element.find('spatialDistribution', namespaces=nsmap)
-                new = temperature.spatialDistribution.toElement('spatialDistribution')
-                element.replace(old, new)
-        elif temperature.profile == TemperatureProfile.TEMPORAL_DISTRIBUTION:
-            db.setValue(xpath + '/temporalDistribution/specification',
-                        temperature.temporalDistribution.specification.value)
-            if temperature.temporalDistribution.specification == TemperatureTemporalDistributionSpecification.PIECEWISE_LINEAR:
-                if temperature.temporalDistribution.piecewiseLinear is not None:
-                    temporalDistributionElement = element.find('temporalDistribution', namespaces=nsmap)
-                    old = temporalDistributionElement.find('piecewiseLinear', namespaces=nsmap)
-                    new = temperature.temporalDistribution.piecewiseLinear.toElement('piecewiseLinear')
-                    temporalDistributionElement.replace(old, new)
-            elif temperature.temporalDistribution.specification == TemperatureTemporalDistributionSpecification.POLYNOMIAL:
-                if temperature.temporalDistribution.polynomial is not None:
-                    db.setValue(xpath + '/temporalDistribution/polynomial', temperature.temporalDistribution.polynomial)
-
-    @staticmethod
-    def updateUserDefinedScalars(db, bcid, scalars):
-        if scalars is None:
-            return
-
-        element = db.getElement(BoundaryDB.getXPath(bcid) + '/userDefinedScalars')
-        element.clear()
-
-        for s in scalars:
-            element.append(
-                etree.fromstring(f'''
-                    <scalar xmlns="http://www.baramcfd.org/baram">
-                        <scalarID>{s.scalarID}</scalarID>
-                        <value>{s.value}</value>
-                    </scalar>
-                '''))
-
-    @staticmethod
-    def updateSpecies(db, bcid, specieRatios):
-        if specieRatios is None:
-            return
-
-        element = db.getElement(f'{BoundaryDB.getXPath(bcid)}/species/mixture[mid="{specieRatios.mid}"]')
-        for s in specieRatios.ratios:
-            element.find(f'specie[mid="{s.mid}"]/value', namespaces=nsmap).text = s.value
+    def updateBoundaryCondition(condition: BoundaryBase, writer: CoreDBWriter = None):
+        condition.update(writer)

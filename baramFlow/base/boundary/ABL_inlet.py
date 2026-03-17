@@ -3,11 +3,11 @@
 
 from dataclasses import dataclass
 
-from baramFlow.base.boundary.boundary import UserDefinedScalarValue, SpecieValue, BoundaryManager, BoundaryTypeCondition
+from baramFlow.base.boundary.boundary import BoundaryBase
 from baramFlow.base.xml_helper import Vector
-from baramFlow.coredb import coredb
 from baramFlow.coredb.boundary_db import FlowDirectionSpecificationMethod
 from baramFlow.coredb.general_db import GeneralDB
+from baramFlow.coredb.libdb import E
 
 
 @dataclass
@@ -26,6 +26,19 @@ class PasquillStability:
     referenceSpecificHeat: str = None
     referenceTemperature: str = None
 
+    def toElement(self):
+        if self.disabled:
+            return None
+
+        return E('pasquillStability',
+                 E('stabilityClass',        self.stabilityClass),
+                 E('latitude',              self.latitude),
+                 E('surfaceHeatFlux',       self.surfaceHeatFlux),
+                 E('referenceDensity',      self.referenceDensity),
+                 E('referenceSpecificHeat', self.referenceSpecificHeat),
+                 E('referenceTemperature',  self.referenceTemperature),
+                 disabled=self.disabled)
+
 
 @dataclass
 class AtmosphericBoundaryLayer:
@@ -37,47 +50,31 @@ class AtmosphericBoundaryLayer:
     minimumZCoordinate: str
     pasquillStability: PasquillStability
 
+    def updateIn(self, db):
+        xpath = GeneralDB.GENERAL_XPATH + '/atmosphericBoundaryLayer'
 
-@dataclass
-class ABLInletCondition(BoundaryTypeCondition):
-    abl: AtmosphericBoundaryLayer
-    userDefinedScalars: list[UserDefinedScalarValue]
-    species: list[SpecieValue]
+        db.setValue(xpath + '/flowDirection/specMethod', self.flowDirection.specificationMethod.value)
+        if self.flowDirection.specificationMethod == FlowDirectionSpecificationMethod.DIRECT:
+            db.replaceElement(xpath + '/flowDirection/value', self.flowDirection.value.toElement('value'))
 
+        db.replaceElement(xpath + '/groundNormalDirection',
+                          self.groundNormalDirection.toElement('groundNormalDirection'))
+        db.setValue(xpath + '/referenceFlowSpeed', self.referenceFlowSpeed)
+        db.setValue(xpath + '/referenceHeight', self.referenceHeight)
+        db.setValue(xpath + '/surfaceRoughnessLength', self.surfaceRoughnessLength)
+        db.setValue(xpath + '/minimumZCoordinate', self.minimumZCoordinate)
 
-def updateABLInletBoundaryConditions(bcid, conditions: ABLInletCondition):
-    xpath = GeneralDB.GENERAL_XPATH + '/atmosphericBoundaryLayer'
-    with coredb.CoreDB() as db:
-        abl = conditions.abl
-
-        db.setValue(xpath + '/flowDirection/specMethod', abl.flowDirection.specificationMethod.value)
-        if abl.flowDirection.specificationMethod == FlowDirectionSpecificationMethod.DIRECT:
-            db.setValue(xpath + '/flowDirection/value/x', abl.flowDirection.value.x)
-            db.setValue(xpath + '/flowDirection/value/y', abl.flowDirection.value.y)
-            db.setValue(xpath + '/flowDirection/value/z', abl.flowDirection.value.z)
-
-        db.setValue(xpath + '/groundNormalDirection/x', abl.groundNormalDirection.x)
-        db.setValue(xpath + '/groundNormalDirection/y', abl.groundNormalDirection.y)
-        db.setValue(xpath + '/groundNormalDirection/z', abl.groundNormalDirection.z)
-
-        db.setValue(xpath + '/referenceFlowSpeed', abl.referenceFlowSpeed)
-        db.setValue(xpath + '/referenceHeight', abl.referenceHeight)
-        db.setValue(xpath + '/surfaceRoughnessLength', abl.surfaceRoughnessLength)
-        db.setValue(xpath + '/minimumZCoordinate', abl.minimumZCoordinate)
-
-        pasquillStability = abl.pasquillStability
-        if pasquillStability.disabled:
+        if self.pasquillStability.disabled:
             db.setAttribute(xpath + '/pasquillStability', 'disabled', 'true')
         else:
-            db.setAttribute(xpath + '/pasquillStability', 'disabled', 'false')
-            db.setValue(xpath + '/pasquillStability/stabilityClass', pasquillStability.stabilityClass)
-            db.setValue(xpath + '/pasquillStability/latitude', pasquillStability.latitude)
-            db.setValue(xpath + '/pasquillStability/surfaceHeatFlux', pasquillStability.surfaceHeatFlux)
-            db.setValue(xpath + '/pasquillStability/referenceDensity', pasquillStability.referenceDensity)
-            db.setValue(xpath + '/pasquillStability/referenceSpecificHeat', pasquillStability.referenceSpecificHeat)
-            db.setValue(xpath + '/pasquillStability/referenceTemperature', pasquillStability.referenceTemperature)
-
-        BoundaryManager.updateUserDefinedScalars(db, bcid, conditions.userDefinedScalars)
-        BoundaryManager.updateSpecies(db, bcid, conditions.species)
+            db.replaceElement(xpath + '/pasquillStability', self.pasquillStability.toElement())
 
         db.increaseConfigCount()
+
+
+@dataclass
+class ABLInletCondition(BoundaryBase):
+    abl: AtmosphericBoundaryLayer = None
+
+    def _updateTypeConditionIn(self, db):
+        self.abl.updateIn(db)

@@ -220,7 +220,7 @@ class CutTool(QObject):
         clipOption.stateChanged.connect(self._clipPlaneStateChanged)
 
     def _connectSignalsSlots(self, ui):
-        self._typeRadios.dataChecked.connect(self._typeChanged)
+        self._typeRadios.selectionChanged.connect(self._typeChanged)
         self._clipHandles.idClicked.connect(self._clipHandleToggled)
         self._slicePlane.valueChanged.connect(self._sliceValueChanged)
         self._slicePlane.valueEditingFinished.connect(self._updateOrigin)

@@ -86,7 +86,6 @@ class TemperatureWidget(QWidget):
             TemperatureTemporalDistributionSpecification(db.getValue(self._xpath + '/temporalDistribution/specification')))
 
         self._profileTypeChanged()
-        self._temporalDistributionTypeChanged()
 
     def appendToWriter(self, writer):
         """
@@ -117,7 +116,7 @@ class TemperatureWidget(QWidget):
     def _connectSignalsSlots(self):
         self._ui.profileType.currentIndexChanged.connect(self._profileTypeChanged)
         self._ui.spatialDistributionEdit.clicked.connect(self._onSpatialDistributionEdit)
-        self._ui.temporalDistributionRadioGroup.idToggled.connect(self._temporalDistributionTypeChanged)
+        self._temporalDistributionRadios.selectionChanged.connect(self._onTemporalDistributionTypeChanged)
         self._ui.piecewiseLinearEdit.clicked.connect(self._onPiecewiseLinearEdit)
         self._ui.polynomialEdit.clicked.connect(self._onPolynomialEdit)
 
@@ -140,9 +139,9 @@ class TemperatureWidget(QWidget):
         except asyncio.exceptions.CancelledError:
             return
 
-    def _temporalDistributionTypeChanged(self):
-        self._ui.piecewiseLinearEdit.setEnabled(self._ui.piecewiseLinear.isChecked())
-        self._ui.polynomialEdit.setEnabled(self._ui.polynomial.isChecked())
+    def _onTemporalDistributionTypeChanged(self, type_):
+        self._ui.piecewiseLinearEdit.setEnabled(type_ == TemperatureTemporalDistributionSpecification.PIECEWISE_LINEAR)
+        self._ui.polynomialEdit.setEnabled(type_ == TemperatureTemporalDistributionSpecification.POLYNOMIAL)
 
     @qasync.asyncSlot()
     async def _onPiecewiseLinearEdit(self):

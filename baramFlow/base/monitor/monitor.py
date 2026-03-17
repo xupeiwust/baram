@@ -5,6 +5,8 @@ from dataclasses import dataclass, field
 from enum import Enum, auto
 from uuid import uuid4, UUID
 
+from libbaram.natural_name_uuid import uuidToNnstr
+
 from baramFlow.base.base import DirectionSpecificationMethod
 from baramFlow.base.constants import FieldType, VectorComponent
 from baramFlow.base.field import getFieldInstance, Field, PRESSURE
@@ -14,7 +16,6 @@ from baramFlow.coredb.libdb import xmlToBool, xmlToStr, E, ValueException, dbErr
 from baramFlow.openfoam.function_objects.surface_field_value import SurfaceReportType
 from baramFlow.openfoam.function_objects.vol_field_value import VolumeReportType
 from baramFlow.openfoam.solver_field import getSolverComponentName, getSolverFieldName
-from libbaram.natural_name_uuid import uuidToNnstr
 
 
 FORCE_MONITORS_XPATH   = '/monitors/forces'
@@ -402,16 +403,16 @@ class MonitorManager:
                 db.setValue(xpath + '/writeInterval', data.monitorBase.writeInterval)
 
                 db.setValue(xpath + '/forceDirection/specificationMethod', data.forceDirection.specificationMethod.value)
-                db.replaceElemenet(xpath + '/forceDirection/dragDirection',
-                                   data.forceDirection.dragDirection.toElement('dragDirection'))
-                db.replaceElemenet(xpath + '/forceDirection/liftDirection',
-                                   data.forceDirection.liftDirection.toElement('liftDirection'))
+                db.replaceElement(xpath + '/forceDirection/dragDirection',
+                                  data.forceDirection.dragDirection.toElement('dragDirection'))
+                db.replaceElement(xpath + '/forceDirection/liftDirection',
+                                  data.forceDirection.liftDirection.toElement('liftDirection'))
 
                 if data.forceDirection.specificationMethod == DirectionSpecificationMethod.AOA_AOS:
                     db.setValue(xpath + '/forceDirection/angleOfSideslip', data.forceDirection.angleOfSideslip)
                     db.setValue(xpath + '/forceDirection/angleOfAttack', data.forceDirection.angleOfAttack)
 
-                db.replaceElemenet(xpath + '/centerOfRotation', data.centerOfRotation.toElement('centerOfRotation'))
+                db.replaceElement(xpath + '/centerOfRotation', data.centerOfRotation.toElement('centerOfRotation'))
                 db.setValue(xpath + '/region', data.region)
                 db.setValue(xpath + '/boundaries', ' ' .join(data.boundaries))
         except ValueException as e:
@@ -427,7 +428,7 @@ class MonitorManager:
                 db.setValue(xpath + '/fieldCategory', data.field.field.category.value)
                 db.setValue(xpath + '/fieldCodeName', data.field.field.codeName)
                 db.setValue(xpath + '/fieldComponent', str(data.field.component.value))
-                db.replaceElemenet(xpath + '/coordinate', data.coordinate.toElement('coordinate'))
+                db.replaceElement(xpath + '/coordinate', data.coordinate.toElement('coordinate'))
                 db.setValue(xpath + '/snapOntoBoundary', 'false' if data.snapOntoBoundary == '0' else 'true')
                 db.setValue(xpath + '/boundary', data.snapOntoBoundary)
                 db.setValue(xpath + '/region', data.region)

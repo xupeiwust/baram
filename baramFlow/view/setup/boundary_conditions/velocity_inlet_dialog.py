@@ -6,17 +6,17 @@ import asyncio
 import qasync
 from PySide6.QtCore import QObject
 
+from baramFlow.base.boundary.boundary import BoundaryManager
 from libbaram.pfloat import PFloat
 from widgets.async_message_box import AsyncMessageBox
 from widgets.simple_sheet_dialog import SimpleSheetDialog
 
 from baramFlow.base.base import SpatialVectorList, TemporalVectorList, TemporalScalarList
 from baramFlow.base.xml_helper import Vector
-from baramFlow.base.boundary.velocity_inlet import VelocitySpecification, VelocityProfile, CoordinateSystem, \
-    updateVelocityInletBoundaryConditions
+from baramFlow.base.boundary.velocity_inlet import VelocitySpecification, VelocityProfile, CoordinateSystem
 from baramFlow.base.boundary.velocity_inlet import InletVelocity, VelocityMagnitude, VelocityComponentCartesian
 from baramFlow.base.boundary.velocity_inlet import LocalCylindricalTemporalDistribution, VelocityLocalCylindrical
-from baramFlow.base.boundary.velocity_inlet import LocalCylindricalConstant, VelocityInletConditions
+from baramFlow.base.boundary.velocity_inlet import LocalCylindricalConstant, VelocityInletCondition
 from baramFlow.coredb import coredb
 from baramFlow.coredb.coredb_writer import CoreDBWriter
 from baramFlow.coredb.boundary_db import BoundaryDB
@@ -147,7 +147,8 @@ class VelocityInletDialog(ResizableDialog):
                 elif profile == VelocityProfile.TEMPORAL_DISTRIBUTION:
                     velocity.localCylindrical.temporalDistribution = self._velocityComponents
 
-            data = VelocityInletConditions(
+            data = VelocityInletCondition(
+                bcid=self._bcid,
                 velocity=velocity,
                 userDefinedScalars=self._scalarsWidget.data(),
                 species=self._speciesWidget.data(),
@@ -160,12 +161,12 @@ class VelocityInletDialog(ResizableDialog):
             if not await self._volumeFractionWidget.appendToWriter(writer, self._xpath + '/volumeFractions'):
                 return
 
-            updateVelocityInletBoundaryConditions(self._bcid, data, writer)
-
-            self.accept()
+            BoundaryManager.updateBoundaryCondition(data, writer)
         except ValueError as e:
             await AsyncMessageBox().information(self, self.tr('Input Error'), str(e))
             return
+
+        self.accept()
 
     def _connectSignalsSlots(self):
         self._ui.velocitySpecificationMethod.currentIndexChanged.connect(self._onSpecificationMethodChanged)

@@ -195,14 +195,14 @@ class DPMDialog(QDialog):
         pass
 
     def _connectSignalsSlots(self):
-        self._particleTypeRadios.dataChecked.connect(self._particleTypeChanged)
+        self._particleTypeRadios.selectionChanged.connect(self._particleTypeChanged)
         self._ui.inertParticleChange.clicked.connect(self._openParticleSelector)
         self._dropletComposition.changed.connect(self._updateDropletTotalComposition)
         self._ui.injections.clicked.connect(self._openInjectionListDialog)
-        self._dragForceRadios.dataChecked.connect(self._dragForceChanged)
-        self._liftForceRadios.dataChecked.connect(self._liftForceChanged)
-        self._turbulentDispersionRadios.dataChecked.connect(self._turbulentDispersionChanged)
-        self._heatTransferRadios.dataChecked.connect(self._heatTransferChanged)
+        self._dragForceRadios.selectionChanged.connect(self._dragForceChanged)
+        self._liftForceRadios.selectionChanged.connect(self._liftForceChanged)
+        self._turbulentDispersionRadios.selectionChanged.connect(self._turbulentDispersionChanged)
+        self._heatTransferRadios.selectionChanged.connect(self._heatTransferChanged)
         self._ui.ok.clicked.connect(self._accept)
 
     def _load(self):

@@ -75,7 +75,7 @@ class CavitationWidget(QObject):
         self._modelConstants[model].save(db)
 
     def _connectSignalsSlots(self):
-        self._modelRadios.dataChecked.connect(self._modelChanged)
+        self._modelRadios.selectionChanged.connect(self._modelChanged)
 
     @qasync.asyncSlot()
     async def _modelChanged(self, model):

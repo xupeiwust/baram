@@ -424,13 +424,13 @@ class MaterialDialog(ResizableDialog):
                                     self._ui.boilingTemperature.text(), self.tr('Boiling Temperature'))
 
                         self._ui.saturationPressure.updateData(self._saturationPressure)
-                        db.replaceElemenet(self._xpath + '/saturationPressure', self._saturationPressure.toElement('saturationPressure'))
+                        db.replaceElement(self._xpath + '/saturationPressure', self._saturationPressure.toElement('saturationPressure'))
 
                         self._ui.enthalpyOfVaporization.updateData(self._enthalpyOfVaporization)
-                        db.replaceElemenet(self._xpath + '/enthalpyOfVaporization', self._enthalpyOfVaporization.toElement('enthalpyOfVaporization'))
+                        db.replaceElement(self._xpath + '/enthalpyOfVaporization', self._enthalpyOfVaporization.toElement('enthalpyOfVaporization'))
 
                         self._ui.dropletSurfaceTension.updateData(self._dropletSurfaceTension)
-                        db.replaceElemenet(self._xpath + '/dropletSurfaceTension', self._dropletSurfaceTension.toElement('dropletSurfaceTension'))
+                        db.replaceElement(self._xpath + '/dropletSurfaceTension', self._dropletSurfaceTension.toElement('dropletSurfaceTension'))
 
                 if ModelsDB.isEnergyModelOn():
                     if self._phase == Phase.SOLID:

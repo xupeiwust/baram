@@ -680,7 +680,7 @@ class _CoreDB(object):
 
         self._configCount += 1
 
-    def replaceElemenet(self, xpath, element):
+    def replaceElement(self, xpath, element):
         oldElement = self._xmlTree.find(xpath, namespaces=nsmap)
         if oldElement is None:
             raise LookupError

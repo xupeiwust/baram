@@ -63,7 +63,7 @@ class PatchInteractionWidget(QWidget):
             self._ui.recycleFraction.validate(self.tr('Recycle Fraction'), low=0, high=1)
 
     def _connectSignalsSlots(self):
-        self._typeRadios.dataChecked.connect(self._typeChanged)
+        self._typeRadios.selectionChanged.connect(self._typeChanged)
         self._ui.selectBoundary.clicked.connect(self._openBoundarySelector)
 
     def _setRecycleBoundary(self, bcid):

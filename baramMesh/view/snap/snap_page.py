@@ -142,7 +142,7 @@ class SnapPage(StepPage):
         self._ui.snapCancel.clicked.connect(snappyHexMesh.cancel)
         self._ui.snapReset.clicked.connect(self._reset)
         self._ui.featureSnapType.currentDataChanged.connect(self._featureSnapTypeChanged)
-        self._smoothingMethod.dataChecked.connect(self._smootingMethodChanged)
+        self._smoothingMethod.selectionChanged.connect(self._smootingMethodChanged)
         self._ui.bufferLayerSurfacesSelect.clicked.connect(self._selectSurfaces)
 
     @qasync.asyncSlot()

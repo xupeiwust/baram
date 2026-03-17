@@ -247,17 +247,17 @@ class WallDialog(ResizableDialog):
                     db.setValue(xpath + '/radiation/radiativeFluxRelaxation', self._ui.radiativeFluxRelaxation.text())
 
                 if self._patchInteractionWidget is not None:
-                    BoundaryManager.updatePatchInteraction(db, self._bcid, self._patchInteractionWidget.updateData())
+                    BoundaryManager.updatePatchInteractionIn(db, self._bcid, self._patchInteractionWidget.updateData())
 
                 self.accept()
         except ValueException as ve:
             await AsyncMessageBox().information(self, self.tr('Input Error'), dbErrorToMessage(ve))
 
     def _connectSignalsSlots(self):
-        self._wallMotionRadios.dataChecked.connect(self._wallMotionChanged)
+        self._wallMotionRadios.selectionChanged.connect(self._wallMotionChanged)
         self._ui.atmosphericWall.stateChanged.connect(self._atomospericWallToggled)
         self._ui.movingWallMotion.currentIndexChanged.connect(self._updateMovingWallParameters)
-        self._shearConditionRadios.dataChecked.connect(self._updateRoughnessEnabled)
+        self._shearConditionRadios.selectionChanged.connect(self._updateRoughnessEnabled)
         self._ui.contactAngleModel.currentIndexChanged.connect(self._contactAngleTypeChanged)
         self._ui.ok.clicked.connect(self._accept)
 
