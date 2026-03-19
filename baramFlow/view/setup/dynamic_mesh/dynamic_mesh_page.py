@@ -147,7 +147,7 @@ class DynamicMeshPage(ContentPage):
         layout.setContentsMargins(8, 4, 8, 4)
         layout.setSpacing(0)
         nameLabel = QLabel(f'<b>{md.name}</b>')
-        czText = ', '.join(CellZoneDB.getCellZoneText(z) for z in md.cellZones) if md.cellZones else ''
+        czText = ', '.join(CellZoneDB.getCellZoneText(z) for z in md.cellZones) if md.cellZones else self.tr('Entire Domain')
         czLabel = QLabel(czText)
         czLabel.setStyleSheet('color:grey')
         layout.addWidget(nameLabel)

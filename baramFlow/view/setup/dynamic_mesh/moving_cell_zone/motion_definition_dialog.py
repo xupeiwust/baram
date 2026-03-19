@@ -44,7 +44,7 @@ class MotionDefinitionDialog(QDialog):
         self._connectSignalsSlots()
 
         self._loadMotionFunctions()
-        self._updateCellZonesLabel()
+        self._setCellZones(motionDefinition.cellZones)
 
     def _connectSignalsSlots(self):
         self._ui.selectButton.clicked.connect(self._selectCellZones)
@@ -61,11 +61,12 @@ class MotionDefinitionDialog(QDialog):
             self._ui.mfList.addItem(item)
             self._ui.mfList.setItemWidget(item, widget)
 
-    def _updateCellZonesLabel(self):
-        if self._motionDefinition.cellZones:
-            self._ui.cellZonesLabel.setText(', '.join(CellZoneDB.getCellZoneText(z) for z in self._motionDefinition.cellZones))
-        else:
-            self._ui.cellZonesLabel.setText('')
+    def _setCellZones(self, cellZones):
+        self._motionDefinition.cellZones = cellZones
+
+        self._ui.cellZones.clear()
+        for czid in cellZones:
+            self._ui.cellZones.addItem(CellZoneDB.getCellZoneText(czid))
 
     def _addMotionFunction(self, functionType: FunctionType):
         mf = MotionFunction(uuid=uuid4(), order=len(self._motionFunctions) + 1,
@@ -124,14 +125,13 @@ class MotionDefinitionDialog(QDialog):
     def _selectCellZones(self):
         self._dialog = MultiSelectorDialog(
             self, self.tr('Select Cell Zones'),
-            CellZoneDB.getCellZoneSelectorItems(),
+            CellZoneDB.getCellZoneOnlySelectorItems(),
             self._motionDefinition.cellZones)
         self._dialog.accepted.connect(self._cellZonesChanged)
         self._dialog.open()
 
     def _cellZonesChanged(self):
-        self._motionDefinition.cellZones = list(self._dialog.selectedItems())
-        self._updateCellZonesLabel()
+        self._setCellZones(list(self._dialog.selectedItems()))
 
     @qasync.asyncSlot()
     async def _accept(self):

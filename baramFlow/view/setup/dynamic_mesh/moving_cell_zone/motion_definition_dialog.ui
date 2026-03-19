@@ -6,15 +6,9 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>500</width>
-    <height>520</height>
+    <width>379</width>
+    <height>542</height>
    </rect>
-  </property>
-  <property name="minimumSize">
-   <size>
-    <width>500</width>
-    <height>0</height>
-   </size>
   </property>
   <property name="windowTitle">
    <string>Motion Definition</string>
@@ -37,105 +31,156 @@
     </widget>
    </item>
    <item>
-    <widget class="QGroupBox" name="motionFunctionsGroup">
-     <property name="title">
-      <string>Motion Functions</string>
+    <widget class="QScrollArea" name="scrollArea">
+     <property name="frameShape">
+      <enum>QFrame::NoFrame</enum>
      </property>
-     <layout class="QVBoxLayout" name="motionFunctionsLayout">
-      <item>
-       <widget class="QListWidget" name="mfList">
-        <property name="contextMenuPolicy">
-         <enum>Qt::CustomContextMenu</enum>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QWidget" name="addButtonWidget" native="true">
-        <layout class="QHBoxLayout" name="addButtonLayout">
-         <item>
-          <widget class="QToolButton" name="addButton">
-           <property name="popupMode">
-            <enum>QToolButton::InstantPopup</enum>
-           </property>
-           <property name="text">
-            <string>Add Motion Function</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <spacer name="addButtonSpacer">
-           <property name="orientation">
-            <enum>Qt::Horizontal</enum>
-           </property>
-           <property name="sizeHint" stdset="0">
-            <size>
-             <width>40</width>
-             <height>20</height>
-            </size>
-           </property>
-          </spacer>
-         </item>
-        </layout>
-       </widget>
-      </item>
-     </layout>
-    </widget>
-   </item>
-   <item>
-    <widget class="QGroupBox" name="cellZonesGroup">
-     <property name="title">
-      <string>CellZones</string>
+     <property name="widgetResizable">
+      <bool>true</bool>
      </property>
-     <layout class="QVBoxLayout" name="cellZonesLayout">
-      <item>
-       <widget class="QLabel" name="cellZonesNote">
-        <property name="styleSheet">
-         <string notr="true">color:grey; font-style:italic</string>
-        </property>
-        <property name="text">
-         <string>The Motion Functions are applied to the entire domain
-if no cell zone is configured.</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QWidget" name="cellZonesRowWidget" native="true">
-        <layout class="QHBoxLayout" name="cellZonesRow">
-         <item>
-          <widget class="QLabel" name="cellZonesLabel">
-           <property name="text">
-            <string/>
-           </property>
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-             <horstretch>1</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="selectButton">
-           <property name="text">
-            <string>Select</string>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </widget>
-      </item>
-     </layout>
-    </widget>
-   </item>
-   <item>
-    <widget class="QLabel" name="bottomNote">
-     <property name="styleSheet">
-      <string notr="true">color:grey</string>
-     </property>
-     <property name="text">
-      <string>Note: The boundaries of moving Cell Zones should
-be of type interface, cyclic, or cyclicACMI.</string>
-     </property>
+     <widget class="QWidget" name="scrollAreaWidgetContents">
+      <layout class="QVBoxLayout" name="verticalLayout_2">
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>0</number>
+       </property>
+       <property name="bottomMargin">
+        <number>0</number>
+       </property>
+       <item>
+        <widget class="QGroupBox" name="motionFunctionsGroup">
+         <property name="title">
+          <string>Motion Functions</string>
+         </property>
+         <layout class="QVBoxLayout" name="motionFunctionsLayout">
+          <item>
+           <widget class="QListWidget" name="mfList">
+            <property name="contextMenuPolicy">
+             <enum>Qt::CustomContextMenu</enum>
+            </property>
+            <property name="verticalScrollBarPolicy">
+             <enum>Qt::ScrollBarAlwaysOff</enum>
+            </property>
+            <property name="horizontalScrollBarPolicy">
+             <enum>Qt::ScrollBarAlwaysOff</enum>
+            </property>
+            <property name="sizeAdjustPolicy">
+             <enum>QAbstractScrollArea::AdjustToContents</enum>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QWidget" name="addButtonWidget" native="true">
+            <layout class="QHBoxLayout" name="horizontalLayout">
+             <item>
+              <widget class="QToolButton" name="addButton">
+               <property name="text">
+                <string>Add Motion Function</string>
+               </property>
+               <property name="popupMode">
+                <enum>QToolButton::InstantPopup</enum>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="addButtonSpacer">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+            </layout>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="cellZonesGroup">
+         <property name="title">
+          <string>CellZones</string>
+         </property>
+         <layout class="QVBoxLayout" name="cellZonesLayout">
+          <item>
+           <widget class="QWidget" name="cellZonesRowWidget" native="true">
+            <layout class="QHBoxLayout" name="cellZonesRow" stretch="1,0">
+             <item>
+              <widget class="QLabel" name="cellZonesNote">
+               <property name="styleSheet">
+                <string notr="true">color:grey; font-style:italic</string>
+               </property>
+               <property name="text">
+                <string>The Motion Functions are applied to the entire domain if no cell zone is configured.</string>
+               </property>
+               <property name="wordWrap">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="selectButton">
+               <property name="text">
+                <string>Select</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </item>
+          <item>
+           <widget class="QListWidget" name="cellZones">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="verticalScrollBarPolicy">
+             <enum>Qt::ScrollBarAlwaysOff</enum>
+            </property>
+            <property name="horizontalScrollBarPolicy">
+             <enum>Qt::ScrollBarAlwaysOff</enum>
+            </property>
+            <property name="sizeAdjustPolicy">
+             <enum>QAbstractScrollArea::AdjustToContents</enum>
+            </property>
+            <property name="editTriggers">
+             <set>QAbstractItemView::NoEditTriggers</set>
+            </property>
+            <property name="selectionMode">
+             <enum>QAbstractItemView::NoSelection</enum>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="bottomNote">
+            <property name="styleSheet">
+             <string notr="true">color:grey</string>
+            </property>
+            <property name="text">
+             <string>Note: The boundaries of moving Cell Zones must use one of the following types: interface, cyclic, or cyclicACMI.</string>
+            </property>
+            <property name="wordWrap">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+      </layout>
+     </widget>
     </widget>
    </item>
    <item>
