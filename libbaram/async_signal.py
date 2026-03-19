@@ -2,16 +2,18 @@
 # -*- coding: utf-8 -*-
 
 import asyncio
+import types
 from typing import Callable
 
 
 class AsyncSignal():
-    def __init__(self, *types):
-        if not all([type(t) == type for t in types]):
+    def __init__(self, *param_types):
+        if not all(isinstance(t, (type, types.GenericAlias)) for t in param_types):
             raise AssertionError('Only "Type" class is allowed')
 
-        self._types = types
+        self._types = param_types
         self._callbacks: set[Callable] = set()
+        self._pending_tasks: set[asyncio.Task] = set()
 
     def asyncConnect(self, func: Callable):
         if not asyncio.iscoroutinefunction(func):
@@ -38,6 +40,13 @@ class AsyncSignal():
 
         for cb in self._callbacks:
             await cb(*args, **kwargs)
+
+    def emitLater(self, *args, **kwargs):
+        loop = asyncio.get_event_loop()
+        for cb in self._callbacks:
+            task = loop.create_task(cb(*args, **kwargs))
+            self._pending_tasks.add(task)
+            task.add_done_callback(self._pending_tasks.discard)
 
 
 async def main():
