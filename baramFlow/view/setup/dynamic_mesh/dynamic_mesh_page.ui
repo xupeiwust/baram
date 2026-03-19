@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>600</width>
-    <height>700</height>
+    <width>299</width>
+    <height>671</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -86,11 +86,9 @@
    <item>
     <widget class="QStackedWidget" name="stack">
      <property name="currentIndex">
-      <number>0</number>
+      <number>3</number>
      </property>
-     <!-- Page 0: None -->
      <widget class="QWidget" name="nonePage"/>
-     <!-- Page 1: Moving Cell Zone -->
      <widget class="QWidget" name="movingCellZonePage">
       <layout class="QVBoxLayout" name="mczLayout">
        <property name="leftMargin">
@@ -149,7 +147,6 @@
        </item>
       </layout>
      </widget>
-     <!-- Page 2: Moving Boundary -->
      <widget class="QWidget" name="movingBoundaryPage">
       <layout class="QVBoxLayout" name="mbLayout">
        <property name="leftMargin">
@@ -207,7 +204,6 @@
        </item>
       </layout>
      </widget>
-     <!-- Page 3: Rigid Body Dynamics -->
      <widget class="QWidget" name="rigidBodyDynamicsPage">
       <layout class="QVBoxLayout" name="rbdLayout">
        <property name="leftMargin">
@@ -241,7 +237,7 @@
           <item row="1" column="0" colspan="2">
            <widget class="QStackedWidget" name="rbdSolverStack">
             <property name="currentIndex">
-             <number>0</number>
+             <number>1</number>
             </property>
             <widget class="QWidget" name="integrationPage">
              <layout class="QFormLayout" name="integFormLayout">
@@ -257,25 +253,34 @@
               <property name="bottomMargin">
                <number>0</number>
               </property>
-              <item row="0" column="0">
-               <widget class="QLabel" name="velCoeffLabel">
-                <property name="text">
-                 <string>For Velocity</string>
-                </property>
-               </widget>
-              </item>
               <item row="0" column="1">
-               <widget class="QLineEdit" name="rbdVelCoeff"/>
-              </item>
-              <item row="1" column="0">
-               <widget class="QLabel" name="posCoeffLabel">
-                <property name="text">
-                 <string>For Position &amp;&amp; Orientation</string>
+               <widget class="QGroupBox" name="groupBox">
+                <property name="title">
+                 <string>Integration Coefficient</string>
                 </property>
+                <layout class="QGridLayout" name="gridLayout">
+                 <item row="1" column="1">
+                  <widget class="QLineEdit" name="rbdPosCoeff"/>
+                 </item>
+                 <item row="1" column="0">
+                  <widget class="QLabel" name="posCoeffLabel">
+                   <property name="text">
+                    <string>For Position &amp;&amp; Orientation</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="0" column="1">
+                  <widget class="QLineEdit" name="rbdVelCoeff"/>
+                 </item>
+                 <item row="0" column="0">
+                  <widget class="QLabel" name="velCoeffLabel">
+                   <property name="text">
+                    <string>For Velocity</string>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
                </widget>
-              </item>
-              <item row="1" column="1">
-               <widget class="QLineEdit" name="rbdPosCoeff"/>
               </item>
              </layout>
             </widget>
@@ -293,28 +298,38 @@
               <property name="bottomMargin">
                <number>0</number>
               </property>
-              <item row="0" column="0">
-               <widget class="QLabel" name="accOffCoeffLabel">
-                <property name="text">
-                 <string>Acceleration</string>
-                </property>
-               </widget>
-              </item>
               <item row="0" column="1">
-               <widget class="QLineEdit" name="rbdAccOffCoeff"/>
-              </item>
-              <item row="1" column="0">
-               <widget class="QLabel" name="velOffCoeffLabel">
-                <property name="text">
-                 <string>Velocity</string>
+               <widget class="QGroupBox" name="groupBox_2">
+                <property name="title">
+                 <string>Off-centering Coefficient</string>
                 </property>
+                <layout class="QGridLayout" name="gridLayout_2" rowstretch="0,0,0">
+                 <item row="1" column="0">
+                  <widget class="QLabel" name="velOffCoeffLabel">
+                   <property name="text">
+                    <string>Velocity</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="0" column="0">
+                  <widget class="QLabel" name="accOffCoeffLabel">
+                   <property name="text">
+                    <string>Acceleration</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="0" column="1">
+                  <widget class="QLineEdit" name="rbdAccOffCoeff"/>
+                 </item>
+                 <item row="1" column="1">
+                  <widget class="QLineEdit" name="rbdVelOffCoeff"/>
+                 </item>
+                </layout>
                </widget>
-              </item>
-              <item row="1" column="1">
-               <widget class="QLineEdit" name="rbdVelOffCoeff"/>
               </item>
              </layout>
             </widget>
+            <widget class="QWidget" name="page"/>
            </widget>
           </item>
          </layout>
@@ -425,11 +440,11 @@
             <layout class="QHBoxLayout" name="addRestraintLayout">
              <item>
               <widget class="QToolButton" name="addRestraintButton">
-               <property name="popupMode">
-                <enum>QToolButton::InstantPopup</enum>
-               </property>
                <property name="text">
                 <string>Add Restraint</string>
+               </property>
+               <property name="popupMode">
+                <enum>QToolButton::InstantPopup</enum>
                </property>
               </widget>
              </item>

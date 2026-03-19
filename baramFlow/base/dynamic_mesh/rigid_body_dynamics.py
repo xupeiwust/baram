@@ -4,7 +4,9 @@
 from dataclasses import dataclass
 from dataclasses import field as dataClassField
 from enum import Enum
-from uuid import UUID
+from uuid import UUID, uuid4
+
+from bidict import bidict
 
 from baramFlow.coredb.libdb import E, nsmap
 from baramFlow.base.dynamic_mesh.rigid_body_solver import RigidBodySolver
@@ -58,9 +60,9 @@ class Joint:
                      E('z', self.axisZ)))
 
 
-@dataclass
+@dataclass(kw_only=True)
 class Body:
-    uuid: UUID
+    uuid: UUID = dataClassField(default_factory=uuid4)
     name: str
     parent: UUID
 
@@ -151,12 +153,21 @@ class Body:
                  E('deformationOffset', self.deformationOffset),
                  E('deformationDistance', self.deformationDistance))
 
+    def processMeshUpdate(self, oldBoundaries: bidict[str, str], newBoundaries: bidict[str, str]):
+        boundaries: list[str] = []
+        for boundary in self.boundaries:
+            name = oldBoundaries.inverse[boundary]
+            if name in newBoundaries:
+                boundaries.append(newBoundaries[name])
+
+        self.boundaries = boundaries
+
 
 @dataclass
 class RigidBodyDynamics:
     solver: RigidBodySolver = dataClassField(default_factory=RigidBodySolver)
-    accelerationRelaxationFactor: str = '0'
-    accelerationDampingFactor: str = '0'
+    accelerationRelaxationFactor: str = '0.7'
+    accelerationDampingFactor: str = '1.0'
     bodies: list[Body] = dataClassField(default_factory=list)
     restraints: list[Restraint] = dataClassField(default_factory=list)
 

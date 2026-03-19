@@ -608,6 +608,7 @@ class MainWindow(QMainWindow, expert_mode.IExpertModeObserver):
             MenuItem.MENU_SETUP_MODELS.value,
             MenuItem.MENU_SETUP_CELL_ZONE_CONDITIONS.value,
             MenuItem.MENU_SETUP_BOUNDARY_CONDITIONS.value,
+            MenuItem.MENU_SETUP_DYNAMIC_MESH.value,
             MenuItem.MENU_SOLUTION_NUMERICAL_CONDITIONS.value,
             MenuItem.MENU_SOLUTION_MONITORS.value,
             MenuItem.MENU_SOLUTION_INITIALIZATION.value,

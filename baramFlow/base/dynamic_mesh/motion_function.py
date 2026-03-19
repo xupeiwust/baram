@@ -2,8 +2,9 @@
 # -*- coding: utf-8 -*-
 
 from dataclasses import dataclass
+from dataclasses import field as dataClassField
 from enum import Enum
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from baramFlow.coredb.libdb import E, nsmap
 
@@ -50,9 +51,9 @@ class Positions:
                  E('yaw', self.yaw))
 
 
-@dataclass
+@dataclass(kw_only=True)
 class MotionFunction:
-    uuid: UUID
+    uuid: UUID = dataClassField(default_factory=uuid4)
     order: int
     functionType: FunctionType
 

@@ -4,7 +4,7 @@
 from dataclasses import dataclass
 from dataclasses import field as dataClassField
 from enum import Enum
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from baramFlow.coredb.libdb import E, nsmap
 from baramFlow.base.dynamic_mesh.motion_function import MotionFunction
@@ -180,9 +180,9 @@ class RigidBodyMotion:
                  E('accelerationDampingFactor', self.accelerationDampingFactor))
 
 
-@dataclass
+@dataclass(kw_only=True)
 class MovingBoundaryEntry:
-    uuid: UUID
+    uuid: UUID = dataClassField(default_factory=uuid4)
     boundary: str = '0'
     pointMotionType: PointMotionType = PointMotionType.FIXED
 

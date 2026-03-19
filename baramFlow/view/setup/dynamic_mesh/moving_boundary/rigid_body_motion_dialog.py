@@ -34,7 +34,7 @@ _SOLVER_TYPES = [SolverType.NEWMARK, SolverType.CRANK_NICOLSON, SolverType.SYMPL
 _SOLVER_STACKED_INDEX = {
     SolverType.NEWMARK: 0,
     SolverType.CRANK_NICOLSON: 1,
-    SolverType.SYMPLECTIC: 0,
+    SolverType.SYMPLECTIC: 2,
 }
 
 

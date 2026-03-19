@@ -9,6 +9,7 @@ import yaml
 from PySide6.QtCore import QObject, Signal
 from pathlib import Path
 
+from baramFlow.base.event_bus import EventBus
 from baramFlow.base.graphic.graphics_db import GraphicsDB
 
 from baramFlow.solver_status import SolverStatus
@@ -170,9 +171,11 @@ class _Project(QObject):
         await self._close()
         await self._open(directory, ProjectOpenType.SAVE_AS)
         self.projectOpened.emit()
+        await EventBus().onProjectOpen.emit()
 
     def opened(self):
         self.projectOpened.emit()
+        EventBus().onProjectOpen.emitLater()
 
     def setParallelEnvironment(self, environment):
         self._settings.set(SettingKey.NP, environment.np())
@@ -285,6 +288,8 @@ class _Project(QObject):
         await GraphicsDB().close()
 
         self.projectClosed.emit()
+        await EventBus().onProjectClose.emit()
+
         if self._projectLock:
             self._projectLock.release()
 

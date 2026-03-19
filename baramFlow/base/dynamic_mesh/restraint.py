@@ -2,8 +2,9 @@
 # -*- coding: utf-8 -*-
 
 from dataclasses import dataclass
+from dataclasses import field as dataClassField
 from enum import Enum
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from baramFlow.coredb.libdb import E, nsmap
 
@@ -14,9 +15,9 @@ class RestraintType(Enum):
     ROTATIONAL_SPRING     = 'rotationalSpring'
 
 
-@dataclass
+@dataclass(kw_only=True)
 class Restraint:
-    uuid: UUID
+    uuid: UUID = dataClassField(default_factory=uuid4)
     order: int
     restraintType: RestraintType
 

@@ -3,15 +3,17 @@
 
 from dataclasses import dataclass
 from dataclasses import field as dataClassField
-from uuid import UUID
+from uuid import UUID, uuid4
+
+from bidict import bidict
 
 from baramFlow.coredb.libdb import E, nsmap
 from baramFlow.base.dynamic_mesh.motion_function import MotionFunction
 
 
-@dataclass
+@dataclass(kw_only=True)
 class MotionDefinition:
-    uuid: UUID
+    uuid: UUID = dataClassField(default_factory=uuid4)
     name: str
     order: int
     motionFunctions: list[MotionFunction] = dataClassField(default_factory=list)
@@ -42,3 +44,12 @@ class MotionDefinition:
                  E('order', str(self.order)),
                  E('motionFunctions', *[f.toElement() for f in self.motionFunctions]),
                  E('cellZones', ' '.join(self.cellZones)))
+
+    def processMeshUpdate(self, oldCellZones: bidict[str, str], newCellZones: bidict[str, str]):
+        cellZones: list[str] = []
+        for czid in self.cellZones:
+            name = oldCellZones.inverse[czid]
+            if name in newCellZones:
+                cellZones.append(newCellZones[name])
+
+        self.cellZones = cellZones

@@ -9,6 +9,7 @@ from vtkmodules.vtkCommonDataModel import vtkCompositeDataSet
 from vtkmodules.vtkCommonCore import VTK_MULTIBLOCK_DATA_SET, VTK_UNSTRUCTURED_GRID, VTK_POLY_DATA
 
 from baramFlow.base.boundary.boundary import PatchInteractionType
+from baramFlow.base.event_bus import EventBus, RegionComponents
 from baramFlow.base.graphic.graphics_db import GraphicsDB
 from baramFlow.base.model.DPM_model import DPMModelManager
 from baramFlow.base.scaffold.scaffolds_db import ScaffoldsDB
@@ -111,6 +112,27 @@ class PolyMeshLoader(QObject):
     def loadBoundaryDict(cls, path, listLengthUnparsed=None, longListOutputThreshold=None):
         return ParsedBoundaryDict(path, listLengthUnparsed=listLengthUnparsed, treatBinaryAsASCII=True, longListOutputThreshold=longListOutputThreshold)
 
+    def buildMeshTopology(self):
+        mesh: dict[str, RegionComponents] = {}
+
+        db = coredb.CoreDB()
+        for rname in db.getRegions():
+            cellZones: dict[str, str] = {}
+            boundaries: dict[str, str] = {}
+
+            for czid, czname in db.getCellZones(rname):
+                cellZones[czname] = str(czid)
+
+            for bcid, bcname, _ in db.getBoundaryConditions(rname):
+                boundaries[bcname] = str(bcid)
+
+            mesh[rname] = {
+                'cellZones': cellZones,
+                'boundaries': boundaries
+            }
+
+        return mesh
+
     async def loadMesh(self):
         self.progress.emit(self.tr("Loading Mesh..."))
         boundaries = self._loadBoundaries()
@@ -119,7 +141,13 @@ class PolyMeshLoader(QObject):
             await reader.setupReader()
 
         vtkMesh = await self._getVtkMesh()
+
+        oldMesh = self.buildMeshTopology()
         updated = self._updateDB(vtkMesh, boundaries)
+        newMesh = self.buildMeshTopology()
+
+        await EventBus().onMeshLoading.emit(oldMesh, newMesh)
+
         await self._updateMeshModel(vtkMesh)
         if updated:
             app.updateMesh()

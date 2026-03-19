@@ -16,10 +16,10 @@ class SolverType(Enum):
 @dataclass
 class RigidBodySolver:
     solverType: SolverType = SolverType.NEWMARK
-    velocityIntegrationCoefficient: str = '0'
-    positionIntegrationCoefficient: str = '0'
-    offCenteringAccelerationCoefficient: str = '0'
-    offCenteringVelocityCoefficient: str = '0'
+    velocityIntegrationCoefficient: str = '0.7'
+    positionIntegrationCoefficient: str = '1.0'
+    offCenteringAccelerationCoefficient: str = '0.5'
+    offCenteringVelocityCoefficient: str = '0.5'
 
     @classmethod
     def fromElement(cls, e):

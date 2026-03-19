@@ -12,12 +12,14 @@ from PySide6.QtWidgets import (QLabel, QListWidgetItem, QMenu, QWidget,
 from baramFlow.base.dynamic_mesh.dynamic_mesh import DYNAMIC_MESH_PATH, DynamicMesh, MotionType
 from baramFlow.base.dynamic_mesh.motion_definition import MotionDefinition
 from baramFlow.coredb import coredb
+from baramFlow.coredb.boundary_db import BoundaryDB
 from baramFlow.coredb.cell_zone_db import CellZoneDB
 from baramFlow.base.dynamic_mesh.moving_boundary import MovingBoundaryEntry, PointMotionType
 from baramFlow.base.dynamic_mesh.rigid_body_dynamics import Body
 from baramFlow.base.dynamic_mesh.rigid_body_solver import SolverType
 from baramFlow.base.dynamic_mesh.restraint import Restraint, RestraintType
 
+from baramFlow.services.dynamic_mesh.dynamic_mesh_service import DynamicMeshService
 from baramFlow.view.setup.dynamic_mesh.motion_type_dialog import MotionTypeDialog
 from baramFlow.view.setup.dynamic_mesh.moving_cell_zone.motion_definition_dialog import MotionDefinitionDialog
 from baramFlow.view.setup.dynamic_mesh.moving_boundary.point_motion_dialog import (
@@ -48,7 +50,7 @@ class DynamicMeshPage(ContentPage):
         self._ui = Ui_DynamicMeshPage()
         self._ui.setupUi(self)
 
-        self._dynamicMesh = DynamicMesh()
+        self._dynamicMesh = DynamicMeshService().getDynamicMesh()  # self.__init__ is called again if another mesh is imported
 
         # Solver combo items
         self._ui.rbdSolverCombo.addItem('Newmark', SolverType.NEWMARK)
@@ -63,8 +65,6 @@ class DynamicMeshPage(ContentPage):
         self._ui.addRestraintButton.setMenu(restraintMenu)
 
         self._connectSignalsSlots()
-
-        self._load()
 
         self._updatePage()
 
@@ -90,10 +90,6 @@ class DynamicMeshPage(ContentPage):
         self._ui.removeBodyButton.clicked.connect(self._removeBody)
         self._ui.bodyList.currentItemChanged.connect(self._bodySelected)
         self._ui.rbdRestraintList.customContextMenuRequested.connect(self._showRbdRestraintMenu)
-
-    def _load(self):
-        db = coredb.CoreDB()
-        self._dynamicMesh = DynamicMesh.fromElement(db.getElement(DYNAMIC_MESH_PATH))
 
     def _updatePage(self):
         mt = self._dynamicMesh.motionType
@@ -126,7 +122,8 @@ class DynamicMeshPage(ContentPage):
         if confirm != QMessageBox.StandardButton.Yes:
             return
 
-        self._dynamicMesh = DynamicMesh(motionType=newType)
+        self._dynamicMesh.motionType=newType
+
         self._updatePage()
 
     # ── Moving Cell Zone ──
@@ -134,6 +131,14 @@ class DynamicMeshPage(ContentPage):
     def _updateMotionDefinitions(self):
         self._ui.mdList.clear()
         for md in self._dynamicMesh.motionDefinitions:
+            self._addMdItem(md)
+
+    def _addMotionDefinition(self):
+        order = len(self._dynamicMesh.motionDefinitions) + 1
+        md = MotionDefinition(name=f'Motion-{order}', order=order)
+        dialog = MotionDefinitionDialog(self, md)
+        if dialog.exec():
+            self._dynamicMesh.motionDefinitions.append(md)
             self._addMdItem(md)
 
     def _addMdItem(self, md: MotionDefinition):
@@ -154,14 +159,6 @@ class DynamicMeshPage(ContentPage):
         item.setData(Qt.ItemDataRole.UserRole, md.uuid)
         self._ui.mdList.addItem(item)
         self._ui.mdList.setItemWidget(item, widget)
-
-    def _addMotionDefinition(self):
-        order = len(self._dynamicMesh.motionDefinitions) + 1
-        md = MotionDefinition(uuid=uuid4(), name=f'Motion-{order}', order=order)
-        dialog = MotionDefinitionDialog(self, md)
-        if dialog.exec():
-            self._dynamicMesh.motionDefinitions.append(md)
-            self._addMdItem(md)
 
     def _showMdContextMenu(self, pos):
         row = self._ui.mdList.currentRow()
@@ -209,7 +206,8 @@ class DynamicMeshPage(ContentPage):
         layout = QHBoxLayout(widget)
         layout.setContentsMargins(8, 4, 8, 4)
 
-        nameLabel = QLabel(f'<b>Boundary {entry.boundary}</b>')
+        name = BoundaryDB.getBoundaryName(entry.boundary)
+        nameLabel = QLabel(f'<b>{name}</b>')
         typeLabel = QLabel(POINT_MOTION_TYPE_NAMES.get(entry.pointMotionType, ''))
         typeLabel.setStyleSheet('color:grey')
 
@@ -224,10 +222,11 @@ class DynamicMeshPage(ContentPage):
         self._ui.mbList.setItemWidget(item, widget)
 
     def _editBoundary(self):
-        row = self._ui.mbList.currentRow()
-        if row < 0:
+        item = self._ui.mbList.currentItem()
+        if item is None:
             return
-        entry = self._dynamicMesh.movingBoundaries[row]
+        uuid = item.data(Qt.ItemDataRole.UserRole)
+        entry = next(mb for mb in self._dynamicMesh.movingBoundaries if mb.uuid == uuid)
         dialog = PointMotionDialog(self, entry)
         if dialog.exec():
             self._updateMovingBoundaries()
@@ -261,10 +260,14 @@ class DynamicMeshPage(ContentPage):
 
     def _rbdSolverChanged(self, index):
         solverType = self._ui.rbdSolverCombo.itemData(index)
-        if solverType == SolverType.CRANK_NICOLSON:
-            self._ui.rbdSolverStack.setCurrentIndex(1)
-        else:
+        if solverType == SolverType.NEWMARK:
             self._ui.rbdSolverStack.setCurrentIndex(0)
+        elif solverType == SolverType.CRANK_NICOLSON:
+            self._ui.rbdSolverStack.setCurrentIndex(1)
+        elif solverType == SolverType.SYMPLECTIC:
+            self._ui.rbdSolverStack.setCurrentIndex(2)
+        else:
+            self._ui.rbdSolverStack.setCurrentIndex(2)
 
     def _addBodyItem(self, body: Body):
         widget = QWidget()

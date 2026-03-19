@@ -794,7 +794,7 @@
             <item>
              <widget class="QStackedWidget" name="stackedWidget">
               <property name="currentIndex">
-               <number>0</number>
+               <number>1</number>
               </property>
               <widget class="QWidget" name="page">
                <layout class="QVBoxLayout" name="verticalLayout_3">
@@ -842,7 +842,7 @@
                </layout>
               </widget>
               <widget class="QWidget" name="page_2">
-               <layout class="QGridLayout" name="gridLayout_9">
+               <layout class="QVBoxLayout" name="verticalLayout_5">
                 <property name="leftMargin">
                  <number>0</number>
                 </property>
@@ -855,7 +855,7 @@
                 <property name="bottomMargin">
                  <number>0</number>
                 </property>
-                <item row="0" column="0">
+                <item>
                  <widget class="QGroupBox" name="groupBox_9">
                   <property name="title">
                    <string>Off-centering Coefficient</string>
@@ -886,6 +886,7 @@
                 </item>
                </layout>
               </widget>
+              <widget class="QWidget" name="page_3"/>
              </widget>
             </item>
            </layout>

@@ -2,17 +2,15 @@
 # -*- coding: utf-8 -*-
 
 from threading import Lock
-from uuid import UUID, uuid4
 
+from bidict import bidict
+
+from baramFlow.base.dynamic_mesh.dynamic_mesh import DYNAMIC_MESH_PATH, DynamicMesh, MotionType
+from baramFlow.base.dynamic_mesh.moving_boundary import MovingBoundaryEntry, PointMotionType
+from baramFlow.base.event_bus import EventBus, RegionComponents
 from baramFlow.coredb import coredb
-from baramFlow.base.graphic.graphic import Graphic
 
-from baramFlow.coredb.libdb import nsmap
-
-from libbaram.async_signal import AsyncSignal
-
-
-GRAPHICS_NAME_PREFIX = 'Graphics'
+from baramFlow.coredb.boundary_db import BoundaryDB, BoundaryType
 
 
 _mutex = Lock()
@@ -24,7 +22,7 @@ class DynamicMeshService:
     def __new__(cls, *args, **kwargs):
         with _mutex:
             if not hasattr(cls, '_instance'):
-                cls._instance = super(GraphicsDB, cls).__new__(cls, *args, **kwargs)
+                cls._instance = super(DynamicMeshService, cls).__new__(cls, *args, **kwargs)
 
         return cls._instance
 
@@ -35,102 +33,97 @@ class DynamicMeshService:
             else:
                 self._initialized = True
 
-        self.reportAdded    = AsyncSignal(UUID)
-        self.reportUpdated  = AsyncSignal(UUID)
-        self.removingReport = AsyncSignal(UUID)
+        EventBus().onMeshLoading.asyncConnect(self._handleMeshUpdate)
+        EventBus().onProjectOpen.asyncConnect(self._handleProjectOpen)
+        EventBus().onProjectClose.asyncConnect(self._handleProjectClose)
 
-        self._reports: dict[UUID, Graphic] = {}
+        self._dynamicMesh = DynamicMesh()
+
+    def getDynamicMesh(self):
+        return self._dynamicMesh
 
     async def load(self):
-        self._reports = await self._parseGraphics()
+        db = coredb.CoreDB()
+        self._dynamicMesh = DynamicMesh.fromElement(db.getElement(DYNAMIC_MESH_PATH))
+        # ToDo: For compatibility. Remove this code block after 20271231
+        # Add boundaries to moving boundary list
+        # Begin
+        if len(self._dynamicMesh.movingBoundaries) == 0:
+            rnames = db.getRegions()
 
-        for report in self._reports.values():
-            report.instanceUpdated.asyncConnect(self._reportUpdated)
-            await self.reportAdded.emit(report.uuid)
+            if len(rnames) == 1:  # Dynamic Mesh does not support multi-region
+                movingBoundaries: list[MovingBoundaryEntry] = []
 
-    async def close(self):
-        for report in self._reports.values():
-            await self.removingReport.emit(report.uuid)
+                for bcid, bcname, typeStr in db.getBoundaryConditions(rnames[0]):
+                    mb = MovingBoundaryEntry(boundary=str(bcid))
 
-        self._reports = {}
+                    bctype = BoundaryType(typeStr)
+                    if bctype == BoundaryType.SYMMETRY:
+                        mb.pointMotionType = PointMotionType.SYMMETRY
+                    elif bctype == BoundaryType.EMPTY:
+                        mb.pointMotionType = PointMotionType.EMPTY
+                    elif bctype == BoundaryType.WEDGE:
+                        mb.pointMotionType = PointMotionType.WEDGE
+                    elif bctype == BoundaryType.CYCLIC:
+                        mb.pointMotionType = PointMotionType.CYCLIC
 
-    async def _parseGraphics(self) -> dict[UUID, Graphic]:
-        reports = {}
-        parent = coredb.CoreDB().getElement(self.GRAPHICS_PATH)
+                    movingBoundaries.append(mb)
 
-        for e in parent.findall('graphic', namespaces=nsmap):
-            c = Graphic.fromElement(e)
-            reports[c.uuid] = c
+                self._dynamicMesh.movingBoundaries = movingBoundaries
 
-            if len(c.getScaffolds()) == 0:
-                continue
+        # End
 
-            await c.updatePolyMesh()
+    async def _handleProjectOpen(self):
+        await self.load()
 
-        return reports
+    async def _handleProjectClose(self):
+        self._dynamicMesh = DynamicMesh()
 
-    def isScaffoldUsed(self, scaffoldUuid: UUID) -> bool:
-        for report in self._reports.values():
-            if report.hasScaffold(scaffoldUuid):
-                return True
+    async def _handleMeshUpdate(self,
+                                oldMesh: dict[str, RegionComponents],
+                                newMesh: dict[str, RegionComponents]):
 
-        return False
-
-    async def updatePolyMeshAll(self):
-        for report in self._reports.values():
-            await report.updatePolyMesh()
-
-    def getVisualReports(self):
-        return self._reports
-
-    def getVisualReport(self, uuid: UUID):
-        return self._reports[uuid]
-
-    async def addVisualReport(self, report: Graphic):
-        if report.uuid in self._reports:
-            raise AssertionError
-
-        report.saveToCoreDB()
-
-        self._reports[report.uuid] = report
-
-        report.instanceUpdated.asyncConnect(self._reportUpdated)
-
-        await self.reportAdded.emit(report.uuid)
-
-    async def removeVisualReport(self, report: Graphic):
-        if report.uuid not in self._reports:
-            raise AssertionError
-
-        await self.removingReport.emit(report.uuid)
-
-        coredb.CoreDB().removeElement(self.GRAPHICS_PATH + report.xpath())
-
-        del self._reports[report.uuid]
-
-    async def _reportUpdated(self, uuid: UUID):
-        if uuid not in self._reports:
+        if len(newMesh) > 1:  # dynamic mesh does not support multi-region
+            self._dynamicMesh = DynamicMesh()
             return
 
-        report = self._reports[uuid]
+        oldDefaultRegion = list(oldMesh.values())[0]
+        newDefaultRegion = list(newMesh.values())[0]
 
-        await self.reportUpdated.emit(report.uuid)
+        oldBoundaries = bidict(oldDefaultRegion['boundaries'])
+        newBoundaries = bidict(newDefaultRegion['boundaries'])
 
-    def nameDuplicates(self, uuid: UUID, name: str) -> bool:
-        for v in self._reports.values():
-            if v.name == name and v.uuid != uuid:
-                return True
+        oldCellZones  = bidict(oldDefaultRegion['cellZones'])
+        newCellZones  = bidict(newDefaultRegion['cellZones'])
 
-        return False
+        for md in self._dynamicMesh.motionDefinitions:
+            md.processMeshUpdate(oldCellZones, newCellZones)
 
-    def getNewGraphicName(self) -> str:
-        return self._getNewVisualReportName(GRAPHICS_NAME_PREFIX)
+        newMovingBoundaries: list[MovingBoundaryEntry] = []
+        for bcname, bcid in newBoundaries.items():
+            if bcname in oldBoundaries:
+                mb = next(mb for mb in self._dynamicMesh.movingBoundaries if mb.boundary == oldBoundaries[bcname])
+            else:
+                mb = MovingBoundaryEntry(boundary=bcid)
 
-    def _getNewVisualReportName(self, prefix: str) -> str:
-        suffixes = [v.name[len(prefix):] for v in self._reports.values() if v.name.startswith(prefix)]
-        for i in range(1, 1000):
-            if f'-{i}' not in suffixes:
-                return f'{prefix}-{i}'
-        return f'{prefix}-{uuid4()}'
+            newMovingBoundaries.append(mb)
+
+        for mb in newMovingBoundaries:
+            bctype = BoundaryDB.getBoundaryType(mb.boundary)
+            if bctype == BoundaryType.SYMMETRY:
+                mb.pointMotionType = PointMotionType.SYMMETRY
+            elif bctype == BoundaryType.EMPTY:
+                mb.pointMotionType = PointMotionType.EMPTY
+            elif bctype == BoundaryType.WEDGE:
+                mb.pointMotionType = PointMotionType.WEDGE
+            elif bctype == BoundaryType.CYCLIC:
+                mb.pointMotionType = PointMotionType.CYCLIC
+
+        self._dynamicMesh.movingBoundaries = newMovingBoundaries
+
+        for body in self._dynamicMesh.rigidBodyDynamics.bodies:
+            body.processMeshUpdate(oldBoundaries, newBoundaries)
 
 
+# Auto-instantiate the singleton so that event bus connections are established at import time
+_instance = DynamicMeshService()
