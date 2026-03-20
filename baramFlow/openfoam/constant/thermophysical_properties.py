@@ -163,6 +163,8 @@ def _mixtureEquationOfState(spec, db, path):
         data = {
             'rho': rho
         }
+    elif spec == DensitySpecification.PERFECT_GAS:
+        data = None
     elif spec == DensitySpecification.POLYNOMIAL:
         rhoCoeffs: list[float] = [0] * 8  # To make sure that rhoCoeffs has length of 8
         for i, n in enumerate(db.getValue(path + '/density/polynomial').split()):
@@ -176,8 +178,13 @@ def _mixtureEquationOfState(spec, db, path):
         data = {
             'pRef': referencePressure + operatingPressure
         }
-    elif spec == DensitySpecification.PERFECT_GAS:
-        data = None
+    elif spec == DensitySpecification.REAL_GAS_PENG_ROBINSON:
+        data = {
+            'Tc': db.getValue(path + '/criticalTemperature'),
+            'Vc': db.getValue(path + '/criticalSpecificVolume'),
+            'Pc': db.getValue(path + '/criticalPressure'),
+            'omega': db.getValue(path + '/criticalTemperature'),
+        }
     elif spec == DensitySpecification.BOUSSINESQ:
         data = {
             'rho0': db.getValue(path + '/density/boussinesq/rho0'),

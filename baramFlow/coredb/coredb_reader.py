@@ -4,6 +4,7 @@
 from threading import Lock
 
 from PySide6.QtCore import QCoreApplication
+from thermo import PR
 
 from libbaram.math import calucateDirectionsByRotation
 
@@ -221,6 +222,15 @@ class CoreDBReader(_CoreDB):
                 return float(self.getValue(xpath + '/density/boussinesq/rho0'))
             elif spec == DensitySpecification.PERFECT_FLUID:
                 return float(self.getValue(xpath + '/density/perfectFluid/rho0'))
+            elif spec  == DensitySpecification.REAL_GAS_PENG_ROBINSON:
+                eos = PR(Tc=float(self.getValue(xpath + '/criticalTemperature')),
+                         Pc=float(self.getValue(xpath + '/criticalPressure')),
+                         omega=float(self.getValue(xpath + '/acentricFactor')),
+                         T=t, P=p)
+
+                mw = float(self.getValue(xpath + '/molecularWeight'))
+
+                return mw * eos.rho_g / 1000
             else:
                 raise KeyError
 
