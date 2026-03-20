@@ -167,11 +167,11 @@ class ForceDirection:
             angleOfSideslip=e.find('angleOfSideslip', namespaces=nsmap).text)
 
     def toElement(self):
-        return E.forceDirection(E.specificationMethod(self.specificationMethod.value),
-                                self.dragDirection.toElement('dragDirection'),
-                                self.liftDirection.toElement('liftDirection'),
-                                E.angleOfAttack(self.angleOfAttack),
-                                E.angleOfSideslip(self.angleOfSideslip))
+        return E('forceDirection',  E.specificationMethod(self.specificationMethod.value),
+                                    self.dragDirection.toElement('dragDirection'),
+                                    self.liftDirection.toElement('liftDirection'),
+                                    E.angleOfAttack(self.angleOfAttack),
+                                    E.angleOfSideslip(self.angleOfSideslip))
 
 
 @dataclass
@@ -202,16 +202,16 @@ class ForceMonitorConfiguration:
             boundaries=e.find('boundaries', namespaces=nsmap).text.split())
 
     def toElement(self):
-        return E.forceMonitor(E('uuid',             self.monitorBase.uuid),
-                              E('name',             self.monitorBase.name),
-                              E('showChart',        self.monitorBase.showChart),
-                              E('writeInterval',    self.monitorBase.writeInterval),
-                              self.forceDirection.toElement(),
-                              self.pitchAxisDirection.toElement('pitchAxisDirection'),
-                              self.centerOfRotation.toElement('centerOfRotation'),
-                              E('region',           self.region),
-                              E('boundaries',       ' ' .join(self.boundaries)),
-                              E('functionName',     self.monitorBase.functionName))
+        return E('forceMonitor',    E('uuid',          self.monitorBase.uuid),
+                                    E('name',             self.monitorBase.name),
+                                    E('showChart',        self.monitorBase.showChart),
+                                    E('writeInterval',    self.monitorBase.writeInterval),
+                                    self.forceDirection.toElement(),
+                                    self.pitchAxisDirection.toElement('pitchAxisDirection'),
+                                    self.centerOfRotation.toElement('centerOfRotation'),
+                                    E('region',           self.region),
+                                    E('boundaries',       ' ' .join(self.boundaries)),
+                                    E('functionName',     self.monitorBase.functionName))
 
 
 @dataclass
@@ -241,19 +241,19 @@ class PointMonitorConfiguration:
             region=xmlToStr(e.find('region', namespaces=nsmap).text))
 
     def toElement(self):
-        return E.pointMonitor(E('uuid',             self.monitorBase.uuid),
-                              E('name',             self.monitorBase.name),
-                              E('showChart',        self.monitorBase.showChart),
-                              E('writeInterval',    self.monitorBase.writeInterval),
-                              E('fieldCategory',    self.field.field.category),
-                              E('fieldCodeName',    self.field.field.codeName),
-                              E('fieldComponent',   str(self.field.component)),
-                              E('interval',         self.interval),
-                              self.coordinate.toElement('coordinate'),
-                              E('snapOntoBoundary', self.snapOntoBoundary != '0'),
-                              E('boundary',         self.snapOntoBoundary),
-                              E('region',           self.region),
-                              E('functionName',     self.monitorBase.functionName))
+        return E('pointMonitor',    E('uuid',             self.monitorBase.uuid),
+                                    E('name',             self.monitorBase.name),
+                                    E('showChart',        self.monitorBase.showChart),
+                                    E('writeInterval',    self.monitorBase.writeInterval),
+                                    E('fieldCategory',    self.field.field.category),
+                                    E('fieldCodeName',    self.field.field.codeName),
+                                    E('fieldComponent',   str(self.field.component)),
+                                    E('interval',         self.interval),
+                                    self.coordinate.toElement('coordinate'),
+                                    E('snapOntoBoundary', self.snapOntoBoundary != '0'),
+                                    E('boundary',         self.snapOntoBoundary),
+                                    E('region',           self.region),
+                                    E('functionName',     self.monitorBase.functionName))
 
 
 @dataclass
@@ -279,16 +279,16 @@ class SurfaceMonitorConfiguration:
                                            surface=e.find('surface', namespaces=nsmap).text)
 
     def toElement(self):
-        return E.surfaceMonitor(E('uuid',           self.monitorBase.uuid),
-                                E('name',           self.monitorBase.name),
-                                E('showChart',      self.monitorBase.showChart),
-                                E('writeInterval',  self.monitorBase.writeInterval),
-                                E('reportType',     self.reportType),
-                                E('fieldCategory',  self.field.field.category),
-                                E('fieldCodeName',  self.field.field.codeName),
-                                E('fieldComponent', str(self.field.component)),
-                                E('surface',        self.surface),
-                                E('functionName',   self.monitorBase.functionName))
+        return E('surfaceMonitor',  E('uuid',           self.monitorBase.uuid),
+                                    E('name',           self.monitorBase.name),
+                                    E('showChart',      self.monitorBase.showChart),
+                                    E('writeInterval',  self.monitorBase.writeInterval),
+                                    E('reportType',     self.reportType),
+                                    E('fieldCategory',  self.field.field.category),
+                                    E('fieldCodeName',  self.field.field.codeName),
+                                    E('fieldComponent', str(self.field.component)),
+                                    E('surface',        self.surface),
+                                    E('functionName',   self.monitorBase.functionName))
 
 
 @dataclass
@@ -314,16 +314,16 @@ class VolumeMonitorConfiguration:
                                           volume=e.find('volume', namespaces=nsmap).text)
 
     def toElement(self):
-        return E.volumeMonitor(E('uuid',            self.monitorBase.uuid),
-                               E('name',            self.monitorBase.name),
-                               E('showChart',       self.monitorBase.showChart),
-                               E('writeInterval',   self.monitorBase.writeInterval),
-                               E('reportType',      self.reportType),
-                               E('fieldCategory',   self.field.field.category),
-                               E('fieldCodeName',   self.field.field.codeName),
-                               E('fieldComponent',  str(self.field.component)),
-                               E('volume',          self.volume),
-                               E('functionName',    self.monitorBase.functionName))
+        return E('volumeMonitor',   E('uuid',            self.monitorBase.uuid),
+                                    E('name',            self.monitorBase.name),
+                                    E('showChart',       self.monitorBase.showChart),
+                                    E('writeInterval',   self.monitorBase.writeInterval),
+                                    E('reportType',      self.reportType),
+                                    E('fieldCategory',   self.field.field.category),
+                                    E('fieldCodeName',   self.field.field.codeName),
+                                    E('fieldComponent',  str(self.field.component)),
+                                    E('volume',          self.volume),
+                                    E('functionName',    self.monitorBase.functionName))
 
 
 class MonitorManager:
@@ -380,19 +380,19 @@ class MonitorManager:
         return VolumeMonitorConfiguration.new()
 
     @staticmethod
-    def addForceMonitor(data):
+    def addForceMonitor(data: ForceMonitorConfiguration):
         CoreDB().addElement(FORCE_MONITORS_XPATH, data.toElement())
 
     @staticmethod
-    def addPointMonitor(data):
+    def addPointMonitor(data: PointMonitorConfiguration):
         CoreDB().addElement(POINT_MONITORS_XPATH, data.toElement())
 
     @staticmethod
-    def addSurfaceMonitor(data):
+    def addSurfaceMonitor(data:SurfaceMonitorConfiguration):
         CoreDB().addElement(SURFACE_MONITORS_XPATH, data.toElement())
 
     @staticmethod
-    def addVolumeMonitor(data):
+    def addVolumeMonitor(data: VolumeMonitorConfiguration):
         CoreDB().addElement(VOLUME_MONITORS_XPATH, data.toElement())
 
     @staticmethod
