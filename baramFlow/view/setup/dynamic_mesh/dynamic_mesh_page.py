@@ -135,8 +135,12 @@ class DynamicMeshPage(ContentPage):
 
     def _addMotionDefinition(self):
         order = len(self._dynamicMesh.motionDefinitions) + 1
-        md = MotionDefinition(name=f'Motion-{order}', order=order)
-        dialog = MotionDefinitionDialog(self, md)
+        existingNames = {md.name for md in self._dynamicMesh.motionDefinitions}
+        n = order
+        while f'Motion-{n}' in existingNames:
+            n += 1
+        md = MotionDefinition(name=f'Motion-{n}', order=order)
+        dialog = MotionDefinitionDialog(self, md, existingNames)
         if dialog.exec():
             self._dynamicMesh.motionDefinitions.append(md)
             self._addMdItem(md)
@@ -182,7 +186,8 @@ class DynamicMeshPage(ContentPage):
         if row < 0:
             return
         md = self._dynamicMesh.motionDefinitions[row]
-        dialog = MotionDefinitionDialog(self, md)
+        existingNames = {m.name for m in self._dynamicMesh.motionDefinitions if m is not md}
+        dialog = MotionDefinitionDialog(self, md, existingNames)
         if dialog.exec():
             self._updateMotionDefinitions()
 
@@ -291,8 +296,12 @@ class DynamicMeshPage(ContentPage):
         self._ui.removeBodyButton.setEnabled(enabled)
 
     def _addBody(self):
-        body = Body(uuid=uuid4(), name='body', parent=UUID(int=0))
         existingBodies = [(b.uuid, b.name) for b in self._dynamicMesh.rigidBodyDynamics.bodies]
+        existingNames = {b.name for b in self._dynamicMesh.rigidBodyDynamics.bodies}
+        n = len(existingBodies) + 1
+        while f'Body-{n}' in existingNames:
+            n += 1
+        body = Body(uuid=uuid4(), name=f'Body-{n}', parent=UUID(int=0))
         dialog = BodyDialog(self, body, existingBodies)
         if dialog.exec():
             self._dynamicMesh.rigidBodyDynamics.bodies.append(body)
@@ -326,7 +335,7 @@ class DynamicMeshPage(ContentPage):
 
         confirm = await AsyncMessageBox().question(
             self, self.tr('Remove Body'),
-            self.tr('Remove "{}"?').format(body.name))
+            self.tr('Remove "{0}"?').format(body.name))
         if confirm == QMessageBox.StandardButton.Yes:
             del self._dynamicMesh.rigidBodyDynamics.bodies[row]
             self._ui.bodyList.takeItem(row)

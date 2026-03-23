@@ -14,6 +14,7 @@ from baramFlow.base.dynamic_mesh.moving_boundary import (
 )
 from baramFlow.view.setup.dynamic_mesh.motion_functions.motion_function_widget import MotionFunctionWidget, FUNCTION_TYPE_NAMES
 from baramFlow.view.setup.dynamic_mesh.motion_functions.motion_function_dialogs import MOTION_FUNCTION_DIALOGS
+from widgets.async_message_box import AsyncMessageBox
 
 from .point_motion_type_dialog_ui import Ui_PointMotionTypeDialog
 from .point_motion_dialog_ui import Ui_PointMotionDialog
@@ -191,6 +192,11 @@ class PointMotionDialog(QDialog):
 
     @qasync.asyncSlot()
     async def _accept(self):
+        if self._pointMotionType == PointMotionType.PRESCRIBED_MOTION and not self._motionFunctions:
+            await AsyncMessageBox().warning(self, self.tr('Warning'),
+                                            self.tr('At least one motion function must be defined.'))
+            return
+
         for i, mf in enumerate(self._motionFunctions):
             mf.order = i + 1
 

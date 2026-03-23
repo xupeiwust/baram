@@ -15,12 +15,13 @@ from baramFlow.coredb.cell_zone_db import CellZoneDB
 from baramFlow.view.setup.dynamic_mesh.motion_functions.motion_function_widget import MotionFunctionWidget, FUNCTION_TYPE_NAMES
 from baramFlow.view.setup.dynamic_mesh.motion_functions.motion_function_dialogs import MOTION_FUNCTION_DIALOGS
 from baramFlow.view.widgets.multi_selector_dialog import MultiSelectorDialog
+from widgets.async_message_box import AsyncMessageBox
 
 from .motion_definition_dialog_ui import Ui_MotionDefinitionDialog
 
 
 class MotionDefinitionDialog(QDialog):
-    def __init__(self, parent, motionDefinition):
+    def __init__(self, parent, motionDefinition, existingNames=None):
         super().__init__(parent)
 
         self._ui = Ui_MotionDefinitionDialog()
@@ -28,6 +29,7 @@ class MotionDefinitionDialog(QDialog):
 
         self._motionDefinition = motionDefinition
         self._motionFunctions = [deepcopy(mf) for mf in motionDefinition.motionFunctions]
+        self._existingNames = existingNames or set()
 
         self._ui.name.setValidator(QRegularExpressionValidator(QRegularExpression('^[A-Za-z_][A-Za-z0-9_-]*')))
         self._ui.name.setText(motionDefinition.name)
@@ -135,9 +137,20 @@ class MotionDefinitionDialog(QDialog):
 
     @qasync.asyncSlot()
     async def _accept(self):
+        name = self._ui.name.text()
+        if name in self._existingNames:
+            await AsyncMessageBox().warning(self, self.tr('Warning'),
+                                            self.tr('The name "{0}" is already in use.').format(name))
+            return
+
+        if not self._motionFunctions:
+            await AsyncMessageBox().warning(self, self.tr('Warning'),
+                                            self.tr('At least one motion function must be defined.'))
+            return
+
         for i, mf in enumerate(self._motionFunctions):
             mf.order = i + 1
 
-        self._motionDefinition.name = self._ui.name.text()
+        self._motionDefinition.name = name
         self._motionDefinition.motionFunctions = self._motionFunctions
         self.accept()

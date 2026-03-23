@@ -13,6 +13,7 @@ from baramFlow.coredb.boundary_db import BoundaryDB
 from baramFlow.view.setup.dynamic_mesh.rigid_body_dynamics.joint_widget import JointWidget, JOINT_TYPE_NAMES
 from baramFlow.view.setup.dynamic_mesh.rigid_body_dynamics.joint_dialogs import JOINT_DIALOGS
 from baramFlow.view.widgets.multi_selector_dialog import MultiSelectorDialog
+from widgets.async_message_box import AsyncMessageBox
 
 from .body_dialog_ui import Ui_BodyDialog
 
@@ -33,6 +34,7 @@ class BodyDialog(QDialog):
         self._body = body
         self._joints = [deepcopy(j) for j in body.joints]
         self._boundaries = list(body.boundaries)
+        self._existingNames = {bName for bUuid, bName in existingBodies if bUuid != body.uuid}
         self._dialog = None
 
         # Name and Parent
@@ -183,7 +185,18 @@ class BodyDialog(QDialog):
 
     @qasync.asyncSlot()
     async def _accept(self):
-        self._body.name = self._ui.name.text()
+        name = self._ui.name.text()
+        if name in self._existingNames:
+            await AsyncMessageBox().warning(self, self.tr('Warning'),
+                                            self.tr('The name "{0}" is already in use.').format(name))
+            return
+
+        if not self._boundaries:
+            await AsyncMessageBox().warning(self, self.tr('Warning'),
+                                            self.tr('At least one boundary must be selected.'))
+            return
+
+        self._body.name = name
         self._body.parent = self._ui.parentCombo.currentData()
 
         self._body.mass = self._ui.mass.text()
