@@ -11,6 +11,7 @@ from bidict import bidict
 from baramFlow.coredb.libdb import E, nsmap
 from baramFlow.base.dynamic_mesh.rigid_body_solver import RigidBodySolver
 from baramFlow.base.dynamic_mesh.restraint import Restraint
+from baramFlow.base.xml_helper import Vector
 
 
 class JointType(Enum):
@@ -23,41 +24,22 @@ class JointType(Enum):
 class Joint:
     jointType: JointType
 
-    directionX: str = '0'
-    directionY: str = '0'
-    directionZ: str = '0'
-
-    axisX: str = '0'
-    axisY: str = '0'
-    axisZ: str = '1'
+    direction: Vector = dataClassField(default_factory=Vector)
+    axis: Vector = dataClassField(default_factory=lambda: Vector('0', '0', '1'))
 
     @classmethod
     def fromElement(cls, e):
         jointType = JointType(e.find('jointType', namespaces=nsmap).text)
+        direction = Vector.fromElement(e.find('direction', namespaces=nsmap))
+        axis = Vector.fromElement(e.find('axis', namespaces=nsmap))
 
-        directionX = e.find('direction/x', namespaces=nsmap).text
-        directionY = e.find('direction/y', namespaces=nsmap).text
-        directionZ = e.find('direction/z', namespaces=nsmap).text
-
-        axisX = e.find('axis/x', namespaces=nsmap).text
-        axisY = e.find('axis/y', namespaces=nsmap).text
-        axisZ = e.find('axis/z', namespaces=nsmap).text
-
-        return Joint(jointType=jointType,
-                     directionX=directionX, directionY=directionY, directionZ=directionZ,
-                     axisX=axisX, axisY=axisY, axisZ=axisZ)
+        return Joint(jointType=jointType, direction=direction, axis=axis)
 
     def toElement(self):
         return E('joint',
                  E('jointType', self.jointType.value),
-                 E('direction',
-                     E('x', self.directionX),
-                     E('y', self.directionY),
-                     E('z', self.directionZ)),
-                 E('axis',
-                     E('x', self.axisX),
-                     E('y', self.axisY),
-                     E('z', self.axisZ)))
+                 self.direction.toElement('direction'),
+                 self.axis.toElement('axis'))
 
 
 @dataclass(kw_only=True)
@@ -68,13 +50,8 @@ class Body:
 
     mass: str = '0'
 
-    centerOfMassX: str = '0'
-    centerOfMassY: str = '0'
-    centerOfMassZ: str = '0'
-
-    centerOfRotationX: str = '0'
-    centerOfRotationY: str = '0'
-    centerOfRotationZ: str = '0'
+    centerOfMass: Vector = dataClassField(default_factory=Vector)
+    centerOfRotation: Vector = dataClassField(default_factory=Vector)
 
     orientation: str = ''
     momentOfInertia: str = ''
@@ -93,13 +70,8 @@ class Body:
 
         mass = e.find('mass', namespaces=nsmap).text
 
-        centerOfMassX = e.find('centerOfMass/x', namespaces=nsmap).text
-        centerOfMassY = e.find('centerOfMass/y', namespaces=nsmap).text
-        centerOfMassZ = e.find('centerOfMass/z', namespaces=nsmap).text
-
-        centerOfRotationX = e.find('centerOfRotation/x', namespaces=nsmap).text
-        centerOfRotationY = e.find('centerOfRotation/y', namespaces=nsmap).text
-        centerOfRotationZ = e.find('centerOfRotation/z', namespaces=nsmap).text
+        centerOfMass = Vector.fromElement(e.find('centerOfMass', namespaces=nsmap))
+        centerOfRotation = Vector.fromElement(e.find('centerOfRotation', namespaces=nsmap))
 
         orientation = e.find('orientation', namespaces=nsmap).text or ''
         momentOfInertia = e.find('momentOfInertia', namespaces=nsmap).text or ''
@@ -117,10 +89,8 @@ class Body:
 
         return Body(uuid=uuid, name=name, parent=parent,
                     mass=mass,
-                    centerOfMassX=centerOfMassX, centerOfMassY=centerOfMassY,
-                    centerOfMassZ=centerOfMassZ,
-                    centerOfRotationX=centerOfRotationX, centerOfRotationY=centerOfRotationY,
-                    centerOfRotationZ=centerOfRotationZ,
+                    centerOfMass=centerOfMass,
+                    centerOfRotation=centerOfRotation,
                     orientation=orientation,
                     momentOfInertia=momentOfInertia,
                     boundaries=boundaries,
@@ -138,14 +108,8 @@ class Body:
                  E('name', self.name),
                  E('parent', str(self.parent)),
                  E('mass', self.mass),
-                 E('centerOfMass',
-                     E('x', self.centerOfMassX),
-                     E('y', self.centerOfMassY),
-                     E('z', self.centerOfMassZ)),
-                 E('centerOfRotation',
-                     E('x', self.centerOfRotationX),
-                     E('y', self.centerOfRotationY),
-                     E('z', self.centerOfRotationZ)),
+                 self.centerOfMass.toElement('centerOfMass'),
+                 self.centerOfRotation.toElement('centerOfRotation'),
                  E('orientation', self.orientation),
                  E('momentOfInertia', self.momentOfInertia),
                  E('boundaries', ' '.join(self.boundaries)),

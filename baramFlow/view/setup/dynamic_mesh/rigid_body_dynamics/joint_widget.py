@@ -20,14 +20,14 @@ REVOLUTE_HINTS = {'1 0 0': 'Roll', '0 1 0': 'Pitch', '0 0 1': 'Yaw'}
 
 def _directionHint(joint: Joint) -> str:
     if joint.jointType == JointType.PRISMATIC:
-        key = f'{joint.directionX} {joint.directionY} {joint.directionZ}'
+        key = f'{joint.direction.x} {joint.direction.y} {joint.direction.z}'
         hint = PRISMATIC_HINTS.get(key, '')
-        vec = f'({joint.directionX}, {joint.directionY}, {joint.directionZ})'
+        vec = str(joint.direction)
         return f'{hint} {vec}'.strip() if hint else vec
     elif joint.jointType == JointType.REVOLUTE:
-        key = f'{joint.axisX} {joint.axisY} {joint.axisZ}'
+        key = f'{joint.axis.x} {joint.axis.y} {joint.axis.z}'
         hint = REVOLUTE_HINTS.get(key, '')
-        vec = f'({joint.axisX}, {joint.axisY}, {joint.axisZ})'
+        vec = str(joint.axis)
         return f'{hint} {vec}'.strip() if hint else vec
     return ''
 

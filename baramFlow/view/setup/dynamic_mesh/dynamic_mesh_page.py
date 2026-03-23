@@ -214,7 +214,7 @@ class DynamicMeshPage(ContentPage):
 
         summary = POINT_MOTION_TYPE_NAMES.get(entry.pointMotionType, '')
         if entry.pointMotionType == PointMotionType.NORMAL:
-            summary = f'Normal ( {entry.normalX}, {entry.normalY}, {entry.normalZ} )'
+            summary = f'Normal {entry.normal}'
         summaryLabel = QLabel(f'<b>{summary}</b>')
 
         layout.addWidget(nameLabel, 1)

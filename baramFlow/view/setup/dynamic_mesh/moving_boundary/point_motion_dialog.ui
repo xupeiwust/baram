@@ -91,19 +91,7 @@
            </widget>
           </item>
           <item row="0" column="1">
-           <widget class="QWidget" name="normalVectorWidget" native="true">
-            <layout class="QHBoxLayout" name="normalVectorLayout">
-             <item>
-              <widget class="QLineEdit" name="normalX"/>
-             </item>
-             <item>
-              <widget class="QLineEdit" name="normalY"/>
-             </item>
-             <item>
-              <widget class="QLineEdit" name="normalZ"/>
-             </item>
-            </layout>
-           </widget>
+           <widget class="VectorWidget" name="normal"/>
           </item>
          </layout>
         </widget>
@@ -218,6 +206,13 @@
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>VectorWidget</class>
+   <extends>QWidget</extends>
+   <header>baramFlow.view.widgets.vector_widget</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

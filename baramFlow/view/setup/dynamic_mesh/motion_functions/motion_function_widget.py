@@ -43,7 +43,7 @@ class MotionFunctionWidget(QWidget):
         elif f.functionType == FunctionType.ROTATING_OSCILLATION:
             detail = f'{f.omega} rpm'
         elif f.functionType == FunctionType.LINEAR_TRANSLATION:
-            detail = f'({f.velocityX}, {f.velocityY}, {f.velocityZ}) m/s'
+            detail = f'{f.velocity} m/s'
         elif f.functionType == FunctionType.LINEAR_OSCILLATION:
             detail = f'{f.frequency} Hz'
         elif f.functionType == FunctionType.MANUAL_POSITION:

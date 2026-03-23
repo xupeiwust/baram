@@ -28,19 +28,7 @@
        </widget>
       </item>
       <item row="0" column="1">
-       <widget class="QWidget" name="originWidget" native="true">
-        <layout class="QHBoxLayout" name="originLayout">
-         <item>
-          <widget class="QLineEdit" name="originX"/>
-         </item>
-         <item>
-          <widget class="QLineEdit" name="originY"/>
-         </item>
-         <item>
-          <widget class="QLineEdit" name="originZ"/>
-         </item>
-        </layout>
-       </widget>
+       <widget class="VectorWidget" name="origin"/>
       </item>
       <item row="1" column="0">
        <widget class="QLabel" name="axisLabel">
@@ -50,19 +38,7 @@
        </widget>
       </item>
       <item row="1" column="1">
-       <widget class="QWidget" name="axisWidget" native="true">
-        <layout class="QHBoxLayout" name="axisLayout">
-         <item>
-          <widget class="QLineEdit" name="axisX"/>
-         </item>
-         <item>
-          <widget class="QLineEdit" name="axisY"/>
-         </item>
-         <item>
-          <widget class="QLineEdit" name="axisZ"/>
-         </item>
-        </layout>
-       </widget>
+       <widget class="VectorWidget" name="axis"/>
       </item>
       <item row="2" column="0">
        <widget class="QLabel" name="speedLabel">
@@ -86,6 +62,13 @@
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>VectorWidget</class>
+   <extends>QWidget</extends>
+   <header>baramFlow.view.widgets.vector_widget</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

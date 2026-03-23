@@ -28,19 +28,7 @@
        </widget>
       </item>
       <item row="0" column="1">
-       <widget class="QWidget" name="attachmentPointWidget" native="true">
-        <layout class="QHBoxLayout" name="attachmentPointLayout">
-         <item>
-          <widget class="QLineEdit" name="attachmentPointX"/>
-         </item>
-         <item>
-          <widget class="QLineEdit" name="attachmentPointY"/>
-         </item>
-         <item>
-          <widget class="QLineEdit" name="attachmentPointZ"/>
-         </item>
-        </layout>
-       </widget>
+       <widget class="VectorWidget" name="attachmentPoint"/>
       </item>
       <item row="1" column="0">
        <widget class="QLabel" name="anchorPointLabel">
@@ -50,19 +38,7 @@
        </widget>
       </item>
       <item row="1" column="1">
-       <widget class="QWidget" name="anchorPointWidget" native="true">
-        <layout class="QHBoxLayout" name="anchorPointLayout">
-         <item>
-          <widget class="QLineEdit" name="anchorPointX"/>
-         </item>
-         <item>
-          <widget class="QLineEdit" name="anchorPointY"/>
-         </item>
-         <item>
-          <widget class="QLineEdit" name="anchorPointZ"/>
-         </item>
-        </layout>
-       </widget>
+       <widget class="VectorWidget" name="anchorPoint"/>
       </item>
       <item row="2" column="0">
        <widget class="QLabel" name="restLengthLabel">
@@ -106,6 +82,13 @@
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>VectorWidget</class>
+   <extends>QWidget</extends>
+   <header>baramFlow.view.widgets.vector_widget</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

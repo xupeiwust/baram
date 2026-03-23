@@ -12,6 +12,7 @@ from baramFlow.base.dynamic_mesh.rigid_body_solver import RigidBodySolver
 from baramFlow.base.dynamic_mesh.restraint import (
     Restraint,
 )
+from baramFlow.base.xml_helper import Vector
 
 
 class PointMotionType(Enum):
@@ -44,13 +45,8 @@ class RotationalConstraintType(Enum):
 class RigidBodyMotion:
     mass: str = '0'
 
-    centerOfMassX: str = '0'
-    centerOfMassY: str = '0'
-    centerOfMassZ: str = '0'
-
-    centerOfRotationX: str = '0'
-    centerOfRotationY: str = '0'
-    centerOfRotationZ: str = '0'
+    centerOfMass: Vector = dataClassField(default_factory=Vector)
+    centerOfRotation: Vector = dataClassField(default_factory=Vector)
 
     orientation: str = ''
     momentOfInertia: str = ''
@@ -58,17 +54,9 @@ class RigidBodyMotion:
     translationalConstraintType: TranslationalConstraintType = TranslationalConstraintType.FREE
     rotationalConstraintType: RotationalConstraintType = RotationalConstraintType.FREE
 
-    directionX: str = '0'
-    directionY: str = '0'
-    directionZ: str = '0'
-
-    normalX: str = '0'
-    normalY: str = '0'
-    normalZ: str = '0'
-
-    axisX: str = '0'
-    axisY: str = '0'
-    axisZ: str = '1'
+    direction: Vector = dataClassField(default_factory=Vector)
+    normal: Vector = dataClassField(default_factory=Vector)
+    axis: Vector = dataClassField(default_factory=lambda: Vector('0', '0', '1'))
 
     limitAngle: bool = False
     clockwise: str = '0'
@@ -84,13 +72,8 @@ class RigidBodyMotion:
     def fromElement(cls, e):
         mass = e.find('mass', namespaces=nsmap).text
 
-        centerOfMassX = e.find('centerOfMass/x', namespaces=nsmap).text
-        centerOfMassY = e.find('centerOfMass/y', namespaces=nsmap).text
-        centerOfMassZ = e.find('centerOfMass/z', namespaces=nsmap).text
-
-        centerOfRotationX = e.find('centerOfRotation/x', namespaces=nsmap).text
-        centerOfRotationY = e.find('centerOfRotation/y', namespaces=nsmap).text
-        centerOfRotationZ = e.find('centerOfRotation/z', namespaces=nsmap).text
+        centerOfMass = Vector.fromElement(e.find('centerOfMass', namespaces=nsmap))
+        centerOfRotation = Vector.fromElement(e.find('centerOfRotation', namespaces=nsmap))
 
         orientation = e.find('orientation', namespaces=nsmap).text or ''
         momentOfInertia = e.find('momentOfInertia', namespaces=nsmap).text or ''
@@ -100,17 +83,9 @@ class RigidBodyMotion:
         rotationalConstraintType = RotationalConstraintType(
             e.find('rotationalConstraintType', namespaces=nsmap).text)
 
-        directionX = e.find('direction/x', namespaces=nsmap).text
-        directionY = e.find('direction/y', namespaces=nsmap).text
-        directionZ = e.find('direction/z', namespaces=nsmap).text
-
-        normalX = e.find('normal/x', namespaces=nsmap).text
-        normalY = e.find('normal/y', namespaces=nsmap).text
-        normalZ = e.find('normal/z', namespaces=nsmap).text
-
-        axisX = e.find('axis/x', namespaces=nsmap).text
-        axisY = e.find('axis/y', namespaces=nsmap).text
-        axisZ = e.find('axis/z', namespaces=nsmap).text
+        direction = Vector.fromElement(e.find('direction', namespaces=nsmap))
+        normal = Vector.fromElement(e.find('normal', namespaces=nsmap))
+        axis = Vector.fromElement(e.find('axis', namespaces=nsmap))
 
         limitAngle = e.find('limitAngle', namespaces=nsmap).text == 'true'
         clockwise = e.find('clockwise', namespaces=nsmap).text
@@ -128,16 +103,15 @@ class RigidBodyMotion:
 
         return RigidBodyMotion(
             mass=mass,
-            centerOfMassX=centerOfMassX, centerOfMassY=centerOfMassY, centerOfMassZ=centerOfMassZ,
-            centerOfRotationX=centerOfRotationX, centerOfRotationY=centerOfRotationY,
-            centerOfRotationZ=centerOfRotationZ,
+            centerOfMass=centerOfMass,
+            centerOfRotation=centerOfRotation,
             orientation=orientation,
             momentOfInertia=momentOfInertia,
             translationalConstraintType=translationalConstraintType,
             rotationalConstraintType=rotationalConstraintType,
-            directionX=directionX, directionY=directionY, directionZ=directionZ,
-            normalX=normalX, normalY=normalY, normalZ=normalZ,
-            axisX=axisX, axisY=axisY, axisZ=axisZ,
+            direction=direction,
+            normal=normal,
+            axis=axis,
             limitAngle=limitAngle,
             clockwise=clockwise, counterclockwise=counterclockwise,
             restraints=restraints, solver=solver,
@@ -147,30 +121,15 @@ class RigidBodyMotion:
     def toElement(self):
         return E('rigidBodyMotion',
                  E('mass', self.mass),
-                 E('centerOfMass',
-                     E('x', self.centerOfMassX),
-                     E('y', self.centerOfMassY),
-                     E('z', self.centerOfMassZ)),
-                 E('centerOfRotation',
-                     E('x', self.centerOfRotationX),
-                     E('y', self.centerOfRotationY),
-                     E('z', self.centerOfRotationZ)),
+                 self.centerOfMass.toElement('centerOfMass'),
+                 self.centerOfRotation.toElement('centerOfRotation'),
                  E('orientation', self.orientation),
                  E('momentOfInertia', self.momentOfInertia),
                  E('translationalConstraintType', self.translationalConstraintType.value),
                  E('rotationalConstraintType', self.rotationalConstraintType.value),
-                 E('direction',
-                     E('x', self.directionX),
-                     E('y', self.directionY),
-                     E('z', self.directionZ)),
-                 E('normal',
-                     E('x', self.normalX),
-                     E('y', self.normalY),
-                     E('z', self.normalZ)),
-                 E('axis',
-                     E('x', self.axisX),
-                     E('y', self.axisY),
-                     E('z', self.axisZ)),
+                 self.direction.toElement('direction'),
+                 self.normal.toElement('normal'),
+                 self.axis.toElement('axis'),
                  E('limitAngle', self.limitAngle),
                  E('clockwise', self.clockwise),
                  E('counterclockwise', self.counterclockwise),
@@ -186,9 +145,7 @@ class MovingBoundaryEntry:
     boundary: str = '0'
     pointMotionType: PointMotionType = PointMotionType.FIXED
 
-    normalX: str = '0'
-    normalY: str = '0'
-    normalZ: str = '0'
+    normal: Vector = dataClassField(default_factory=Vector)
 
     motionFunctions: list[MotionFunction] = dataClassField(default_factory=list)
     rigidBodyMotion: RigidBodyMotion = dataClassField(default_factory=RigidBodyMotion)
@@ -199,9 +156,7 @@ class MovingBoundaryEntry:
         boundary = e.find('boundary', namespaces=nsmap).text
         pointMotionType = PointMotionType(e.find('pointMotionType', namespaces=nsmap).text)
 
-        normalX = e.find('normal/x', namespaces=nsmap).text
-        normalY = e.find('normal/y', namespaces=nsmap).text
-        normalZ = e.find('normal/z', namespaces=nsmap).text
+        normal = Vector.fromElement(e.find('normal', namespaces=nsmap))
 
         motionFunctions = []
         for fe in e.find('motionFunctions', namespaces=nsmap).findall('motionFunction', namespaces=nsmap):
@@ -213,7 +168,7 @@ class MovingBoundaryEntry:
 
         return MovingBoundaryEntry(
             uuid=uuid, boundary=boundary, pointMotionType=pointMotionType,
-            normalX=normalX, normalY=normalY, normalZ=normalZ,
+            normal=normal,
             motionFunctions=motionFunctions,
             rigidBodyMotion=rigidBodyMotion)
 
@@ -222,9 +177,6 @@ class MovingBoundaryEntry:
                  E('uuid', str(self.uuid)),
                  E('boundary', self.boundary),
                  E('pointMotionType', self.pointMotionType.value),
-                 E('normal',
-                     E('x', self.normalX),
-                     E('y', self.normalY),
-                     E('z', self.normalZ)),
+                 self.normal.toElement('normal'),
                  E('motionFunctions', *[f.toElement() for f in self.motionFunctions]),
                  self.rigidBodyMotion.toElement())

@@ -85,9 +85,7 @@ class PointMotionDialog(QDialog):
         self._rigidBodyMotion = deepcopy(entry.rigidBodyMotion)
 
         # Normal vector
-        self._ui.normalX.setText(entry.normalX)
-        self._ui.normalY.setText(entry.normalY)
-        self._ui.normalZ.setText(entry.normalZ)
+        self._ui.normal.setVector(entry.normal)
 
         # Add motion function menu
         addMenu = QMenu(self._ui.addMfButton)
@@ -201,9 +199,7 @@ class PointMotionDialog(QDialog):
             mf.order = i + 1
 
         self._entry.pointMotionType = self._pointMotionType
-        self._entry.normalX = self._ui.normalX.text()
-        self._entry.normalY = self._ui.normalY.text()
-        self._entry.normalZ = self._ui.normalZ.text()
+        self._entry.normal = self._ui.normal.vector('Normal')
         self._entry.motionFunctions = self._motionFunctions
         self._entry.rigidBodyMotion = self._rigidBodyMotion
         self.accept()

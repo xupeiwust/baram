@@ -49,12 +49,8 @@ class BodyDialog(QDialog):
 
         # Mass Properties
         self._ui.mass.setText(body.mass)
-        self._ui.comX.setText(body.centerOfMassX)
-        self._ui.comY.setText(body.centerOfMassY)
-        self._ui.comZ.setText(body.centerOfMassZ)
-        self._ui.corX.setText(body.centerOfRotationX)
-        self._ui.corY.setText(body.centerOfRotationY)
-        self._ui.corZ.setText(body.centerOfRotationZ)
+        self._ui.com.setVector(body.centerOfMass)
+        self._ui.cor.setVector(body.centerOfRotation)
 
         # Orientation Tensor
         oriValues = body.orientation.split() if body.orientation.strip() else ['1','0','0','0','1','0','0','0','1']
@@ -200,12 +196,8 @@ class BodyDialog(QDialog):
         self._body.parent = self._ui.parentCombo.currentData()
 
         self._body.mass = self._ui.mass.text()
-        self._body.centerOfMassX = self._ui.comX.text()
-        self._body.centerOfMassY = self._ui.comY.text()
-        self._body.centerOfMassZ = self._ui.comZ.text()
-        self._body.centerOfRotationX = self._ui.corX.text()
-        self._body.centerOfRotationY = self._ui.corY.text()
-        self._body.centerOfRotationZ = self._ui.corZ.text()
+        self._body.centerOfMass = self._ui.com.vector('Center of Mass')
+        self._body.centerOfRotation = self._ui.cor.vector('Center of Rotation')
 
         oriEdits = [
             [self._ui.ori00, self._ui.ori01, self._ui.ori02],

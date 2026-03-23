@@ -21,12 +21,8 @@ class RotationDialog(QDialog):
         self._ui.setupUi(self)
         self._mf = motionFunction
 
-        self._ui.originX.setText(motionFunction.centerX)
-        self._ui.originY.setText(motionFunction.centerY)
-        self._ui.originZ.setText(motionFunction.centerZ)
-        self._ui.axisX.setText(motionFunction.axisX)
-        self._ui.axisY.setText(motionFunction.axisY)
-        self._ui.axisZ.setText(motionFunction.axisZ)
+        self._ui.origin.setVector(motionFunction.center)
+        self._ui.axis.setVector(motionFunction.axis)
         self._ui.speed.setText(motionFunction.omega)
 
         self._ui.buttonBox.accepted.connect(self._accept)
@@ -34,12 +30,8 @@ class RotationDialog(QDialog):
 
     @qasync.asyncSlot()
     async def _accept(self):
-        self._mf.centerX = self._ui.originX.text()
-        self._mf.centerY = self._ui.originY.text()
-        self._mf.centerZ = self._ui.originZ.text()
-        self._mf.axisX = self._ui.axisX.text()
-        self._mf.axisY = self._ui.axisY.text()
-        self._mf.axisZ = self._ui.axisZ.text()
+        self._mf.center = self._ui.origin.vector('Origin')
+        self._mf.axis = self._ui.axis.vector('Axis')
         self._mf.omega = self._ui.speed.text()
         self.accept()
 
@@ -51,12 +43,8 @@ class RotatingOscillationDialog(QDialog):
         self._ui.setupUi(self)
         self._mf = motionFunction
 
-        self._ui.originX.setText(motionFunction.centerX)
-        self._ui.originY.setText(motionFunction.centerY)
-        self._ui.originZ.setText(motionFunction.centerZ)
-        self._ui.amplitudeX.setText(motionFunction.angularAmplitudeX)
-        self._ui.amplitudeY.setText(motionFunction.angularAmplitudeY)
-        self._ui.amplitudeZ.setText(motionFunction.angularAmplitudeZ)
+        self._ui.origin.setVector(motionFunction.center)
+        self._ui.amplitude.setVector(motionFunction.angularAmplitude)
         self._ui.speed.setText(motionFunction.omega)
 
         self._ui.buttonBox.accepted.connect(self._accept)
@@ -64,12 +52,8 @@ class RotatingOscillationDialog(QDialog):
 
     @qasync.asyncSlot()
     async def _accept(self):
-        self._mf.centerX = self._ui.originX.text()
-        self._mf.centerY = self._ui.originY.text()
-        self._mf.centerZ = self._ui.originZ.text()
-        self._mf.angularAmplitudeX = self._ui.amplitudeX.text()
-        self._mf.angularAmplitudeY = self._ui.amplitudeY.text()
-        self._mf.angularAmplitudeZ = self._ui.amplitudeZ.text()
+        self._mf.center = self._ui.origin.vector('Origin')
+        self._mf.angularAmplitude = self._ui.amplitude.vector('Amplitude')
         self._mf.omega = self._ui.speed.text()
         self.accept()
 
@@ -81,18 +65,14 @@ class LinearTranslationDialog(QDialog):
         self._ui.setupUi(self)
         self._mf = motionFunction
 
-        self._ui.velocityX.setText(motionFunction.velocityX)
-        self._ui.velocityY.setText(motionFunction.velocityY)
-        self._ui.velocityZ.setText(motionFunction.velocityZ)
+        self._ui.velocity.setVector(motionFunction.velocity)
 
         self._ui.buttonBox.accepted.connect(self._accept)
         self._ui.buttonBox.rejected.connect(self.reject)
 
     @qasync.asyncSlot()
     async def _accept(self):
-        self._mf.velocityX = self._ui.velocityX.text()
-        self._mf.velocityY = self._ui.velocityY.text()
-        self._mf.velocityZ = self._ui.velocityZ.text()
+        self._mf.velocity = self._ui.velocity.vector('Velocity')
         self.accept()
 
 
@@ -103,9 +83,7 @@ class LinearOscillationDialog(QDialog):
         self._ui.setupUi(self)
         self._mf = motionFunction
 
-        self._ui.amplitudeX.setText(motionFunction.linearAmplitudeX)
-        self._ui.amplitudeY.setText(motionFunction.linearAmplitudeY)
-        self._ui.amplitudeZ.setText(motionFunction.linearAmplitudeZ)
+        self._ui.amplitude.setVector(motionFunction.linearAmplitude)
         self._ui.frequency.setText(motionFunction.frequency)
 
         self._ui.buttonBox.accepted.connect(self._accept)
@@ -113,9 +91,7 @@ class LinearOscillationDialog(QDialog):
 
     @qasync.asyncSlot()
     async def _accept(self):
-        self._mf.linearAmplitudeX = self._ui.amplitudeX.text()
-        self._mf.linearAmplitudeY = self._ui.amplitudeY.text()
-        self._mf.linearAmplitudeZ = self._ui.amplitudeZ.text()
+        self._mf.linearAmplitude = self._ui.amplitude.vector('Amplitude')
         self._mf.frequency = self._ui.frequency.text()
         self.accept()
 
@@ -127,18 +103,14 @@ class ManualPositionDialog(QDialog):
         self._ui.setupUi(self)
         self._mf = motionFunction
 
-        self._ui.cogX.setText(motionFunction.centerX)
-        self._ui.cogY.setText(motionFunction.centerY)
-        self._ui.cogZ.setText(motionFunction.centerZ)
+        self._ui.cog.setVector(motionFunction.center)
 
         self._ui.buttonBox.accepted.connect(self._accept)
         self._ui.buttonBox.rejected.connect(self.reject)
 
     @qasync.asyncSlot()
     async def _accept(self):
-        self._mf.centerX = self._ui.cogX.text()
-        self._mf.centerY = self._ui.cogY.text()
-        self._mf.centerZ = self._ui.cogZ.text()
+        self._mf.center = self._ui.cog.vector('Center of Gravity')
         self.accept()
 
 

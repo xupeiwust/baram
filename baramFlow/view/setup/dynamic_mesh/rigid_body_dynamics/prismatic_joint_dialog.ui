@@ -25,19 +25,7 @@
        </widget>
       </item>
       <item row="0" column="1">
-       <widget class="QWidget" name="directionWidget" native="true">
-        <layout class="QHBoxLayout" name="directionLayout">
-         <item>
-          <widget class="QLineEdit" name="directionX"/>
-         </item>
-         <item>
-          <widget class="QLineEdit" name="directionY"/>
-         </item>
-         <item>
-          <widget class="QLineEdit" name="directionZ"/>
-         </item>
-        </layout>
-       </widget>
+       <widget class="VectorWidget" name="direction"/>
       </item>
      </layout>
     </widget>
@@ -51,6 +39,13 @@
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>VectorWidget</class>
+   <extends>QWidget</extends>
+   <header>baramFlow.view.widgets.vector_widget</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

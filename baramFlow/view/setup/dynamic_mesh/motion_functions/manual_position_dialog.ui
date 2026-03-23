@@ -28,19 +28,7 @@
        </widget>
       </item>
       <item row="0" column="1">
-       <widget class="QWidget" name="cogWidget" native="true">
-        <layout class="QHBoxLayout" name="cogLayout">
-         <item>
-          <widget class="QLineEdit" name="cogX"/>
-         </item>
-         <item>
-          <widget class="QLineEdit" name="cogY"/>
-         </item>
-         <item>
-          <widget class="QLineEdit" name="cogZ"/>
-         </item>
-        </layout>
-       </widget>
+       <widget class="VectorWidget" name="cog"/>
       </item>
       <item row="1" column="0">
        <widget class="QLabel" name="positionsLabel">
@@ -68,6 +56,13 @@
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>VectorWidget</class>
+   <extends>QWidget</extends>
+   <header>baramFlow.view.widgets.vector_widget</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

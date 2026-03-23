@@ -37,12 +37,8 @@ class TranslationalSpringDialog(QDialog):
         self._ui.setupUi(self)
         self._restraint = restraint
 
-        self._ui.attachmentPointX.setText(restraint.attachmentPointX)
-        self._ui.attachmentPointY.setText(restraint.attachmentPointY)
-        self._ui.attachmentPointZ.setText(restraint.attachmentPointZ)
-        self._ui.anchorPointX.setText(restraint.anchorPointX)
-        self._ui.anchorPointY.setText(restraint.anchorPointY)
-        self._ui.anchorPointZ.setText(restraint.anchorPointZ)
+        self._ui.attachmentPoint.setVector(restraint.attachmentPoint)
+        self._ui.anchorPoint.setVector(restraint.anchorPoint)
         self._ui.restLength.setText(restraint.restLength)
         self._ui.springConstant.setText(restraint.springConstant)
         self._ui.dampingConstant.setText(restraint.dampingConstant)
@@ -52,12 +48,8 @@ class TranslationalSpringDialog(QDialog):
 
     @qasync.asyncSlot()
     async def _accept(self):
-        self._restraint.attachmentPointX = self._ui.attachmentPointX.text()
-        self._restraint.attachmentPointY = self._ui.attachmentPointY.text()
-        self._restraint.attachmentPointZ = self._ui.attachmentPointZ.text()
-        self._restraint.anchorPointX = self._ui.anchorPointX.text()
-        self._restraint.anchorPointY = self._ui.anchorPointY.text()
-        self._restraint.anchorPointZ = self._ui.anchorPointZ.text()
+        self._restraint.attachmentPoint = self._ui.attachmentPoint.vector('Attachment Point')
+        self._restraint.anchorPoint = self._ui.anchorPoint.vector('Anchor Point')
         self._restraint.restLength = self._ui.restLength.text()
         self._restraint.springConstant = self._ui.springConstant.text()
         self._restraint.dampingConstant = self._ui.dampingConstant.text()
@@ -71,9 +63,7 @@ class RotationalSpringDialog(QDialog):
         self._ui.setupUi(self)
         self._restraint = restraint
 
-        self._ui.axisX.setText(restraint.axisX)
-        self._ui.axisY.setText(restraint.axisY)
-        self._ui.axisZ.setText(restraint.axisZ)
+        self._ui.axis.setVector(restraint.axis)
         self._ui.springConstant.setText(restraint.springConstant)
         self._ui.dampingConstant.setText(restraint.dampingConstant)
 
@@ -82,9 +72,7 @@ class RotationalSpringDialog(QDialog):
 
     @qasync.asyncSlot()
     async def _accept(self):
-        self._restraint.axisX = self._ui.axisX.text()
-        self._restraint.axisY = self._ui.axisY.text()
-        self._restraint.axisZ = self._ui.axisZ.text()
+        self._restraint.axis = self._ui.axis.vector('Axis')
         self._restraint.springConstant = self._ui.springConstant.text()
         self._restraint.dampingConstant = self._ui.dampingConstant.text()
         self.accept()

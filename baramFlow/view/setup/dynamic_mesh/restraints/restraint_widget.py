@@ -40,4 +40,4 @@ class RestraintWidget(QWidget):
         elif r.restraintType == RestraintType.TRANSLATIONAL_SPRING:
             self._ui.detailLabel.setText(f'{r.restLength} m')
         elif r.restraintType == RestraintType.ROTATIONAL_SPRING:
-            self._ui.detailLabel.setText(f'({r.axisX}, {r.axisY}, {r.axisZ})')
+            self._ui.detailLabel.setText(str(r.axis))
