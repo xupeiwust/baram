@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>700</width>
-    <height>600</height>
+    <height>726</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -22,28 +22,28 @@
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
     <widget class="QWidget" name="topFormWidget" native="true">
-    <layout class="QFormLayout" name="topFormLayout">
-     <item row="0" column="0">
-      <widget class="QLabel" name="nameLabel">
-       <property name="text">
-        <string>Name</string>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="1">
-      <widget class="QLineEdit" name="name"/>
-     </item>
-     <item row="1" column="0">
-      <widget class="QLabel" name="parentLabel">
-       <property name="text">
-        <string>Parent</string>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="1">
-      <widget class="PythonComboBox" name="parentCombo"/>
-     </item>
-    </layout>
+     <layout class="QFormLayout" name="topFormLayout">
+      <item row="0" column="0">
+       <widget class="QLabel" name="nameLabel">
+        <property name="text">
+         <string>Name</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QLineEdit" name="name"/>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="parentLabel">
+        <property name="text">
+         <string>Parent</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="PythonComboBox" name="parentCombo"/>
+      </item>
+     </layout>
     </widget>
    </item>
    <item>
@@ -71,17 +71,17 @@
       </item>
       <item row="1" column="1">
        <widget class="QWidget" name="comWidget" native="true">
-       <layout class="QHBoxLayout" name="comLayout">
-        <item>
-         <widget class="QLineEdit" name="comX"/>
-        </item>
-        <item>
-         <widget class="QLineEdit" name="comY"/>
-        </item>
-        <item>
-         <widget class="QLineEdit" name="comZ"/>
-        </item>
-       </layout>
+        <layout class="QHBoxLayout" name="comLayout">
+         <item>
+          <widget class="QLineEdit" name="comX"/>
+         </item>
+         <item>
+          <widget class="QLineEdit" name="comY"/>
+         </item>
+         <item>
+          <widget class="QLineEdit" name="comZ"/>
+         </item>
+        </layout>
        </widget>
       </item>
       <item row="2" column="0">
@@ -93,17 +93,17 @@
       </item>
       <item row="2" column="1">
        <widget class="QWidget" name="corWidget" native="true">
-       <layout class="QHBoxLayout" name="corLayout">
-        <item>
-         <widget class="QLineEdit" name="corX"/>
-        </item>
-        <item>
-         <widget class="QLineEdit" name="corY"/>
-        </item>
-        <item>
-         <widget class="QLineEdit" name="corZ"/>
-        </item>
-       </layout>
+        <layout class="QHBoxLayout" name="corLayout">
+         <item>
+          <widget class="QLineEdit" name="corX"/>
+         </item>
+         <item>
+          <widget class="QLineEdit" name="corY"/>
+         </item>
+         <item>
+          <widget class="QLineEdit" name="corZ"/>
+         </item>
+        </layout>
        </widget>
       </item>
      </layout>
@@ -111,269 +111,269 @@
    </item>
    <item>
     <widget class="QWidget" name="tensorWidget" native="true">
-    <layout class="QHBoxLayout" name="tensorLayout">
-     <item>
-      <widget class="QGroupBox" name="orientationGroup">
-       <property name="title">
-        <string>Orientation (Rotation Tensor)</string>
-       </property>
-       <layout class="QGridLayout" name="orientationGrid">
-        <item row="0" column="0">
-         <widget class="QLineEdit" name="ori00"/>
-        </item>
-        <item row="0" column="1">
-         <widget class="QLineEdit" name="ori01"/>
-        </item>
-        <item row="0" column="2">
-         <widget class="QLineEdit" name="ori02"/>
-        </item>
-        <item row="1" column="0">
-         <widget class="QLineEdit" name="ori10"/>
-        </item>
-        <item row="1" column="1">
-         <widget class="QLineEdit" name="ori11"/>
-        </item>
-        <item row="1" column="2">
-         <widget class="QLineEdit" name="ori12"/>
-        </item>
-        <item row="2" column="0">
-         <widget class="QLineEdit" name="ori20"/>
-        </item>
-        <item row="2" column="1">
-         <widget class="QLineEdit" name="ori21"/>
-        </item>
-        <item row="2" column="2">
-         <widget class="QLineEdit" name="ori22"/>
-        </item>
-       </layout>
-      </widget>
-     </item>
-     <item>
-      <widget class="QGroupBox" name="moiGroup">
-       <property name="title">
-        <string>Moment of Inertia Tensor</string>
-       </property>
-       <layout class="QGridLayout" name="moiGrid">
-        <item row="0" column="0">
-         <widget class="QLabel" name="moiLabelIxx">
-          <property name="styleSheet">
-           <string notr="true">color:grey; font-size:8pt</string>
-          </property>
-          <property name="text">
-           <string>Ixx</string>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="1">
-         <widget class="QLabel" name="moiLabelIxy">
-          <property name="styleSheet">
-           <string notr="true">color:grey; font-size:8pt</string>
-          </property>
-          <property name="text">
-           <string>Ixy</string>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="2">
-         <widget class="QLabel" name="moiLabelIxz">
-          <property name="styleSheet">
-           <string notr="true">color:grey; font-size:8pt</string>
-          </property>
-          <property name="text">
-           <string>Ixz</string>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="0">
-         <widget class="QLineEdit" name="moi00"/>
-        </item>
-        <item row="1" column="1">
-         <widget class="QLineEdit" name="moi01"/>
-        </item>
-        <item row="1" column="2">
-         <widget class="QLineEdit" name="moi02"/>
-        </item>
-        <item row="2" column="0">
-         <widget class="QLabel" name="moiLabelIyx">
-          <property name="styleSheet">
-           <string notr="true">color:grey; font-size:8pt</string>
-          </property>
-          <property name="text">
-           <string>Iyx</string>
-          </property>
-         </widget>
-        </item>
-        <item row="2" column="1">
-         <widget class="QLabel" name="moiLabelIyy">
-          <property name="styleSheet">
-           <string notr="true">color:grey; font-size:8pt</string>
-          </property>
-          <property name="text">
-           <string>Iyy</string>
-          </property>
-         </widget>
-        </item>
-        <item row="2" column="2">
-         <widget class="QLabel" name="moiLabelIyz">
-          <property name="styleSheet">
-           <string notr="true">color:grey; font-size:8pt</string>
-          </property>
-          <property name="text">
-           <string>Iyz</string>
-          </property>
-         </widget>
-        </item>
-        <item row="3" column="0">
-         <widget class="QLineEdit" name="moi10"/>
-        </item>
-        <item row="3" column="1">
-         <widget class="QLineEdit" name="moi11"/>
-        </item>
-        <item row="3" column="2">
-         <widget class="QLineEdit" name="moi12"/>
-        </item>
-        <item row="4" column="0">
-         <widget class="QLabel" name="moiLabelIzx">
-          <property name="styleSheet">
-           <string notr="true">color:grey; font-size:8pt</string>
-          </property>
-          <property name="text">
-           <string>Izx</string>
-          </property>
-         </widget>
-        </item>
-        <item row="4" column="1">
-         <widget class="QLabel" name="moiLabelIzy">
-          <property name="styleSheet">
-           <string notr="true">color:grey; font-size:8pt</string>
-          </property>
-          <property name="text">
-           <string>Izy</string>
-          </property>
-         </widget>
-        </item>
-        <item row="4" column="2">
-         <widget class="QLabel" name="moiLabelIzz">
-          <property name="styleSheet">
-           <string notr="true">color:grey; font-size:8pt</string>
-          </property>
-          <property name="text">
-           <string>Izz</string>
-          </property>
-         </widget>
-        </item>
-        <item row="5" column="0">
-         <widget class="QLineEdit" name="moi20"/>
-        </item>
-        <item row="5" column="1">
-         <widget class="QLineEdit" name="moi21"/>
-        </item>
-        <item row="5" column="2">
-         <widget class="QLineEdit" name="moi22"/>
-        </item>
-       </layout>
-      </widget>
-     </item>
-    </layout>
+     <layout class="QHBoxLayout" name="tensorLayout">
+      <item>
+       <widget class="QGroupBox" name="orientationGroup">
+        <property name="title">
+         <string>Orientation (Rotation Tensor)</string>
+        </property>
+        <layout class="QGridLayout" name="orientationGrid">
+         <item row="0" column="0">
+          <widget class="QLineEdit" name="ori00"/>
+         </item>
+         <item row="0" column="1">
+          <widget class="QLineEdit" name="ori01"/>
+         </item>
+         <item row="0" column="2">
+          <widget class="QLineEdit" name="ori02"/>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLineEdit" name="ori10"/>
+         </item>
+         <item row="1" column="1">
+          <widget class="QLineEdit" name="ori11"/>
+         </item>
+         <item row="1" column="2">
+          <widget class="QLineEdit" name="ori12"/>
+         </item>
+         <item row="2" column="0">
+          <widget class="QLineEdit" name="ori20"/>
+         </item>
+         <item row="2" column="1">
+          <widget class="QLineEdit" name="ori21"/>
+         </item>
+         <item row="2" column="2">
+          <widget class="QLineEdit" name="ori22"/>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item>
+       <widget class="QGroupBox" name="moiGroup">
+        <property name="title">
+         <string>Moment of Inertia Tensor (kg•m2)</string>
+        </property>
+        <layout class="QGridLayout" name="moiGrid">
+         <item row="0" column="0">
+          <widget class="QLabel" name="moiLabelIxx">
+           <property name="styleSheet">
+            <string notr="true">color:grey; font-size:8pt</string>
+           </property>
+           <property name="text">
+            <string>Ixx</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QLabel" name="moiLabelIxy">
+           <property name="styleSheet">
+            <string notr="true">color:grey; font-size:8pt</string>
+           </property>
+           <property name="text">
+            <string>Ixy</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="2">
+          <widget class="QLabel" name="moiLabelIxz">
+           <property name="styleSheet">
+            <string notr="true">color:grey; font-size:8pt</string>
+           </property>
+           <property name="text">
+            <string>Ixz</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLineEdit" name="moi00"/>
+         </item>
+         <item row="1" column="1">
+          <widget class="QLineEdit" name="moi01"/>
+         </item>
+         <item row="1" column="2">
+          <widget class="QLineEdit" name="moi02"/>
+         </item>
+         <item row="2" column="0">
+          <widget class="QLabel" name="moiLabelIyx">
+           <property name="styleSheet">
+            <string notr="true">color:grey; font-size:8pt</string>
+           </property>
+           <property name="text">
+            <string>Iyx</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="1">
+          <widget class="QLabel" name="moiLabelIyy">
+           <property name="styleSheet">
+            <string notr="true">color:grey; font-size:8pt</string>
+           </property>
+           <property name="text">
+            <string>Iyy</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="2">
+          <widget class="QLabel" name="moiLabelIyz">
+           <property name="styleSheet">
+            <string notr="true">color:grey; font-size:8pt</string>
+           </property>
+           <property name="text">
+            <string>Iyz</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="0">
+          <widget class="QLineEdit" name="moi10"/>
+         </item>
+         <item row="3" column="1">
+          <widget class="QLineEdit" name="moi11"/>
+         </item>
+         <item row="3" column="2">
+          <widget class="QLineEdit" name="moi12"/>
+         </item>
+         <item row="4" column="0">
+          <widget class="QLabel" name="moiLabelIzx">
+           <property name="styleSheet">
+            <string notr="true">color:grey; font-size:8pt</string>
+           </property>
+           <property name="text">
+            <string>Izx</string>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="1">
+          <widget class="QLabel" name="moiLabelIzy">
+           <property name="styleSheet">
+            <string notr="true">color:grey; font-size:8pt</string>
+           </property>
+           <property name="text">
+            <string>Izy</string>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="2">
+          <widget class="QLabel" name="moiLabelIzz">
+           <property name="styleSheet">
+            <string notr="true">color:grey; font-size:8pt</string>
+           </property>
+           <property name="text">
+            <string>Izz</string>
+           </property>
+          </widget>
+         </item>
+         <item row="5" column="0">
+          <widget class="QLineEdit" name="moi20"/>
+         </item>
+         <item row="5" column="1">
+          <widget class="QLineEdit" name="moi21"/>
+         </item>
+         <item row="5" column="2">
+          <widget class="QLineEdit" name="moi22"/>
+         </item>
+        </layout>
+       </widget>
+      </item>
+     </layout>
     </widget>
    </item>
    <item>
     <widget class="QWidget" name="bottomWidget" native="true">
-    <layout class="QHBoxLayout" name="bottomLayout">
-     <item>
-      <widget class="QGroupBox" name="boundariesGroup">
-       <property name="title">
-        <string>Boundaries</string>
-       </property>
-       <layout class="QVBoxLayout" name="boundariesLayout">
-        <item>
-         <widget class="QPushButton" name="selectBoundariesButton">
-          <property name="text">
-           <string>Select</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QListWidget" name="boundariesList"/>
-        </item>
-       </layout>
-      </widget>
-     </item>
-     <item>
-      <widget class="QGroupBox" name="jointGroup">
-       <property name="title">
-        <string>Joints</string>
-       </property>
-       <layout class="QVBoxLayout" name="jointLayout">
-        <item>
-         <widget class="QListWidget" name="jointList">
-          <property name="contextMenuPolicy">
-           <enum>Qt::CustomContextMenu</enum>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QWidget" name="addJointWidget" native="true">
-         <layout class="QHBoxLayout" name="addJointLayout">
-          <item>
-           <widget class="QToolButton" name="addJointButton">
-            <property name="popupMode">
-             <enum>QToolButton::InstantPopup</enum>
-            </property>
-            <property name="text">
-             <string>Add Joint</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <spacer name="addJointSpacer">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>40</width>
-              <height>20</height>
-             </size>
-            </property>
-           </spacer>
-          </item>
-         </layout>
-         </widget>
-        </item>
-       </layout>
-      </widget>
-     </item>
-     <item>
-      <widget class="QGroupBox" name="deformationGroup">
-       <property name="title">
-        <string>Mesh Deformation Range</string>
-       </property>
-       <layout class="QFormLayout" name="deformationFormLayout">
-        <item row="0" column="0">
-         <widget class="QLabel" name="offsetLabel">
-          <property name="text">
-           <string>Offset from surface (m)</string>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="1">
-         <widget class="QLineEdit" name="deformationOffset"/>
-        </item>
-        <item row="1" column="0">
-         <widget class="QLabel" name="distanceLabel">
-          <property name="text">
-           <string>Outer Distance (m)</string>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="1">
-         <widget class="QLineEdit" name="deformationDistance"/>
-        </item>
-       </layout>
-      </widget>
-     </item>
-    </layout>
+     <layout class="QHBoxLayout" name="bottomLayout">
+      <item>
+       <widget class="QGroupBox" name="boundariesGroup">
+        <property name="title">
+         <string>Boundaries</string>
+        </property>
+        <layout class="QVBoxLayout" name="boundariesLayout">
+         <item>
+          <widget class="QPushButton" name="selectBoundariesButton">
+           <property name="text">
+            <string>Select</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QListWidget" name="boundariesList"/>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item>
+       <widget class="QGroupBox" name="jointGroup">
+        <property name="title">
+         <string>Joints</string>
+        </property>
+        <layout class="QVBoxLayout" name="jointLayout">
+         <item>
+          <widget class="QListWidget" name="jointList">
+           <property name="contextMenuPolicy">
+            <enum>Qt::CustomContextMenu</enum>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QWidget" name="addJointWidget" native="true">
+           <layout class="QHBoxLayout" name="addJointLayout">
+            <item>
+             <widget class="QToolButton" name="addJointButton">
+              <property name="text">
+               <string>Add Joint</string>
+              </property>
+              <property name="popupMode">
+               <enum>QToolButton::InstantPopup</enum>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <spacer name="addJointSpacer">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item>
+       <widget class="QGroupBox" name="deformationGroup">
+        <property name="title">
+         <string>Mesh Deformation Range</string>
+        </property>
+        <layout class="QFormLayout" name="deformationFormLayout">
+         <item row="0" column="0">
+          <widget class="QLabel" name="offsetLabel">
+           <property name="text">
+            <string>Offset from surface (m)</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QLineEdit" name="deformationOffset"/>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="distanceLabel">
+           <property name="text">
+            <string>Outer Distance (m)</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QLineEdit" name="deformationDistance"/>
+         </item>
+        </layout>
+       </widget>
+      </item>
+     </layout>
     </widget>
    </item>
    <item>

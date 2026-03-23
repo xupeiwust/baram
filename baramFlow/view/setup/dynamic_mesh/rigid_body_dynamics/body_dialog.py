@@ -9,8 +9,10 @@ import qasync
 from PySide6.QtWidgets import QDialog, QMenu, QListWidgetItem
 
 from baramFlow.base.dynamic_mesh.rigid_body_dynamics import Body, Joint, JointType
+from baramFlow.coredb.boundary_db import BoundaryDB
 from baramFlow.view.setup.dynamic_mesh.rigid_body_dynamics.joint_widget import JointWidget, JOINT_TYPE_NAMES
 from baramFlow.view.setup.dynamic_mesh.rigid_body_dynamics.joint_dialogs import JOINT_DIALOGS
+from baramFlow.view.widgets.multi_selector_dialog import MultiSelectorDialog
 
 from .body_dialog_ui import Ui_BodyDialog
 
@@ -30,6 +32,8 @@ class BodyDialog(QDialog):
 
         self._body = body
         self._joints = [deepcopy(j) for j in body.joints]
+        self._boundaries = list(body.boundaries)
+        self._dialog = None
 
         # Name and Parent
         self._ui.name.setText(body.name)
@@ -87,13 +91,32 @@ class BodyDialog(QDialog):
             action.triggered.connect(lambda checked=False, jtype=jt: self._addJoint(jtype))
         self._ui.addJointButton.setMenu(jointMenu)
 
+        self._setBoundaries(self._boundaries)
         self._connectSignalsSlots()
         self._loadJoints()
 
     def _connectSignalsSlots(self):
+        self._ui.selectBoundariesButton.clicked.connect(self._selectBoundariesClicked)
         self._ui.jointList.customContextMenuRequested.connect(self._showJointContextMenu)
         self._ui.buttonBox.accepted.connect(self._accept)
         self._ui.buttonBox.rejected.connect(self.reject)
+
+    @qasync.asyncSlot()
+    async def _selectBoundariesClicked(self):
+        boundaries = BoundaryDB.getBoundarySelectorItems()
+        self._dialog = MultiSelectorDialog(self, self.tr("Select Boundaries"), boundaries, self._boundaries)
+        self._dialog.accepted.connect(self._boundariesChanged)
+        self._dialog.open()
+
+    @qasync.asyncSlot()
+    async def _boundariesChanged(self):
+        self._setBoundaries(self._dialog.selectedItems())
+
+    def _setBoundaries(self, boundaries):
+        self._boundaries = boundaries
+        self._ui.boundariesList.clear()
+        for bcid in boundaries:
+            self._ui.boundariesList.addItem(BoundaryDB.getBoundaryText(bcid))
 
     def _loadJoints(self):
         self._ui.jointList.clear()
@@ -193,6 +216,7 @@ class BodyDialog(QDialog):
                 moiValues.append(moiEdits[i][j].text())
         self._body.momentOfInertia = ' '.join(moiValues)
 
+        self._body.boundaries = self._boundaries
         self._body.joints = self._joints
         self._body.deformationOffset = self._ui.deformationOffset.text()
         self._body.deformationDistance = self._ui.deformationDistance.text()

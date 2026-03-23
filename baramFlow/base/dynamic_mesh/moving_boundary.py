@@ -77,8 +77,8 @@ class RigidBodyMotion:
     restraints: list[Restraint] = dataClassField(default_factory=list)
     solver: RigidBodySolver = dataClassField(default_factory=RigidBodySolver)
 
-    accelerationRelaxationFactor: str = '0'
-    accelerationDampingFactor: str = '0'
+    accelerationRelaxationFactor: str = '0.7'
+    accelerationDampingFactor: str = '1.0'
 
     @classmethod
     def fromElement(cls, e):

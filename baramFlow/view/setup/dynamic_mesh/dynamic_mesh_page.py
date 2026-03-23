@@ -5,7 +5,7 @@ from uuid import uuid4, UUID
 
 import qasync
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QSize
 from PySide6.QtWidgets import (QLabel, QListWidgetItem, QMenu, QWidget,
                                 QVBoxLayout, QHBoxLayout, QMessageBox)
 
@@ -152,10 +152,8 @@ class DynamicMeshPage(ContentPage):
         czLabel.setStyleSheet('color:grey')
         layout.addWidget(nameLabel)
         layout.addWidget(czLabel)
-        widget.setFixedHeight(48)
-
         item = QListWidgetItem()
-        item.setSizeHint(widget.size())
+        item.setSizeHint(QSize(0, 48))
         item.setData(Qt.ItemDataRole.UserRole, md.uuid)
         self._ui.mdList.addItem(item)
         self._ui.mdList.setItemWidget(item, widget)
@@ -207,16 +205,18 @@ class DynamicMeshPage(ContentPage):
         layout.setContentsMargins(8, 4, 8, 4)
 
         name = BoundaryDB.getBoundaryName(entry.boundary)
-        nameLabel = QLabel(f'<b>{name}</b>')
-        typeLabel = QLabel(POINT_MOTION_TYPE_NAMES.get(entry.pointMotionType, ''))
-        typeLabel.setStyleSheet('color:grey')
+        nameLabel = QLabel(name)
+
+        summary = POINT_MOTION_TYPE_NAMES.get(entry.pointMotionType, '')
+        if entry.pointMotionType == PointMotionType.NORMAL:
+            summary = f'Normal ( {entry.normalX}, {entry.normalY}, {entry.normalZ} )'
+        summaryLabel = QLabel(f'<b>{summary}</b>')
 
         layout.addWidget(nameLabel, 1)
-        layout.addWidget(typeLabel)
-        widget.setFixedHeight(40)
+        layout.addWidget(summaryLabel)
 
         item = QListWidgetItem()
-        item.setSizeHint(widget.size())
+        item.setSizeHint(QSize(0, 40))
         item.setData(Qt.ItemDataRole.UserRole, entry.uuid)
         self._ui.mbList.addItem(item)
         self._ui.mbList.setItemWidget(item, widget)
@@ -278,13 +278,12 @@ class DynamicMeshPage(ContentPage):
         massLabel.setStyleSheet('color:grey')
         layout.addWidget(nameLabel, 1)
         layout.addWidget(massLabel)
-        widget.setFixedHeight(40)
-
         item = QListWidgetItem()
-        item.setSizeHint(widget.size())
+        item.setSizeHint(QSize(0, 40))
         item.setData(Qt.ItemDataRole.UserRole, body.uuid)
         self._ui.bodyList.addItem(item)
         self._ui.bodyList.setItemWidget(item, widget)
+        self._ui.bodyList.updateGeometry()
 
     def _bodySelected(self):
         enabled = self._ui.bodyList.currentRow() >= 0
@@ -331,6 +330,7 @@ class DynamicMeshPage(ContentPage):
         if confirm == QMessageBox.StandardButton.Yes:
             del self._dynamicMesh.rigidBodyDynamics.bodies[row]
             self._ui.bodyList.takeItem(row)
+            self._ui.bodyList.updateGeometry()
 
     def _addRbdRestraint(self, restraintType: RestraintType):
         order = self._ui.rbdRestraintList.count() + 1
@@ -346,9 +346,10 @@ class DynamicMeshPage(ContentPage):
     def _addRbdRestraintItem(self, restraint: Restraint):
         widget = RestraintWidget(restraint)
         item = QListWidgetItem()
-        item.setSizeHint(widget.size())
+        item.setSizeHint(QSize(0, 48))
         self._ui.rbdRestraintList.addItem(item)
         self._ui.rbdRestraintList.setItemWidget(item, widget)
+        self._ui.rbdRestraintList.updateGeometry()
 
     def _showRbdRestraintMenu(self, pos):
         row = self._ui.rbdRestraintList.currentRow()
@@ -389,3 +390,4 @@ class DynamicMeshPage(ContentPage):
         if row >= 0:
             del self._dynamicMesh.rigidBodyDynamics.restraints[row]
             self._ui.rbdRestraintList.takeItem(row)
+            self._ui.rbdRestraintList.updateGeometry()
