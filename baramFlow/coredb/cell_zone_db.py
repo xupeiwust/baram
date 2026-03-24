@@ -81,6 +81,20 @@ class CellZoneDB:
 
         return items
 
+    @classmethod
+    def getCellZoneOnlySelectorItems(cls):
+        db = coredb.CoreDB()
+
+        items = []
+        for rname in db.getRegions():
+            r = '' if rname == '' else rname + ':'
+            for czid, czname in db.getCellZones(rname):
+                if cls.isRegion(czname):
+                    continue
+                items.append(SelectorItem(f'{r}{czname}', czname, str(czid)))
+
+        return items
+
 def getCellZoneElements(rname=None):
     return coredb.CoreDB().getElements(f'{RegionDB.getXPath(rname)}/cellZones/cellZone')
 
@@ -95,7 +109,7 @@ def copyCellZoneConditions(sourceID, targetID):
     new.set('czid', str(targetID))
     new.find('name', namespaces=xml.nsmap).text = name
     parent.replace(old, new)
-    
+
     if CellZoneDB.isRegion(name):
         sourceRegion = db.getElement(RegionDB.getXPath(CellZoneDB.getCellZoneRegion(sourceID)))
         targetRegion = parent.getparent()

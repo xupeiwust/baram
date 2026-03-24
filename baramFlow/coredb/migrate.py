@@ -11,6 +11,7 @@ from lxml import etree
 import pandas as pd
 
 from baramFlow.coredb.libdb import E
+
 from resources import resource
 
 logger = logging.getLogger(__name__)
@@ -1393,6 +1394,27 @@ def _version_12(root: etree.Element, path):
             p.append(E('functionName',
                        p.find('name', namespaces=_nsmap).text))
 
+    if (p := root.find('dynamicMesh', namespaces=_nsmap)) is None:
+        p = E('dynamicMesh',
+                 E('motionType', 'none'),
+                 E('movingCellZone'),
+                 E('movingBoundary'),  # each boundary will be added later in dynamic mesh service
+                 E('rigidBodyDynamics',
+                    E('rigidBodySolverType',
+                        E('solverType', 'newmark'),
+                        E('velocityIntegrationCoefficient', '0.5'),
+                        E('positionIntegrationCoefficient', '0.25'),
+                        E('offCenteringAccelerationCoefficient', '0.5'),
+                        E('offCenteringVelocityCoefficient', '0.5')
+                    ),
+                    E('accelerationRelaxationFactor', '0.7'),
+                    E('accelerationDampingFactor', '1.0'),
+                    E('bodies'),
+                    E('rigidBodyRestraints')
+                )
+            )
+        index = root.index(root.find('regions', namespaces=_nsmap))
+        root.insert(index + 1, p)
 
 _fTable = [
     None,

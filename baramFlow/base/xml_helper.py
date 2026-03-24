@@ -3,14 +3,15 @@
 
 from dataclasses import dataclass
 
-from baramFlow.coredb.libdb import nsmap, E
+
+from baramFlow.coredb.libdb import E, nsmap
 
 
 @dataclass
 class Vector:
-    x: str
-    y: str
-    z: str
+    x: str = '0'
+    y: str = '0'
+    z: str = '0'
 
     @staticmethod
     def zero():
@@ -36,10 +37,12 @@ class Vector:
 
     def toElement(self, tag):
         return E(tag,
-                 E.x(self.x),
-                 E.y(self.y),
-                 E.z(self.z))
-
+                    E('x', self.x),
+                    E('y', self.y),
+                    E('z', self.z))
 
     def toList(self):
         return [float(self.x), float(self.y), float(self.z)]
+
+    def __str__(self):
+        return f'({self.x}, {self.y}, {self.z})'

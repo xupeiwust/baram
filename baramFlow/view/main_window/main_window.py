@@ -63,6 +63,7 @@ from baramFlow.view.setup.materials.material_page import MaterialPage
 from baramFlow.view.setup.models.models_page import ModelsPage
 from baramFlow.view.setup.cell_zone_conditions.cell_zone_conditions_page import CellZoneConditionsPage
 from baramFlow.view.setup.boundary_conditions.boundary_conditions_page import BoundaryConditionsPage
+from baramFlow.view.setup.dynamic_mesh.dynamic_mesh_page import DynamicMeshPage
 from baramFlow.view.setup.reference_values.reference_values_page import ReferenceValuesPage
 from baramFlow.view.solution.numerical_conditions.numerical_conditions_page import NumericalConditionsPage
 from baramFlow.view.solution.monitors.monitors_page import MonitorsPage
@@ -161,6 +162,7 @@ class MainWindow(QMainWindow, expert_mode.IExpertModeObserver):
             MenuItem.MENU_SETUP_MODELS.value: MenuPage(ModelsPage),
             MenuItem.MENU_SETUP_CELL_ZONE_CONDITIONS.value: MenuPage(CellZoneConditionsPage),
             MenuItem.MENU_SETUP_BOUNDARY_CONDITIONS.value: MenuPage(BoundaryConditionsPage),
+            MenuItem.MENU_SETUP_DYNAMIC_MESH.value: MenuPage(DynamicMeshPage),
             MenuItem.MENU_SETUP_REFERENCE_VALUES.value: MenuPage(ReferenceValuesPage),
 
             MenuItem.MENU_SOLUTION_NUMERICAL_CONDITIONS.value: MenuPage(NumericalConditionsPage),
@@ -607,6 +609,7 @@ class MainWindow(QMainWindow, expert_mode.IExpertModeObserver):
             MenuItem.MENU_SETUP_MODELS.value,
             MenuItem.MENU_SETUP_CELL_ZONE_CONDITIONS.value,
             MenuItem.MENU_SETUP_BOUNDARY_CONDITIONS.value,
+            MenuItem.MENU_SETUP_DYNAMIC_MESH.value,
             MenuItem.MENU_SOLUTION_NUMERICAL_CONDITIONS.value,
             MenuItem.MENU_SOLUTION_MONITORS.value,
             MenuItem.MENU_SOLUTION_INITIALIZATION.value,

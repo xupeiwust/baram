@@ -539,7 +539,7 @@ class _CoreDB(object):
 
         return index
 
-    def getCellZones(self, rname: str) -> list[(int, str)]:
+    def getCellZones(self, rname: str) -> list[tuple[int, str]]:
         elements = self._xmlTree.findall(f'/regions/region[name="{rname}"]/cellZones/cellZone', namespaces=nsmap)
         return [(int(e.attrib['czid']), e.find('name', namespaces=nsmap).text) for e in elements]
 
