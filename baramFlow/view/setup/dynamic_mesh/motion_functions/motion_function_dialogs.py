@@ -6,6 +6,8 @@ import qasync
 from PySide6.QtWidgets import QDialog
 
 from baramFlow.base.dynamic_mesh.motion_function import FunctionType, MotionFunction
+from libbaram.pfloat import PFloat
+from widgets.async_message_box import AsyncMessageBox
 
 from .rotation_dialog_ui import Ui_RotationDialog
 from .rotating_oscillation_dialog_ui import Ui_RotatingOscillationDialog
@@ -30,9 +32,18 @@ class RotationDialog(QDialog):
 
     @qasync.asyncSlot()
     async def _accept(self):
-        self._mf.center = self._ui.origin.vector('Origin')
-        self._mf.axis = self._ui.axis.vector('Axis')
-        self._mf.omega = self._ui.speed.text()
+        try:
+            center = self._ui.origin.vector('Origin')
+            axis = self._ui.axis.vector('Axis')
+            omega = str(PFloat(self._ui.speed.text(), self.tr('Speed')))
+        except ValueError as e:
+            await AsyncMessageBox().warning(self, self.tr('Warning'), str(e))
+            return
+
+        self._mf.center = center
+        self._mf.axis = axis
+        self._mf.omega = omega
+
         self.accept()
 
 
@@ -52,9 +63,18 @@ class RotatingOscillationDialog(QDialog):
 
     @qasync.asyncSlot()
     async def _accept(self):
-        self._mf.center = self._ui.origin.vector('Origin')
-        self._mf.angularAmplitude = self._ui.amplitude.vector('Amplitude')
-        self._mf.omega = self._ui.speed.text()
+        try:
+            center = self._ui.origin.vector('Origin')
+            angularAmplitude = self._ui.amplitude.vector('Amplitude')
+            omega = str(PFloat(self._ui.speed.text(), self.tr('Speed')))
+        except ValueError as e:
+            await AsyncMessageBox().warning(self, self.tr('Warning'), str(e))
+            return
+
+        self._mf.center = center
+        self._mf.angularAmplitude = angularAmplitude
+        self._mf.omega = omega
+
         self.accept()
 
 
@@ -72,7 +92,14 @@ class LinearTranslationDialog(QDialog):
 
     @qasync.asyncSlot()
     async def _accept(self):
-        self._mf.velocity = self._ui.velocity.vector('Velocity')
+        try:
+            velocity = self._ui.velocity.vector('Velocity')
+        except ValueError as e:
+            await AsyncMessageBox().warning(self, self.tr('Warning'), str(e))
+            return
+
+        self._mf.velocity = velocity
+
         self.accept()
 
 
@@ -91,8 +118,16 @@ class LinearOscillationDialog(QDialog):
 
     @qasync.asyncSlot()
     async def _accept(self):
-        self._mf.linearAmplitude = self._ui.amplitude.vector('Amplitude')
-        self._mf.frequency = self._ui.frequency.text()
+        try:
+            linearAmplitude = self._ui.amplitude.vector('Amplitude')
+            frequency = str(PFloat(self._ui.frequency.text(), self.tr('Frequency'), low=0, lowInclusive=True))
+        except ValueError as e:
+            await AsyncMessageBox().warning(self, self.tr('Warning'), str(e))
+            return
+
+        self._mf.linearAmplitude = linearAmplitude
+        self._mf.frequency = frequency
+
         self.accept()
 
 
@@ -110,7 +145,14 @@ class ManualPositionDialog(QDialog):
 
     @qasync.asyncSlot()
     async def _accept(self):
-        self._mf.center = self._ui.cog.vector('Center of Gravity')
+        try:
+            center = self._ui.cog.vector('Center of Gravity')
+        except ValueError as e:
+            await AsyncMessageBox().warning(self, self.tr('Warning'), str(e))
+            return
+
+        self._mf.center = center
+
         self.accept()
 
 

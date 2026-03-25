@@ -48,7 +48,7 @@
        </widget>
       </item>
       <item row="2" column="1">
-       <widget class="QLineEdit" name="restLength"/>
+       <widget class="PFloatLineEdit" name="restLength"/>
       </item>
       <item row="3" column="0">
        <widget class="QLabel" name="springConstantLabel">
@@ -58,7 +58,7 @@
        </widget>
       </item>
       <item row="3" column="1">
-       <widget class="QLineEdit" name="springConstant"/>
+       <widget class="PFloatLineEdit" name="springConstant"/>
       </item>
       <item row="4" column="0">
        <widget class="QLabel" name="dampingConstantLabel">
@@ -68,7 +68,7 @@
        </widget>
       </item>
       <item row="4" column="1">
-       <widget class="QLineEdit" name="dampingConstant"/>
+       <widget class="PFloatLineEdit" name="dampingConstant"/>
       </item>
      </layout>
     </widget>
@@ -87,6 +87,11 @@
    <class>VectorWidget</class>
    <extends>QWidget</extends>
    <header>baramFlow.view.widgets.vector_widget</header>
+  </customwidget>
+  <customwidget>
+   <class>PFloatLineEdit</class>
+   <extends>QLineEdit</extends>
+   <header location="global">widgets.pfloat_line_edit</header>
   </customwidget>
  </customwidgets>
  <resources/>

@@ -6,6 +6,8 @@ import qasync
 from PySide6.QtWidgets import QDialog
 
 from baramFlow.base.dynamic_mesh.restraint import Restraint, RestraintType
+from libbaram.pfloat import PFloat
+from widgets.async_message_box import AsyncMessageBox
 
 from .simple_damper_dialog_ui import Ui_SimpleDamperDialog
 from .translational_spring_dialog_ui import Ui_TranslationalSpringDialog
@@ -26,7 +28,13 @@ class SimpleDamperDialog(QDialog):
 
     @qasync.asyncSlot()
     async def _accept(self):
-        self._restraint.dampingConstant = self._ui.dampingConstant.text()
+        try:
+            dampingConstant = str(PFloat(self._ui.dampingConstant.text(), self.tr('Damping Constant')))
+        except ValueError as e:
+            await AsyncMessageBox().warning(self, self.tr('Warning'), str(e))
+            return
+
+        self._restraint.dampingConstant = dampingConstant
         self.accept()
 
 
@@ -48,11 +56,21 @@ class TranslationalSpringDialog(QDialog):
 
     @qasync.asyncSlot()
     async def _accept(self):
-        self._restraint.attachmentPoint = self._ui.attachmentPoint.vector('Attachment Point')
-        self._restraint.anchorPoint = self._ui.anchorPoint.vector('Anchor Point')
-        self._restraint.restLength = self._ui.restLength.text()
-        self._restraint.springConstant = self._ui.springConstant.text()
-        self._restraint.dampingConstant = self._ui.dampingConstant.text()
+        try:
+            attachmentPoint = self._ui.attachmentPoint.vector('Attachment Point')
+            anchorPoint = self._ui.anchorPoint.vector('Anchor Point')
+            restLength = str(PFloat(self._ui.restLength.text(), self.tr('Rest Length')))
+            springConstant = str(PFloat(self._ui.springConstant.text(), self.tr('Spring Constant')))
+            dampingConstant = str(PFloat(self._ui.dampingConstant.text(), self.tr('Damping Constant')))
+        except ValueError as e:
+            await AsyncMessageBox().warning(self, self.tr('Warning'), str(e))
+            return
+
+        self._restraint.attachmentPoint = attachmentPoint
+        self._restraint.anchorPoint = anchorPoint
+        self._restraint.restLength = restLength
+        self._restraint.springConstant = springConstant
+        self._restraint.dampingConstant = dampingConstant
         self.accept()
 
 
@@ -72,9 +90,17 @@ class RotationalSpringDialog(QDialog):
 
     @qasync.asyncSlot()
     async def _accept(self):
-        self._restraint.axis = self._ui.axis.vector('Axis')
-        self._restraint.springConstant = self._ui.springConstant.text()
-        self._restraint.dampingConstant = self._ui.dampingConstant.text()
+        try:
+            axis = self._ui.axis.vector('Axis')
+            springConstant = str(PFloat(self._ui.springConstant.text(), self.tr('Spring Constant')))
+            dampingConstant = str(PFloat(self._ui.dampingConstant.text(), self.tr('Damping Constant')))
+        except ValueError as e:
+            await AsyncMessageBox().warning(self, self.tr('Warning'), str(e))
+            return
+
+        self._restraint.axis = axis
+        self._restraint.springConstant = springConstant
+        self._restraint.dampingConstant = dampingConstant
         self.accept()
 
 

@@ -309,7 +309,7 @@
                     </property>
                     <layout class="QGridLayout" name="gridLayout">
                      <item row="1" column="1">
-                      <widget class="QLineEdit" name="rbdPosCoeff"/>
+                      <widget class="PFloatLineEdit" name="rbdPosCoeff"/>
                      </item>
                      <item row="1" column="0">
                       <widget class="QLabel" name="posCoeffLabel">
@@ -319,7 +319,7 @@
                       </widget>
                      </item>
                      <item row="0" column="1">
-                      <widget class="QLineEdit" name="rbdVelCoeff"/>
+                      <widget class="PFloatLineEdit" name="rbdVelCoeff"/>
                      </item>
                      <item row="0" column="0">
                       <widget class="QLabel" name="velCoeffLabel">
@@ -368,10 +368,10 @@
                       </widget>
                      </item>
                      <item row="0" column="1">
-                      <widget class="QLineEdit" name="rbdAccOffCoeff"/>
+                      <widget class="PFloatLineEdit" name="rbdAccOffCoeff"/>
                      </item>
                      <item row="1" column="1">
-                      <widget class="QLineEdit" name="rbdVelOffCoeff"/>
+                      <widget class="PFloatLineEdit" name="rbdVelOffCoeff"/>
                      </item>
                     </layout>
                    </widget>
@@ -404,7 +404,7 @@
                </widget>
               </item>
               <item row="0" column="1">
-               <widget class="QLineEdit" name="rbdRelaxation"/>
+               <widget class="PFloatLineEdit" name="rbdRelaxation"/>
               </item>
               <item row="1" column="0">
                <widget class="QLabel" name="dampingLabel">
@@ -414,7 +414,7 @@
                </widget>
               </item>
               <item row="1" column="1">
-               <widget class="QLineEdit" name="rbdDamping"/>
+               <widget class="PFloatLineEdit" name="rbdDamping"/>
               </item>
              </layout>
             </widget>
@@ -573,6 +573,11 @@
    <class>ContentSizedListWidget</class>
    <extends>QListWidget</extends>
    <header location="global">widgets.content_sized_list_widget</header>
+  </customwidget>
+  <customwidget>
+   <class>PFloatLineEdit</class>
+   <extends>QLineEdit</extends>
+   <header location="global">widgets.pfloat_line_edit</header>
   </customwidget>
  </customwidgets>
  <resources/>

@@ -13,6 +13,7 @@ from baramFlow.coredb.boundary_db import BoundaryDB
 from baramFlow.view.setup.dynamic_mesh.rigid_body_dynamics.joint_widget import JointWidget, JOINT_TYPE_NAMES
 from baramFlow.view.setup.dynamic_mesh.rigid_body_dynamics.joint_dialogs import JOINT_DIALOGS
 from baramFlow.view.widgets.multi_selector_dialog import MultiSelectorDialog
+from libbaram.pfloat import PFloat
 from widgets.async_message_box import AsyncMessageBox
 
 from .body_dialog_ui import Ui_BodyDialog
@@ -192,38 +193,47 @@ class BodyDialog(QDialog):
                                             self.tr('At least one boundary must be selected.'))
             return
 
+        try:
+            mass = str(PFloat(self._ui.mass.text(), self.tr('Mass')))
+            centerOfMass = self._ui.com.vector('Center of Mass')
+            centerOfRotation = self._ui.cor.vector('Center of Rotation')
+
+            oriEdits = [
+                [self._ui.ori00, self._ui.ori01, self._ui.ori02],
+                [self._ui.ori10, self._ui.ori11, self._ui.ori12],
+                [self._ui.ori20, self._ui.ori21, self._ui.ori22],
+            ]
+            oriValues = []
+            for i in range(3):
+                for j in range(3):
+                    oriValues.append(str(PFloat(oriEdits[i][j].text(), self.tr('Orientation'))))
+
+            moiEdits = [
+                [self._ui.moi00, self._ui.moi01, self._ui.moi02],
+                [self._ui.moi10, self._ui.moi11, self._ui.moi12],
+                [self._ui.moi20, self._ui.moi21, self._ui.moi22],
+            ]
+            moiValues = []
+            for i in range(3):
+                for j in range(3):
+                    moiValues.append(str(PFloat(moiEdits[i][j].text(), self.tr('Moment of Inertia'))))
+
+            deformationOffset = str(PFloat(self._ui.deformationOffset.text(), self.tr('Deformation Offset')))
+            deformationDistance = str(PFloat(self._ui.deformationDistance.text(), self.tr('Deformation Distance')))
+        except ValueError as e:
+            await AsyncMessageBox().warning(self, self.tr('Warning'), str(e))
+            return
+
         self._body.name = name
         self._body.parent = self._ui.parentCombo.currentData()
-
-        self._body.mass = self._ui.mass.text()
-        self._body.centerOfMass = self._ui.com.vector('Center of Mass')
-        self._body.centerOfRotation = self._ui.cor.vector('Center of Rotation')
-
-        oriEdits = [
-            [self._ui.ori00, self._ui.ori01, self._ui.ori02],
-            [self._ui.ori10, self._ui.ori11, self._ui.ori12],
-            [self._ui.ori20, self._ui.ori21, self._ui.ori22],
-        ]
-        oriValues = []
-        for i in range(3):
-            for j in range(3):
-                oriValues.append(oriEdits[i][j].text())
+        self._body.mass = mass
+        self._body.centerOfMass = centerOfMass
+        self._body.centerOfRotation = centerOfRotation
         self._body.orientation = ' '.join(oriValues)
-
-        moiEdits = [
-            [self._ui.moi00, self._ui.moi01, self._ui.moi02],
-            [self._ui.moi10, self._ui.moi11, self._ui.moi12],
-            [self._ui.moi20, self._ui.moi21, self._ui.moi22],
-        ]
-        moiValues = []
-        for i in range(3):
-            for j in range(3):
-                moiValues.append(moiEdits[i][j].text())
         self._body.momentOfInertia = ' '.join(moiValues)
-
         self._body.boundaries = self._boundaries
         self._body.joints = self._joints
-        self._body.deformationOffset = self._ui.deformationOffset.text()
-        self._body.deformationDistance = self._ui.deformationDistance.text()
+        self._body.deformationOffset = deformationOffset
+        self._body.deformationDistance = deformationDistance
 
         self.accept()

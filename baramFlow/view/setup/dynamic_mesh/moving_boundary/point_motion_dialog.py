@@ -198,8 +198,15 @@ class PointMotionDialog(QDialog):
         for i, mf in enumerate(self._motionFunctions):
             mf.order = i + 1
 
+        try:
+            normal = self._ui.normal.vector('Normal')
+        except ValueError as e:
+            await AsyncMessageBox().warning(self, self.tr('Warning'), str(e))
+            return
+
         self._entry.pointMotionType = self._pointMotionType
-        self._entry.normal = self._ui.normal.vector('Normal')
+        self._entry.normal = normal
         self._entry.motionFunctions = self._motionFunctions
         self._entry.rigidBodyMotion = self._rigidBodyMotion
+
         self.accept()

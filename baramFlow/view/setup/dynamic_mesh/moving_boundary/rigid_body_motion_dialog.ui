@@ -68,7 +68,7 @@
                 </widget>
                </item>
                <item row="0" column="1">
-                <widget class="QLineEdit" name="mass"/>
+                <widget class="PFloatLineEdit" name="mass"/>
                </item>
                <item row="2" column="1">
                 <widget class="VectorWidget" name="centerOfRotation"/>
@@ -106,31 +106,31 @@
               </property>
               <layout class="QGridLayout" name="gridLayout_2" rowstretch="0,0,0" columnstretch="0,0,0">
                <item row="2" column="1">
-                <widget class="QLineEdit" name="ori21"/>
+                <widget class="PFloatLineEdit" name="ori21"/>
                </item>
                <item row="1" column="0">
-                <widget class="QLineEdit" name="ori10"/>
+                <widget class="PFloatLineEdit" name="ori10"/>
                </item>
                <item row="1" column="2">
-                <widget class="QLineEdit" name="ori12"/>
+                <widget class="PFloatLineEdit" name="ori12"/>
                </item>
                <item row="2" column="2">
-                <widget class="QLineEdit" name="ori22"/>
+                <widget class="PFloatLineEdit" name="ori22"/>
                </item>
                <item row="1" column="1">
-                <widget class="QLineEdit" name="ori11"/>
+                <widget class="PFloatLineEdit" name="ori11"/>
                </item>
                <item row="0" column="1">
-                <widget class="QLineEdit" name="ori01"/>
+                <widget class="PFloatLineEdit" name="ori01"/>
                </item>
                <item row="0" column="2">
-                <widget class="QLineEdit" name="ori02"/>
+                <widget class="PFloatLineEdit" name="ori02"/>
                </item>
                <item row="2" column="0">
-                <widget class="QLineEdit" name="ori20"/>
+                <widget class="PFloatLineEdit" name="ori20"/>
                </item>
                <item row="0" column="0">
-                <widget class="QLineEdit" name="ori00"/>
+                <widget class="PFloatLineEdit" name="ori00"/>
                </item>
               </layout>
              </widget>
@@ -142,7 +142,7 @@
               </property>
               <layout class="QGridLayout" name="gridLayout_6">
                <item row="5" column="2">
-                <widget class="QLineEdit" name="moi22"/>
+                <widget class="PFloatLineEdit" name="moi22"/>
                </item>
                <item row="2" column="0">
                 <widget class="QLabel" name="label_29">
@@ -159,7 +159,7 @@
                 </widget>
                </item>
                <item row="5" column="0">
-                <widget class="QLineEdit" name="moi20"/>
+                <widget class="PFloatLineEdit" name="moi20"/>
                </item>
                <item row="4" column="1">
                 <widget class="QLabel" name="label_33">
@@ -183,16 +183,16 @@
                 </widget>
                </item>
                <item row="1" column="2">
-                <widget class="QLineEdit" name="moi02"/>
+                <widget class="PFloatLineEdit" name="moi02"/>
                </item>
                <item row="5" column="1">
-                <widget class="QLineEdit" name="moi21"/>
+                <widget class="PFloatLineEdit" name="moi21"/>
                </item>
                <item row="3" column="2">
-                <widget class="QLineEdit" name="moi12"/>
+                <widget class="PFloatLineEdit" name="moi12"/>
                </item>
                <item row="1" column="0">
-                <widget class="QLineEdit" name="moi00"/>
+                <widget class="PFloatLineEdit" name="moi00"/>
                </item>
                <item row="0" column="2">
                 <widget class="QLabel" name="label_28">
@@ -202,10 +202,10 @@
                 </widget>
                </item>
                <item row="1" column="1">
-                <widget class="QLineEdit" name="moi01"/>
+                <widget class="PFloatLineEdit" name="moi01"/>
                </item>
                <item row="3" column="0">
-                <widget class="QLineEdit" name="moi10"/>
+                <widget class="PFloatLineEdit" name="moi10"/>
                </item>
                <item row="2" column="2">
                 <widget class="QLabel" name="label_31">
@@ -215,7 +215,7 @@
                 </widget>
                </item>
                <item row="3" column="1">
-                <widget class="QLineEdit" name="moi11"/>
+                <widget class="PFloatLineEdit" name="moi11"/>
                </item>
                <item row="4" column="0">
                 <widget class="QLabel" name="label_32">
@@ -335,7 +335,7 @@
                    </widget>
                   </item>
                   <item row="0" column="1">
-                   <widget class="QLineEdit" name="clockwise"/>
+                   <widget class="PFloatLineEdit" name="clockwise"/>
                   </item>
                   <item row="1" column="0">
                    <widget class="QLabel" name="label_24">
@@ -345,7 +345,7 @@
                    </widget>
                   </item>
                   <item row="1" column="1">
-                   <widget class="QLineEdit" name="counterclockwise"/>
+                   <widget class="PFloatLineEdit" name="counterclockwise"/>
                   </item>
                  </layout>
                 </widget>
@@ -498,7 +498,7 @@
                     </widget>
                    </item>
                    <item row="0" column="1">
-                    <widget class="QLineEdit" name="velocityIntegrationCoefficient"/>
+                    <widget class="PFloatLineEdit" name="velocityIntegrationCoefficient"/>
                    </item>
                    <item row="1" column="0">
                     <widget class="QLabel" name="label_36">
@@ -508,7 +508,7 @@
                     </widget>
                    </item>
                    <item row="1" column="1">
-                    <widget class="QLineEdit" name="positionIntegrationCoefficient"/>
+                    <widget class="PFloatLineEdit" name="positionIntegrationCoefficient"/>
                    </item>
                   </layout>
                  </widget>
@@ -543,10 +543,10 @@
                     </widget>
                    </item>
                    <item row="1" column="1">
-                    <widget class="QLineEdit" name="offCenteringVelocityCoefficient"/>
+                    <widget class="PFloatLineEdit" name="offCenteringVelocityCoefficient"/>
                    </item>
                    <item row="0" column="1">
-                    <widget class="QLineEdit" name="offCenteringAccelerationCoefficient"/>
+                    <widget class="PFloatLineEdit" name="offCenteringAccelerationCoefficient"/>
                    </item>
                    <item row="1" column="0">
                     <widget class="QLabel" name="label_39">
@@ -573,10 +573,10 @@
            </property>
            <layout class="QGridLayout" name="gridLayout_10">
             <item row="1" column="1">
-             <widget class="QLineEdit" name="accelerationDampingFactor"/>
+             <widget class="PFloatLineEdit" name="accelerationDampingFactor"/>
             </item>
             <item row="0" column="1">
-             <widget class="QLineEdit" name="accelerationRelaxationFactor"/>
+             <widget class="PFloatLineEdit" name="accelerationRelaxationFactor"/>
             </item>
             <item row="0" column="0">
              <widget class="QLabel" name="label_40">
@@ -667,6 +667,11 @@
    <class>VectorWidget</class>
    <extends>QWidget</extends>
    <header>baramFlow.view.widgets.vector_widget</header>
+  </customwidget>
+  <customwidget>
+   <class>PFloatLineEdit</class>
+   <extends>QLineEdit</extends>
+   <header location="global">widgets.pfloat_line_edit</header>
   </customwidget>
  </customwidgets>
  <resources/>

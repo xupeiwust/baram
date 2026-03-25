@@ -60,7 +60,7 @@
        </widget>
       </item>
       <item row="0" column="1">
-       <widget class="QLineEdit" name="mass"/>
+       <widget class="PFloatLineEdit" name="mass"/>
       </item>
       <item row="1" column="0">
        <widget class="QLabel" name="comLabel">
@@ -95,31 +95,31 @@
         </property>
         <layout class="QGridLayout" name="orientationGrid">
          <item row="0" column="0">
-          <widget class="QLineEdit" name="ori00"/>
+          <widget class="PFloatLineEdit" name="ori00"/>
          </item>
          <item row="0" column="1">
-          <widget class="QLineEdit" name="ori01"/>
+          <widget class="PFloatLineEdit" name="ori01"/>
          </item>
          <item row="0" column="2">
-          <widget class="QLineEdit" name="ori02"/>
+          <widget class="PFloatLineEdit" name="ori02"/>
          </item>
          <item row="1" column="0">
-          <widget class="QLineEdit" name="ori10"/>
+          <widget class="PFloatLineEdit" name="ori10"/>
          </item>
          <item row="1" column="1">
-          <widget class="QLineEdit" name="ori11"/>
+          <widget class="PFloatLineEdit" name="ori11"/>
          </item>
          <item row="1" column="2">
-          <widget class="QLineEdit" name="ori12"/>
+          <widget class="PFloatLineEdit" name="ori12"/>
          </item>
          <item row="2" column="0">
-          <widget class="QLineEdit" name="ori20"/>
+          <widget class="PFloatLineEdit" name="ori20"/>
          </item>
          <item row="2" column="1">
-          <widget class="QLineEdit" name="ori21"/>
+          <widget class="PFloatLineEdit" name="ori21"/>
          </item>
          <item row="2" column="2">
-          <widget class="QLineEdit" name="ori22"/>
+          <widget class="PFloatLineEdit" name="ori22"/>
          </item>
         </layout>
        </widget>
@@ -161,13 +161,13 @@
           </widget>
          </item>
          <item row="1" column="0">
-          <widget class="QLineEdit" name="moi00"/>
+          <widget class="PFloatLineEdit" name="moi00"/>
          </item>
          <item row="1" column="1">
-          <widget class="QLineEdit" name="moi01"/>
+          <widget class="PFloatLineEdit" name="moi01"/>
          </item>
          <item row="1" column="2">
-          <widget class="QLineEdit" name="moi02"/>
+          <widget class="PFloatLineEdit" name="moi02"/>
          </item>
          <item row="2" column="0">
           <widget class="QLabel" name="moiLabelIyx">
@@ -200,13 +200,13 @@
           </widget>
          </item>
          <item row="3" column="0">
-          <widget class="QLineEdit" name="moi10"/>
+          <widget class="PFloatLineEdit" name="moi10"/>
          </item>
          <item row="3" column="1">
-          <widget class="QLineEdit" name="moi11"/>
+          <widget class="PFloatLineEdit" name="moi11"/>
          </item>
          <item row="3" column="2">
-          <widget class="QLineEdit" name="moi12"/>
+          <widget class="PFloatLineEdit" name="moi12"/>
          </item>
          <item row="4" column="0">
           <widget class="QLabel" name="moiLabelIzx">
@@ -239,13 +239,13 @@
           </widget>
          </item>
          <item row="5" column="0">
-          <widget class="QLineEdit" name="moi20"/>
+          <widget class="PFloatLineEdit" name="moi20"/>
          </item>
          <item row="5" column="1">
-          <widget class="QLineEdit" name="moi21"/>
+          <widget class="PFloatLineEdit" name="moi21"/>
          </item>
          <item row="5" column="2">
-          <widget class="QLineEdit" name="moi22"/>
+          <widget class="PFloatLineEdit" name="moi22"/>
          </item>
         </layout>
        </widget>
@@ -334,7 +334,7 @@
           </widget>
          </item>
          <item row="0" column="1">
-          <widget class="QLineEdit" name="deformationOffset"/>
+          <widget class="PFloatLineEdit" name="deformationOffset"/>
          </item>
          <item row="1" column="0">
           <widget class="QLabel" name="distanceLabel">
@@ -344,7 +344,7 @@
           </widget>
          </item>
          <item row="1" column="1">
-          <widget class="QLineEdit" name="deformationDistance"/>
+          <widget class="PFloatLineEdit" name="deformationDistance"/>
          </item>
         </layout>
        </widget>
@@ -371,6 +371,11 @@
    <class>VectorWidget</class>
    <extends>QWidget</extends>
    <header>baramFlow.view.widgets.vector_widget</header>
+  </customwidget>
+  <customwidget>
+   <class>PFloatLineEdit</class>
+   <extends>QLineEdit</extends>
+   <header location="global">widgets.pfloat_line_edit</header>
   </customwidget>
  </customwidgets>
  <resources/>

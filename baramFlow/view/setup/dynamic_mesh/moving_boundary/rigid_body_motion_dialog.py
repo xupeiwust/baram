@@ -7,7 +7,6 @@ from uuid import uuid4
 import qasync
 
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QDoubleValidator
 from PySide6.QtWidgets import QDialog, QListWidget, QListWidgetItem, QMenu, QToolButton, QVBoxLayout
 
 from baramFlow.base.dynamic_mesh.moving_boundary import (
@@ -17,6 +16,8 @@ from baramFlow.base.dynamic_mesh.rigid_body_solver import RigidBodySolver, Solve
 from baramFlow.base.dynamic_mesh.restraint import Restraint, RestraintType
 from baramFlow.view.setup.dynamic_mesh.restraints.restraint_widget import RestraintWidget, RESTRAINT_TYPE_NAMES
 from baramFlow.view.setup.dynamic_mesh.restraints.restraint_dialogs import RESTRAINT_DIALOGS
+from libbaram.pfloat import PFloat
+from widgets.async_message_box import AsyncMessageBox
 from .rigid_body_motion_dialog_ui import Ui_RigidBodyMotionDialog
 
 
@@ -50,7 +51,6 @@ class RigidBodyMotionDialog(QDialog):
         self._restraints: list[Restraint] = [deepcopy(r) for r in model.restraints]
 
         self._setupRestraintsList()
-        self._setupValidators()
         self._setupSolverComboBox()
         self._connectSignals()
         self._load()
@@ -76,30 +76,6 @@ class RigidBodyMotionDialog(QDialog):
             action.triggered.connect(lambda checked=False, rtype=rt: self._addRestraint(rtype))
         addBtn.setMenu(addMenu)
         layout.addWidget(addBtn)
-
-    def _setupValidators(self):
-        validator = QDoubleValidator()
-        fields = [
-            self._ui.mass,
-            # Orientation tensor (3x3)
-            self._ui.ori00, self._ui.ori01, self._ui.ori02,
-            self._ui.ori10, self._ui.ori11, self._ui.ori12,
-            self._ui.ori20, self._ui.ori21, self._ui.ori22,
-            # Moment of Inertia tensor (3x3)
-            self._ui.moi00, self._ui.moi01, self._ui.moi02,
-            self._ui.moi10, self._ui.moi11, self._ui.moi12,
-            self._ui.moi20, self._ui.moi21, self._ui.moi22,
-            # Limit angle
-            self._ui.clockwise, self._ui.counterclockwise,
-            # Integration coefficients
-            self._ui.velocityIntegrationCoefficient, self._ui.positionIntegrationCoefficient,
-            # Off-centering coefficients
-            self._ui.offCenteringAccelerationCoefficient, self._ui.offCenteringVelocityCoefficient,
-            # Acceleration factors
-            self._ui.accelerationRelaxationFactor, self._ui.accelerationDampingFactor,
-        ]
-        for field in fields:
-            field.setValidator(validator)
 
     def _setupSolverComboBox(self):
         for st in _SOLVER_TYPES:
@@ -322,67 +298,93 @@ class RigidBodyMotionDialog(QDialog):
 
     @qasync.asyncSlot()
     async def _accept(self):
+        try:
+            mass = str(PFloat(self._ui.mass.text(), self.tr('Mass')))
+            centerOfMass = self._ui.centerOfMass.vector('Center of Mass')
+            centerOfRotation = self._ui.centerOfRotation.vector('Center of Rotation')
+
+            orientFields = [
+                self._ui.ori00, self._ui.ori01, self._ui.ori02,
+                self._ui.ori10, self._ui.ori11, self._ui.ori12,
+                self._ui.ori20, self._ui.ori21, self._ui.ori22,
+            ]
+            orientation = ' '.join(str(PFloat(f.text(), self.tr('Orientation'))) for f in orientFields)
+
+            moiFields = [
+                self._ui.moi00, self._ui.moi01, self._ui.moi02,
+                self._ui.moi10, self._ui.moi11, self._ui.moi12,
+                self._ui.moi20, self._ui.moi21, self._ui.moi22,
+            ]
+            momentOfInertia = ' '.join(str(PFloat(f.text(), self.tr('Moment of Inertia'))) for f in moiFields)
+
+            translationalConstraintType = self._selectedTranslationalConstraintType()
+            direction = self._ui.direction.vector('Direction')
+            normal = self._ui.normal.vector('Normal')
+
+            rotationalConstraintType = self._selectedRotationalConstraintType()
+            axis = self._ui.axis.vector('Axis')
+            limitAngle = self._ui.limitAngleGroup.isChecked()
+            clockwise = str(PFloat(self._ui.clockwise.text(), self.tr('Clockwise'), low=0, lowInclusive=True))
+            counterclockwise = str(PFloat(self._ui.counterclockwise.text(), self.tr('Counterclockwise'), low=0, lowInclusive=True))
+
+            solverIndex = self._ui.solverCombo.currentIndex()
+            solverType = _SOLVER_TYPES[solverIndex]
+
+            velocityIntegrationCoefficient = str(PFloat(self._ui.velocityIntegrationCoefficient.text(),
+                                                        self.tr('Velocity Integration Coefficient'),
+                                                        low=0, lowInclusive=True,
+                                                        high=1, highInclusive=True))
+            positionIntegrationCoefficient = str(PFloat(self._ui.positionIntegrationCoefficient.text(),
+                                                        self.tr('Counterclockwise'),
+                                                        low=0, lowInclusive=True,
+                                                        high=1, highInclusive=True))
+            offCenteringAccelerationCoefficient = str(PFloat(self._ui.offCenteringAccelerationCoefficient.text(),
+                                                             self.tr('Counterclockwise'),
+                                                             low=0, lowInclusive=True,
+                                                             high=1, highInclusive=True))
+            offCenteringVelocityCoefficient = str(PFloat(self._ui.offCenteringVelocityCoefficient.text(),
+                                                         self.tr('Counterclockwise'),
+                                                         low=0, lowInclusive=True,
+                                                         high=1, highInclusive=True))
+            solver = RigidBodySolver(
+                solverType=solverType,
+                velocityIntegrationCoefficient=velocityIntegrationCoefficient,
+                positionIntegrationCoefficient=positionIntegrationCoefficient,
+                offCenteringAccelerationCoefficient=offCenteringAccelerationCoefficient,
+                offCenteringVelocityCoefficient=offCenteringVelocityCoefficient,
+            )
+
+            accelerationRelaxationFactor = str(PFloat(self._ui.accelerationRelaxationFactor.text(),
+                                                      self.tr('Acceleration Relaxation Factor'),
+                                                      low=0, lowInclusive=True,
+                                                      high=1, highInclusive=True))
+            accelerationDampingFactor = str(PFloat(self._ui.accelerationDampingFactor.text(),
+                                                   self.tr('Acceleration Damping Factor'),
+                                                   low=0, lowInclusive=True,
+                                                   high=1, highInclusive=True))
+        except ValueError as e:
+            await AsyncMessageBox().warning(self, self.tr('Warning'), str(e))
+            return
+
         m = self._model
-
-        # Mass
-        m.mass = self._ui.mass.text()
-
-        # Center of Mass
-        m.centerOfMass = self._ui.centerOfMass.vector('Center of Mass')
-
-        # Center of Rotation
-        m.centerOfRotation = self._ui.centerOfRotation.vector('Center of Rotation')
-
-        # Orientation tensor
-        orientFields = [
-            self._ui.ori00, self._ui.ori01, self._ui.ori02,
-            self._ui.ori10, self._ui.ori11, self._ui.ori12,
-            self._ui.ori20, self._ui.ori21, self._ui.ori22,
-        ]
-        m.orientation = ' '.join(f.text() for f in orientFields)
-
-        # Moment of Inertia tensor
-        moiFields = [
-            self._ui.moi00, self._ui.moi01, self._ui.moi02,
-            self._ui.moi10, self._ui.moi11, self._ui.moi12,
-            self._ui.moi20, self._ui.moi21, self._ui.moi22,
-        ]
-        m.momentOfInertia = ' '.join(f.text() for f in moiFields)
-
-        # Translational constraint
-        m.translationalConstraintType = self._selectedTranslationalConstraintType()
-
-        m.direction = self._ui.direction.vector('Direction')
-
-        m.normal = self._ui.normal.vector('Normal')
-
-        # Rotational constraint
-        m.rotationalConstraintType = self._selectedRotationalConstraintType()
-
-        m.axis = self._ui.axis.vector('Axis')
-
-        m.limitAngle = self._ui.limitAngleGroup.isChecked()
-        m.clockwise = self._ui.clockwise.text()
-        m.counterclockwise = self._ui.counterclockwise.text()
-
-        # Restraints (update order)
+        m.mass = mass
+        m.centerOfMass = centerOfMass
+        m.centerOfRotation = centerOfRotation
+        m.orientation = orientation
+        m.momentOfInertia = momentOfInertia
+        m.translationalConstraintType = translationalConstraintType
+        m.direction = direction
+        m.normal = normal
+        m.rotationalConstraintType = rotationalConstraintType
+        m.axis = axis
+        m.limitAngle = limitAngle
+        m.clockwise = clockwise
+        m.counterclockwise = counterclockwise
         for i, r in enumerate(self._restraints):
             r.order = i + 1
         m.restraints = self._restraints
-
-        # Solver
-        solverIndex = self._ui.solverCombo.currentIndex()
-        solverType = _SOLVER_TYPES[solverIndex]
-        m.solver = RigidBodySolver(
-            solverType=solverType,
-            velocityIntegrationCoefficient=self._ui.velocityIntegrationCoefficient.text(),
-            positionIntegrationCoefficient=self._ui.positionIntegrationCoefficient.text(),
-            offCenteringAccelerationCoefficient=self._ui.offCenteringAccelerationCoefficient.text(),
-            offCenteringVelocityCoefficient=self._ui.offCenteringVelocityCoefficient.text(),
-        )
-
-        # Acceleration factors
-        m.accelerationRelaxationFactor = self._ui.accelerationRelaxationFactor.text()
-        m.accelerationDampingFactor = self._ui.accelerationDampingFactor.text()
+        m.solver = solver
+        m.accelerationRelaxationFactor = accelerationRelaxationFactor
+        m.accelerationDampingFactor = accelerationDampingFactor
 
         self.accept()

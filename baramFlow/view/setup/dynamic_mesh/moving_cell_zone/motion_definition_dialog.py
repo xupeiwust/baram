@@ -31,7 +31,6 @@ class MotionDefinitionDialog(QDialog):
         self._motionFunctions = [deepcopy(mf) for mf in motionDefinition.motionFunctions]
         self._existingNames = existingNames or set()
 
-        self._ui.name.setValidator(QRegularExpressionValidator(QRegularExpression('^[A-Za-z_][A-Za-z0-9_-]*')))
         self._ui.name.setText(motionDefinition.name)
 
         self._addMenu = QMenu(self._ui.addButton)
@@ -137,15 +136,16 @@ class MotionDefinitionDialog(QDialog):
 
     @qasync.asyncSlot()
     async def _accept(self):
-        name = self._ui.name.text()
-        if name in self._existingNames:
-            await AsyncMessageBox().warning(self, self.tr('Warning'),
-                                            self.tr('The name "{0}" is already in use.').format(name))
-            return
+        try:
+            name = self._ui.name.text()
+            if name in self._existingNames:
+                raise ValueError(self.tr('The name "{0}" is already in use.').format(name))
 
-        if not self._motionFunctions:
-            await AsyncMessageBox().warning(self, self.tr('Warning'),
-                                            self.tr('At least one motion function must be defined.'))
+            if not self._motionFunctions:
+                raise ValueError(self.tr('At least one motion function must be defined.'))
+
+        except ValueError as e:
+            await AsyncMessageBox().warning(self, self.tr('Warning'), str(e))
             return
 
         for i, mf in enumerate(self._motionFunctions):
@@ -153,4 +153,5 @@ class MotionDefinitionDialog(QDialog):
 
         self._motionDefinition.name = name
         self._motionDefinition.motionFunctions = self._motionFunctions
+
         self.accept()

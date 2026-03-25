@@ -1,19 +1,20 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from PySide6.QtWidgets import QWidget, QHBoxLayout, QLabel, QLineEdit
+from PySide6.QtWidgets import QWidget, QHBoxLayout, QLabel
 
 from baramFlow.base.xml_helper import Vector
 from libbaram.pfloat import PFloat
+from widgets.pfloat_line_edit import PFloatLineEdit
 
 
 class VectorWidget(QWidget):
     def __init__(self, parent):
         super().__init__(parent)
 
-        self._x = QLineEdit('0')
-        self._y = QLineEdit('0')
-        self._z = QLineEdit('0')
+        self._x = PFloatLineEdit('0')
+        self._y = PFloatLineEdit('0')
+        self._z = PFloatLineEdit('0')
 
         layout = QHBoxLayout(self)
         layout.addWidget(QLabel('('))

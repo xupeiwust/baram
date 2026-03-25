@@ -6,6 +6,7 @@ import qasync
 from PySide6.QtWidgets import QDialog
 
 from baramFlow.base.dynamic_mesh.rigid_body_dynamics import Joint, JointType
+from widgets.async_message_box import AsyncMessageBox
 
 from .prismatic_joint_dialog_ui import Ui_PrismaticJointDialog
 from .revolute_joint_dialog_ui import Ui_RevoluteJointDialog
@@ -25,7 +26,13 @@ class PrismaticJointDialog(QDialog):
 
     @qasync.asyncSlot()
     async def _accept(self):
-        self._joint.direction = self._ui.direction.vector('Direction')
+        try:
+            direction = self._ui.direction.vector('Direction')
+        except ValueError as e:
+            await AsyncMessageBox().warning(self, self.tr('Warning'), str(e))
+            return
+
+        self._joint.direction = direction
         self.accept()
 
 
@@ -43,7 +50,13 @@ class RevoluteJointDialog(QDialog):
 
     @qasync.asyncSlot()
     async def _accept(self):
-        self._joint.axis = self._ui.axis.vector('Axis')
+        try:
+            axis = self._ui.axis.vector('Axis')
+        except ValueError as e:
+            await AsyncMessageBox().warning(self, self.tr('Warning'), str(e))
+            return
+
+        self._joint.axis = axis
         self.accept()
 
 
