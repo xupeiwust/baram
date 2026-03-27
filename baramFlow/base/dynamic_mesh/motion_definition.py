@@ -30,8 +30,8 @@ class MotionDefinition:
             motionFunctions.append(MotionFunction.fromElement(fe))
         motionFunctions.sort(key=lambda f: f.order)
 
-        cellZonesText = e.find('cellZones', namespaces=nsmap).text or ''
-        cellZones: list[str] = cellZonesText.split() if cellZonesText.strip() else []
+        cellZonesText: str = e.find('cellZones', namespaces=nsmap).text
+        cellZones: list[str] = cellZonesText.split() if cellZonesText else []
 
         return MotionDefinition(uuid=uuid, name=name, order=order,
                                 motionFunctions=motionFunctions,

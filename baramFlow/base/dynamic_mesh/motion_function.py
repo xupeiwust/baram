@@ -8,6 +8,7 @@ from uuid import UUID, uuid4
 
 from baramFlow.coredb.libdb import E, nsmap
 from baramFlow.base.xml_helper import Vector
+from libbaram.pfloat import PFloat
 
 
 class FunctionType(Enum):
@@ -59,14 +60,14 @@ class MotionFunction:
     functionType: FunctionType
 
     center: Vector = dataClassField(default_factory=Vector)
-    axis: Vector = dataClassField(default_factory=lambda: Vector('0', '0', '1'))
-    omega: str = '0'
+    axis: Vector = dataClassField(default_factory=Vector.zUnit)
+    omega: PFloat = PFloat('0')
 
     velocity: Vector = dataClassField(default_factory=Vector)
     angularAmplitude: Vector = dataClassField(default_factory=Vector)
     linearAmplitude: Vector = dataClassField(default_factory=Vector)
 
-    frequency: str = '0'
+    frequency: PFloat = PFloat('0')
 
     positions: Positions = None
 
@@ -82,13 +83,13 @@ class MotionFunction:
 
         center = Vector.fromElement(e.find('center', namespaces=nsmap))
         axis = Vector.fromElement(e.find('axis', namespaces=nsmap))
-        omega = e.find('omega', namespaces=nsmap).text
+        omega = PFloat.fromElement(e.find('omega', namespaces=nsmap))
 
         velocity = Vector.fromElement(e.find('velocity', namespaces=nsmap))
         angularAmplitude = Vector.fromElement(e.find('angularAmplitude', namespaces=nsmap))
         linearAmplitude = Vector.fromElement(e.find('linearAmplitude', namespaces=nsmap))
 
-        frequency = e.find('frequency', namespaces=nsmap).text
+        frequency = PFloat.fromElement(e.find('frequency', namespaces=nsmap))
 
         positions = Positions.fromElement(e.find('positions', namespaces=nsmap))
 
@@ -109,9 +110,9 @@ class MotionFunction:
                  E('functionType', self.functionType.value),
                  self.center.toElement('center'),
                  self.axis.toElement('axis'),
-                 E('omega', self.omega),
+                 self.omega.toElement('omega'),
                  self.velocity.toElement('velocity'),
                  self.angularAmplitude.toElement('angularAmplitude'),
                  self.linearAmplitude.toElement('linearAmplitude'),
-                 E('frequency', self.frequency),
+                 self.frequency.toElement('frequency'),
                  self.positions.toElement())

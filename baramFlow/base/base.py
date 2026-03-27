@@ -8,6 +8,7 @@ from uuid import UUID
 import pandas as pd
 from PySide6.QtCore import QCoreApplication
 
+from baramFlow.base.xml_helper import Vector
 from baramFlow.coredb.libdb import nsmap
 from baramFlow.base.constants import Function1Type
 from baramFlow.coredb.libdb import E
@@ -63,32 +64,6 @@ class BatchableNumber:
             return E(tag, self._default, batchParameter=self.parameter())
         else:
             return E(tag, self._text)
-
-
-@dataclass
-class Vector:
-    x: BatchableNumber
-    y: BatchableNumber
-    z: BatchableNumber
-
-    @staticmethod
-    def new(x, y, z):
-        return Vector(x=BatchableNumber(x), y=BatchableNumber(y), z=BatchableNumber(z))
-
-    @staticmethod
-    def fromElement(e):
-        return Vector(x=BatchableNumber.fromElement(e.find('x', namespaces=nsmap)),
-                      y=BatchableNumber.fromElement(e.find('y', namespaces=nsmap)),
-                      z=BatchableNumber.fromElement(e.find('z', namespaces=nsmap)))
-
-    def toXML(self):
-        return f"{self.x.toXML('x')}{self.y.toXML('y')}{self.z.toXML('z')}"
-
-    def toElement(self, tag: str):
-        return E(tag,
-                 self.x.toElement('x'),
-                 self.y.toElement('y'),
-                 self.z.toElement('z'))
 
 
 @dataclass
@@ -175,7 +150,7 @@ class Function1Scalar:
 @dataclass
 class Function1Vector:
     type: Function1Type = Function1Type.CONSTANT
-    constant: Vector = field(default_factory=lambda: Vector.new('1', '1', '1'))
+    constant: Vector = field(default_factory=Vector.xUnit)
     table: list[Function1VectorRow] = field(default_factory=lambda: [])
 
     @staticmethod
@@ -188,17 +163,6 @@ class Function1Vector:
         return Function1Vector(type=Function1Type(e.find('type', namespaces=nsmap).text),
                                constant=Vector.fromElement(e.find('constant', namespaces=nsmap)),
                                table=table)
-
-    def toXML(self):
-        rows = ''
-        for row in self.table:
-            rows += f'<row>{row.toXML()}</row>'
-
-        return f'''
-            <type>{self.type.value}</type>
-            <constant>{self.constant.toXML()}</constant>
-            <table>{rows}</table>
-        '''
 
     def toElement(self, tag: str):
         tableElement = E('table')

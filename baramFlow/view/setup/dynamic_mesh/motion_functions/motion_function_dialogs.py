@@ -25,7 +25,7 @@ class RotationDialog(QDialog):
 
         self._ui.origin.setVector(motionFunction.center)
         self._ui.axis.setVector(motionFunction.axis)
-        self._ui.speed.setText(motionFunction.omega)
+        self._ui.speed.setPFloat(motionFunction.omega)
 
         self._ui.buttonBox.accepted.connect(self._accept)
         self._ui.buttonBox.rejected.connect(self.reject)
@@ -33,9 +33,9 @@ class RotationDialog(QDialog):
     @qasync.asyncSlot()
     async def _accept(self):
         try:
-            center = self._ui.origin.vector('Origin')
-            axis = self._ui.axis.vector('Axis')
-            omega = str(PFloat(self._ui.speed.text(), self.tr('Speed')))
+            center = self._ui.origin.vector(self.tr('Origin'))
+            axis = self._ui.axis.vector(self.tr('Axis'))
+            omega = self._ui.speed.pFloat(self.tr('Speed'))
         except ValueError as e:
             await AsyncMessageBox().warning(self, self.tr('Warning'), str(e))
             return
@@ -56,7 +56,7 @@ class RotatingOscillationDialog(QDialog):
 
         self._ui.origin.setVector(motionFunction.center)
         self._ui.amplitude.setVector(motionFunction.angularAmplitude)
-        self._ui.speed.setText(motionFunction.omega)
+        self._ui.speed.setPFloat(motionFunction.omega)
 
         self._ui.buttonBox.accepted.connect(self._accept)
         self._ui.buttonBox.rejected.connect(self.reject)
@@ -64,9 +64,9 @@ class RotatingOscillationDialog(QDialog):
     @qasync.asyncSlot()
     async def _accept(self):
         try:
-            center = self._ui.origin.vector('Origin')
-            angularAmplitude = self._ui.amplitude.vector('Amplitude')
-            omega = str(PFloat(self._ui.speed.text(), self.tr('Speed')))
+            center = self._ui.origin.vector(self.tr('Origin'))
+            angularAmplitude = self._ui.amplitude.vector(self.tr('Amplitude'))
+            omega = self._ui.speed.pFloat(self.tr('Speed'))
         except ValueError as e:
             await AsyncMessageBox().warning(self, self.tr('Warning'), str(e))
             return
@@ -111,7 +111,7 @@ class LinearOscillationDialog(QDialog):
         self._mf = motionFunction
 
         self._ui.amplitude.setVector(motionFunction.linearAmplitude)
-        self._ui.frequency.setText(motionFunction.frequency)
+        self._ui.frequency.setPFloat(motionFunction.frequency)
 
         self._ui.buttonBox.accepted.connect(self._accept)
         self._ui.buttonBox.rejected.connect(self.reject)
@@ -120,7 +120,7 @@ class LinearOscillationDialog(QDialog):
     async def _accept(self):
         try:
             linearAmplitude = self._ui.amplitude.vector('Amplitude')
-            frequency = str(PFloat(self._ui.frequency.text(), self.tr('Frequency'), low=0, lowInclusive=True))
+            frequency = self._ui.frequency.pFloat(self.tr('Frequency'), low=0, lowInclusive=True)
         except ValueError as e:
             await AsyncMessageBox().warning(self, self.tr('Warning'), str(e))
             return

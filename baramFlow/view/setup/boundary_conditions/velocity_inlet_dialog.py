@@ -127,9 +127,9 @@ class VelocityInletDialog(ResizableDialog):
                 velocity.component = VelocityComponentCartesian(profile=profile)
                 if profile == VelocityProfile.CONSTANT:
                     velocity.component.constant = Vector(
-                        x=str(PFloat(self._ui.xVelocity.text(), self.tr('X-Velocity'))),
-                        y=str(PFloat(self._ui.yVelocity.text(), self.tr('Y-Velocity'))),
-                        z=str(PFloat(self._ui.zVelocity.text(), self.tr('Z-Velocity'))))
+                        x=PFloat(self._ui.xVelocity.text(), self.tr('X-Velocity')),
+                        y=PFloat(self._ui.yVelocity.text(), self.tr('Y-Velocity')),
+                        z=PFloat(self._ui.zVelocity.text(), self.tr('Z-Velocity')))
                 elif profile == VelocityProfile.SPATIAL_DISTRIBUTION:
                     velocity.component.spatialDistribution = self._componentSpatialDistribution
                 elif profile == VelocityProfile.TEMPORAL_DISTRIBUTION:

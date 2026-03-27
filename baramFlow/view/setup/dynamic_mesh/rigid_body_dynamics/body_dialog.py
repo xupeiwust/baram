@@ -49,7 +49,7 @@ class BodyDialog(QDialog):
             self._ui.parentCombo.setCurrentIndex(idx)
 
         # Mass Properties
-        self._ui.mass.setText(body.mass)
+        self._ui.mass.setPFloat(body.mass)
         self._ui.com.setVector(body.centerOfMass)
         self._ui.cor.setVector(body.centerOfRotation)
 

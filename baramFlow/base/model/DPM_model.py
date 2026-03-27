@@ -5,8 +5,9 @@ from dataclasses import dataclass, field
 
 from lxml import etree
 
-from baramFlow.base.base import BatchableNumber, Vector, Function1Scalar, Function1Vector
+from baramFlow.base.base import BatchableNumber, Function1Scalar, Function1Vector
 from baramFlow.base.boundary.boundary import PatchInteractionType
+from baramFlow.base.xml_helper import Vector
 from baramFlow.coredb import coredb
 from baramFlow.coredb.boundary_db import BoundaryType
 from baramFlow.coredb.libdb import boolToXml, E, nsmap, xmlToBool
@@ -300,7 +301,7 @@ class DPMModelProperties:
 class PointInjection:
     numberOfParticlesPerPoint: BatchableNumber  = field(default_factory=lambda: BatchableNumber('100'))
     injectionTime: BatchableNumber              = field(default_factory=lambda: BatchableNumber('0'))
-    particleVelocity: Vector                    = field(default_factory=lambda: Vector.new('1', '1', '1'))
+    particleVelocity: Vector                    = field(default_factory=Vector.xUnit)
     positions: list[Vector]                     = field(default_factory=list)
 
     @staticmethod
@@ -392,8 +393,8 @@ class FlowRate:
 @dataclass
 class ConeInjection:
     injectorType: DPMConeInjectorType   = DPMConeInjectorType.DISC
-    position: Function1Vector           = field(default_factory=lambda: Function1Vector(constant=Vector.new('1', '1', '1')))
-    axis: Function1Vector               = field(default_factory=lambda: Function1Vector(constant=Vector.new('1', '1', '1')))
+    position: Function1Vector           = field(default_factory=lambda: Function1Vector(constant=Vector.xUnit()))
+    axis: Function1Vector               = field(default_factory=lambda: Function1Vector(constant=Vector.zUnit()))
     outerConeAngle: Function1Scalar     = field(default_factory=lambda: Function1Scalar(constant=BatchableNumber('30')))
     innerConeAngle: Function1Scalar     = field(default_factory=lambda: Function1Scalar(constant=BatchableNumber('0')))
     outerRadius: BatchableNumber        = field(default_factory=lambda: BatchableNumber('1'))
@@ -438,7 +439,7 @@ class ConeInjection:
 @dataclass
 class ParticleVelocity:
     type: DPMParticleVelocityType   = DPMParticleVelocityType.CONSTANT
-    value: Vector                   = field(default_factory=lambda: Vector.new('1', '1', '1'))
+    value: Vector                   = field(default_factory=Vector.xUnit)
 
     @staticmethod
     def fromElement(e):

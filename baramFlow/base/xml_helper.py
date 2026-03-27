@@ -5,41 +5,42 @@ from dataclasses import dataclass
 
 
 from baramFlow.coredb.libdb import E, nsmap
+from libbaram.pfloat import PFloat
 
 
 @dataclass
 class Vector:
-    x: str = '0'
-    y: str = '0'
-    z: str = '0'
+    x: PFloat = PFloat('0')
+    y: PFloat = PFloat('0')
+    z: PFloat = PFloat('0')
 
     @staticmethod
     def zero():
-        return Vector('0', '0', '0')
+        return Vector(PFloat('0'), PFloat('0'), PFloat('0'))
 
     @staticmethod
     def xUnit():
-        return Vector('1', '0', '0')
+        return Vector(PFloat('1'), PFloat('0'), PFloat('0'))
 
     @staticmethod
     def yUnit():
-        return Vector('0', '1', '0')
+        return Vector(PFloat('0'), PFloat('1'), PFloat('0'))
 
     @staticmethod
     def zUnit():
-        return Vector('0', '0', '1')
+        return Vector(PFloat('0'), PFloat('0'), PFloat('1'))
 
     @staticmethod
     def fromElement(e):
-        return Vector(x=e.find('x', namespaces=nsmap).text,
-                      y=e.find('y', namespaces=nsmap).text,
-                      z=e.find('z', namespaces=nsmap).text)
+        return Vector(x=PFloat.fromElement(e.find('x', namespaces=nsmap)),
+                      y=PFloat.fromElement(e.find('y', namespaces=nsmap)),
+                      z=PFloat.fromElement(e.find('z', namespaces=nsmap)))
 
     def toElement(self, tag):
         return E(tag,
-                    E('x', self.x),
-                    E('y', self.y),
-                    E('z', self.z))
+                    self.x.toElement('x'),
+                    self.y.toElement('y'),
+                    self.z.toElement('z'))
 
     def toList(self):
         return [float(self.x), float(self.y), float(self.z)]

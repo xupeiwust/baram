@@ -105,7 +105,7 @@ class RigidBodyMotionDialog(QDialog):
         m = self._model
 
         # Mass
-        self._ui.mass.setText(m.mass)
+        self._ui.mass.setPFloat(m.mass)
 
         # Center of Mass
         self._ui.centerOfMass.setVector(m.centerOfMass)
@@ -163,8 +163,8 @@ class RigidBodyMotionDialog(QDialog):
 
         # Limit angle
         self._ui.limitAngleGroup.setChecked(m.limitAngle)
-        self._ui.clockwise.setText(m.clockwise)
-        self._ui.counterclockwise.setText(m.counterclockwise)
+        self._ui.clockwise.setPFloat(m.clockwise)
+        self._ui.counterclockwise.setPFloat(m.counterclockwise)
 
         # Solver
         solver = m.solver
@@ -172,14 +172,14 @@ class RigidBodyMotionDialog(QDialog):
         self._ui.solverCombo.setCurrentIndex(solverIndex)
         self._ui.solverStack.setCurrentIndex(_SOLVER_STACKED_INDEX[solver.solverType])
 
-        self._ui.velocityIntegrationCoefficient.setText(solver.velocityIntegrationCoefficient)
-        self._ui.positionIntegrationCoefficient.setText(solver.positionIntegrationCoefficient)
-        self._ui.offCenteringAccelerationCoefficient.setText(solver.offCenteringAccelerationCoefficient)
-        self._ui.offCenteringVelocityCoefficient.setText(solver.offCenteringVelocityCoefficient)
+        self._ui.velocityIntegrationCoefficient.setPFloat(solver.velocityIntegrationCoefficient)
+        self._ui.positionIntegrationCoefficient.setPFloat(solver.positionIntegrationCoefficient)
+        self._ui.offCenteringAccelerationCoefficient.setPFloat(solver.offCenteringAccelerationCoefficient)
+        self._ui.offCenteringVelocityCoefficient.setPFloat(solver.offCenteringVelocityCoefficient)
 
         # Acceleration factors
-        self._ui.accelerationRelaxationFactor.setText(m.accelerationRelaxationFactor)
-        self._ui.accelerationDampingFactor.setText(m.accelerationDampingFactor)
+        self._ui.accelerationRelaxationFactor.setPFloat(m.accelerationRelaxationFactor)
+        self._ui.accelerationDampingFactor.setPFloat(m.accelerationDampingFactor)
 
         # Constraint visibility
         self._updateTranslationalConstraintWidgets()
@@ -299,7 +299,7 @@ class RigidBodyMotionDialog(QDialog):
     @qasync.asyncSlot()
     async def _accept(self):
         try:
-            mass = str(PFloat(self._ui.mass.text(), self.tr('Mass')))
+            mass = self._ui.mass.pFloat(self.tr('Mass'))
             centerOfMass = self._ui.centerOfMass.vector('Center of Mass')
             centerOfRotation = self._ui.centerOfRotation.vector('Center of Rotation')
 
@@ -324,28 +324,28 @@ class RigidBodyMotionDialog(QDialog):
             rotationalConstraintType = self._selectedRotationalConstraintType()
             axis = self._ui.axis.vector('Axis')
             limitAngle = self._ui.limitAngleGroup.isChecked()
-            clockwise = str(PFloat(self._ui.clockwise.text(), self.tr('Clockwise'), low=0, lowInclusive=True))
-            counterclockwise = str(PFloat(self._ui.counterclockwise.text(), self.tr('Counterclockwise'), low=0, lowInclusive=True))
+            clockwise = self._ui.clockwise.pFloat(self.tr('Clockwise'), low=0, lowInclusive=True)
+            counterclockwise = self._ui.counterclockwise.pFloat(self.tr('Counterclockwise'), low=0, lowInclusive=True)
 
             solverIndex = self._ui.solverCombo.currentIndex()
             solverType = _SOLVER_TYPES[solverIndex]
 
-            velocityIntegrationCoefficient = str(PFloat(self._ui.velocityIntegrationCoefficient.text(),
+            velocityIntegrationCoefficient = self._ui.velocityIntegrationCoefficient.pFloat(
                                                         self.tr('Velocity Integration Coefficient'),
                                                         low=0, lowInclusive=True,
-                                                        high=1, highInclusive=True))
-            positionIntegrationCoefficient = str(PFloat(self._ui.positionIntegrationCoefficient.text(),
+                                                        high=1, highInclusive=True)
+            positionIntegrationCoefficient = self._ui.positionIntegrationCoefficient.pFloat(
                                                         self.tr('Counterclockwise'),
                                                         low=0, lowInclusive=True,
-                                                        high=1, highInclusive=True))
-            offCenteringAccelerationCoefficient = str(PFloat(self._ui.offCenteringAccelerationCoefficient.text(),
+                                                        high=1, highInclusive=True)
+            offCenteringAccelerationCoefficient = self._ui.offCenteringAccelerationCoefficient.pFloat(
                                                              self.tr('Counterclockwise'),
                                                              low=0, lowInclusive=True,
-                                                             high=1, highInclusive=True))
-            offCenteringVelocityCoefficient = str(PFloat(self._ui.offCenteringVelocityCoefficient.text(),
+                                                             high=1, highInclusive=True)
+            offCenteringVelocityCoefficient = self._ui.offCenteringVelocityCoefficient.pFloat(
                                                          self.tr('Counterclockwise'),
                                                          low=0, lowInclusive=True,
-                                                         high=1, highInclusive=True))
+                                                         high=1, highInclusive=True)
             solver = RigidBodySolver(
                 solverType=solverType,
                 velocityIntegrationCoefficient=velocityIntegrationCoefficient,
@@ -354,14 +354,14 @@ class RigidBodyMotionDialog(QDialog):
                 offCenteringVelocityCoefficient=offCenteringVelocityCoefficient,
             )
 
-            accelerationRelaxationFactor = str(PFloat(self._ui.accelerationRelaxationFactor.text(),
+            accelerationRelaxationFactor = self._ui.accelerationRelaxationFactor.pFloat(
                                                       self.tr('Acceleration Relaxation Factor'),
                                                       low=0, lowInclusive=True,
-                                                      high=1, highInclusive=True))
-            accelerationDampingFactor = str(PFloat(self._ui.accelerationDampingFactor.text(),
+                                                      high=1, highInclusive=True)
+            accelerationDampingFactor = self._ui.accelerationDampingFactor.pFloat(
                                                    self.tr('Acceleration Damping Factor'),
                                                    low=0, lowInclusive=True,
-                                                   high=1, highInclusive=True))
+                                                   high=1, highInclusive=True)
         except ValueError as e:
             await AsyncMessageBox().warning(self, self.tr('Warning'), str(e))
             return

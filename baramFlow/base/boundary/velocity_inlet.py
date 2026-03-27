@@ -2,12 +2,14 @@
 # -*- coding: utf-8 -*-
 
 from dataclasses import dataclass
+from dataclasses import field as dataClassField
 from enum import Enum
 
-from baramFlow.base.base import Vector, SimpleSheetData
+from baramFlow.base.base import SimpleSheetData
 from baramFlow.base.base import SpatialVectorList, TemporalScalarList, TemporalVectorList
 from baramFlow.base.boundary.boundary import BoundaryBase
 from baramFlow.base.boundary.temperature import BoundaryTemperature
+from baramFlow.base.xml_helper import Vector
 from baramFlow.coredb.boundary_db import BoundaryDB
 
 
@@ -30,7 +32,7 @@ class CoordinateSystem(Enum):
 @dataclass
 class VelocityComponentCartesian:
     profile: VelocityProfile
-    constant: Vector = None
+    constant: Vector = dataClassField(default_factory=Vector.xUnit)
     spatialDistribution: SpatialVectorList = None
     temporalDistribution: TemporalVectorList = None
 

@@ -12,6 +12,7 @@ from baramFlow.coredb.libdb import E, nsmap
 from baramFlow.base.dynamic_mesh.rigid_body_solver import RigidBodySolver
 from baramFlow.base.dynamic_mesh.restraint import Restraint
 from baramFlow.base.xml_helper import Vector
+from libbaram.pfloat import PFloat
 
 
 class JointType(Enum):
@@ -25,7 +26,7 @@ class Joint:
     jointType: JointType
 
     direction: Vector = dataClassField(default_factory=Vector)
-    axis: Vector = dataClassField(default_factory=lambda: Vector('0', '0', '1'))
+    axis: Vector = dataClassField(default_factory=Vector.zUnit)
 
     @classmethod
     def fromElement(cls, e):
@@ -48,7 +49,7 @@ class Body:
     name: str
     parent: UUID
 
-    mass: str = '0'
+    mass: PFloat = PFloat('0')
 
     centerOfMass: Vector = dataClassField(default_factory=Vector)
     centerOfRotation: Vector = dataClassField(default_factory=Vector)
@@ -59,8 +60,8 @@ class Body:
     boundaries: list[str] = dataClassField(default_factory=list)
     joints: list[Joint] = dataClassField(default_factory=list)
 
-    deformationOffset: str = '0'
-    deformationDistance: str = '0'
+    deformationOffset: PFloat = PFloat('0')
+    deformationDistance: PFloat = PFloat('0')
 
     @classmethod
     def fromElement(cls, e):
@@ -68,7 +69,7 @@ class Body:
         name = e.find('name', namespaces=nsmap).text
         parent = UUID(e.find('parent', namespaces=nsmap).text)
 
-        mass = e.find('mass', namespaces=nsmap).text
+        mass = PFloat.fromElement(e.find('mass', namespaces=nsmap))
 
         centerOfMass = Vector.fromElement(e.find('centerOfMass', namespaces=nsmap))
         centerOfRotation = Vector.fromElement(e.find('centerOfRotation', namespaces=nsmap))
@@ -84,8 +85,8 @@ class Body:
         for je in jointsElement.findall('joint', namespaces=nsmap):
             joints.append(Joint.fromElement(je))
 
-        deformationOffset = e.find('deformationOffset', namespaces=nsmap).text
-        deformationDistance = e.find('deformationDistance', namespaces=nsmap).text
+        deformationOffset = PFloat.fromElement(e.find('deformationOffset', namespaces=nsmap))
+        deformationDistance = PFloat.fromElement(e.find('deformationDistance', namespaces=nsmap))
 
         return Body(uuid=uuid, name=name, parent=parent,
                     mass=mass,
@@ -107,15 +108,15 @@ class Body:
                  E('uuid', str(self.uuid)),
                  E('name', self.name),
                  E('parent', str(self.parent)),
-                 E('mass', self.mass),
+                 self.mass.toElement('mass'),
                  self.centerOfMass.toElement('centerOfMass'),
                  self.centerOfRotation.toElement('centerOfRotation'),
                  E('orientation', self.orientation),
                  E('momentOfInertia', self.momentOfInertia),
                  E('boundaries', ' '.join(self.boundaries)),
                  jointsElement,
-                 E('deformationOffset', self.deformationOffset),
-                 E('deformationDistance', self.deformationDistance))
+                 self.deformationOffset.toElement('deformationOffset'),
+                 self.deformationDistance.toElement('deformationDistance'))
 
     def processMeshUpdate(self, oldBoundaries: bidict[str, str], newBoundaries: bidict[str, str]):
         boundaries: list[str] = []
@@ -130,16 +131,16 @@ class Body:
 @dataclass
 class RigidBodyDynamics:
     solver: RigidBodySolver = dataClassField(default_factory=RigidBodySolver)
-    accelerationRelaxationFactor: str = '0.7'
-    accelerationDampingFactor: str = '1.0'
+    accelerationRelaxationFactor: PFloat = PFloat('0.7')
+    accelerationDampingFactor: PFloat = PFloat('1.0')
     bodies: list[Body] = dataClassField(default_factory=list)
     restraints: list[Restraint] = dataClassField(default_factory=list)
 
     @classmethod
     def fromElement(cls, e):
         solver = RigidBodySolver.fromElement(e.find('rigidBodySolverType', namespaces=nsmap))
-        accelerationRelaxationFactor = e.find('accelerationRelaxationFactor', namespaces=nsmap).text
-        accelerationDampingFactor = e.find('accelerationDampingFactor', namespaces=nsmap).text
+        accelerationRelaxationFactor = PFloat.fromElement(e.find('accelerationRelaxationFactor', namespaces=nsmap))
+        accelerationDampingFactor = PFloat.fromElement(e.find('accelerationDampingFactor', namespaces=nsmap))
 
         bodies = []
         bodiesElement = e.find('bodies', namespaces=nsmap)
@@ -165,7 +166,7 @@ class RigidBodyDynamics:
 
         return E('rigidBodyDynamics',
                  self.solver.toElement(),
-                 E('accelerationRelaxationFactor', self.accelerationRelaxationFactor),
-                 E('accelerationDampingFactor', self.accelerationDampingFactor),
+                 self.accelerationRelaxationFactor.toElement('accelerationRelaxationFactor'),
+                 self.accelerationDampingFactor.toElement('accelerationDampingFactor'),
                  bodiesElement,
                  E('rigidBodyRestraints', *[r.toElement() for r in self.restraints]))

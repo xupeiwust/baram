@@ -8,6 +8,7 @@ from uuid import UUID, uuid4
 
 from baramFlow.coredb.libdb import E, nsmap
 from baramFlow.base.xml_helper import Vector
+from libbaram.pfloat import PFloat
 
 
 class RestraintType(Enum):
@@ -22,11 +23,11 @@ class Restraint:
     order: int
     restraintType: RestraintType
 
-    dampingConstant: str = '0'
-    springConstant: str = '0'
-    restLength: str = '0'
+    dampingConstant: PFloat = PFloat('0')
+    springConstant: PFloat = PFloat('0')
+    restLength: PFloat = PFloat('0')
 
-    axis: Vector = dataClassField(default_factory=lambda: Vector('0', '0', '1'))
+    axis: Vector = dataClassField(default_factory=Vector.zUnit)
     attachmentPoint: Vector = dataClassField(default_factory=Vector)
     anchorPoint: Vector = dataClassField(default_factory=Vector)
 
@@ -36,9 +37,9 @@ class Restraint:
         order = int(e.find('order', namespaces=nsmap).text)
         restraintType = RestraintType(e.find('restraintType', namespaces=nsmap).text)
 
-        dampingConstant = e.find('dampingConstant', namespaces=nsmap).text
-        springConstant = e.find('springConstant', namespaces=nsmap).text
-        restLength = e.find('restLength', namespaces=nsmap).text
+        dampingConstant = PFloat.fromElement(e.find('dampingConstant', namespaces=nsmap))
+        springConstant = PFloat.fromElement(e.find('springConstant', namespaces=nsmap))
+        restLength = PFloat.fromElement(e.find('restLength', namespaces=nsmap))
 
         axis = Vector.fromElement(e.find('axis', namespaces=nsmap))
         attachmentPoint = Vector.fromElement(e.find('attachmentPoint', namespaces=nsmap))
@@ -57,9 +58,9 @@ class Restraint:
                  E('uuid', str(self.uuid)),
                  E('order', str(self.order)),
                  E('restraintType', self.restraintType.value),
-                 E('dampingConstant', self.dampingConstant),
-                 E('springConstant', self.springConstant),
-                 E('restLength', self.restLength),
+                 self.dampingConstant.toElement('dampingConstant'),
+                 self.springConstant.toElement('springConstant'),
+                 self.restLength.toElement('restLength'),
                  self.axis.toElement('axis'),
                  self.attachmentPoint.toElement('attachmentPoint'),
                  self.anchorPoint.toElement('anchorPoint'))

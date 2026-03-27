@@ -45,3 +45,13 @@ class DynamicMeshDict(DictionaryFile):
                 }
 
         return self
+
+    def _buildMovingCellZone(self):
+        pass
+
+    def _buildMovingBoundary(self):
+        pass
+
+    def _buildRigidBodyDynamics(self):
+        pass
+

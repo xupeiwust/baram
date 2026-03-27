@@ -59,9 +59,9 @@ class ABLInletDialog(QDialog):
                 flowDirection = ABLFlowDirection(
                     specificationMethod=specMethod,
                     value = Vector(
-                        x=str(PFloat(self._ui.flowDirectionXComponent.text(), self.tr("Flow Direction X-Component"))),
-                        y=str(PFloat(self._ui.flowDirectionYComponent.text(), self.tr("Flow Direction Y-Component"))),
-                        z=str(PFloat(self._ui.flowDirectionZComponent.text(), self.tr("Flow Direction Z-Component")))))
+                        x=PFloat(self._ui.flowDirectionXComponent.text(), self.tr("Flow Direction X-Component")),
+                        y=PFloat(self._ui.flowDirectionYComponent.text(), self.tr("Flow Direction Y-Component")),
+                        z=PFloat(self._ui.flowDirectionZComponent.text(), self.tr("Flow Direction Z-Component"))))
             else:
                 flowDirection = ABLFlowDirection(specificationMethod=specMethod)
 
@@ -85,12 +85,12 @@ class ABLInletDialog(QDialog):
                 abl= AtmosphericBoundaryLayer(
                     flowDirection=flowDirection,
                     groundNormalDirection=Vector(
-                        x=str(PFloat(self._ui.groundNormalDirectionXComponent.text(),
-                                     self.tr("Ground-Normal Direction X-Component"))),
-                        y=str(PFloat(self._ui.groundNormalDirectionYComponent.text(),
-                                     self.tr("Ground-Normal Direction Y-Component"))),
-                        z=str(PFloat(self._ui.groundNormalDirectionZComponent.text(),
-                                     self.tr("Ground-Normal Direction Z-Component")))),
+                        x=PFloat(self._ui.groundNormalDirectionXComponent.text(),
+                                     self.tr("Ground-Normal Direction X-Component")),
+                        y=PFloat(self._ui.groundNormalDirectionYComponent.text(),
+                                     self.tr("Ground-Normal Direction Y-Component")),
+                        z=PFloat(self._ui.groundNormalDirectionZComponent.text(),
+                                     self.tr("Ground-Normal Direction Z-Component"))),
                     referenceFlowSpeed=str(PFloat(self._ui.referenceFlowSpeed.text(), self.tr("Reference Flow Speed"))),
                     referenceHeight= str(PFloat(self._ui.referenceHeight.text(), self.tr("Reference Height"))),
                     surfaceRoughnessLength= str(

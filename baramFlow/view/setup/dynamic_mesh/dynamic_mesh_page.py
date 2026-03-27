@@ -245,13 +245,13 @@ class DynamicMeshPage(ContentPage):
         idx = self._ui.rbdSolverCombo.findData(rbd.solver.solverType)
         if idx >= 0:
             self._ui.rbdSolverCombo.setCurrentIndex(idx)
-        self._ui.rbdVelCoeff.setText(rbd.solver.velocityIntegrationCoefficient)
-        self._ui.rbdPosCoeff.setText(rbd.solver.positionIntegrationCoefficient)
-        self._ui.rbdAccOffCoeff.setText(rbd.solver.offCenteringAccelerationCoefficient)
-        self._ui.rbdVelOffCoeff.setText(rbd.solver.offCenteringVelocityCoefficient)
+        self._ui.rbdVelCoeff.setPFloat(rbd.solver.velocityIntegrationCoefficient)
+        self._ui.rbdPosCoeff.setPFloat(rbd.solver.positionIntegrationCoefficient)
+        self._ui.rbdAccOffCoeff.setPFloat(rbd.solver.offCenteringAccelerationCoefficient)
+        self._ui.rbdVelOffCoeff.setPFloat(rbd.solver.offCenteringVelocityCoefficient)
 
-        self._ui.rbdRelaxation.setText(rbd.accelerationRelaxationFactor)
-        self._ui.rbdDamping.setText(rbd.accelerationDampingFactor)
+        self._ui.rbdRelaxation.setPFloat(rbd.accelerationRelaxationFactor)
+        self._ui.rbdDamping.setPFloat(rbd.accelerationDampingFactor)
 
         # Bodies
         self._ui.bodyList.clear()

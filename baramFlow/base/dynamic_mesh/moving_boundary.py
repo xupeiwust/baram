@@ -13,6 +13,7 @@ from baramFlow.base.dynamic_mesh.restraint import (
     Restraint,
 )
 from baramFlow.base.xml_helper import Vector
+from libbaram.pfloat import PFloat
 
 
 class PointMotionType(Enum):
@@ -43,7 +44,7 @@ class RotationalConstraintType(Enum):
 
 @dataclass
 class RigidBodyMotion:
-    mass: str = '0'
+    mass: PFloat = PFloat('0')
 
     centerOfMass: Vector = dataClassField(default_factory=Vector)
     centerOfRotation: Vector = dataClassField(default_factory=Vector)
@@ -56,21 +57,21 @@ class RigidBodyMotion:
 
     direction: Vector = dataClassField(default_factory=Vector)
     normal: Vector = dataClassField(default_factory=Vector)
-    axis: Vector = dataClassField(default_factory=lambda: Vector('0', '0', '1'))
+    axis: Vector = dataClassField(default_factory=Vector.zUnit)
 
     limitAngle: bool = False
-    clockwise: str = '0'
-    counterclockwise: str = '0'
+    clockwise: PFloat = PFloat('0')
+    counterclockwise: PFloat = PFloat('0')
 
     restraints: list[Restraint] = dataClassField(default_factory=list)
     solver: RigidBodySolver = dataClassField(default_factory=RigidBodySolver)
 
-    accelerationRelaxationFactor: str = '0.7'
-    accelerationDampingFactor: str = '1.0'
+    accelerationRelaxationFactor: PFloat = PFloat('0.7')
+    accelerationDampingFactor: PFloat = PFloat('1.0')
 
     @classmethod
     def fromElement(cls, e):
-        mass = e.find('mass', namespaces=nsmap).text
+        mass = PFloat.fromElement(e.find('mass', namespaces=nsmap))
 
         centerOfMass = Vector.fromElement(e.find('centerOfMass', namespaces=nsmap))
         centerOfRotation = Vector.fromElement(e.find('centerOfRotation', namespaces=nsmap))
@@ -88,8 +89,8 @@ class RigidBodyMotion:
         axis = Vector.fromElement(e.find('axis', namespaces=nsmap))
 
         limitAngle = e.find('limitAngle', namespaces=nsmap).text == 'true'
-        clockwise = e.find('clockwise', namespaces=nsmap).text
-        counterclockwise = e.find('counterclockwise', namespaces=nsmap).text
+        clockwise = PFloat.fromElement(e.find('clockwise', namespaces=nsmap))
+        counterclockwise = PFloat.fromElement(e.find('counterclockwise', namespaces=nsmap))
 
         restraints = []
         for re_ in e.find('rigidBodyRestraints', namespaces=nsmap).findall('restraint', namespaces=nsmap):
@@ -98,8 +99,8 @@ class RigidBodyMotion:
 
         solver = RigidBodySolver.fromElement(e.find('rigidBodySolverType', namespaces=nsmap))
 
-        accelerationRelaxationFactor = e.find('accelerationRelaxationFactor', namespaces=nsmap).text
-        accelerationDampingFactor = e.find('accelerationDampingFactor', namespaces=nsmap).text
+        accelerationRelaxationFactor = PFloat.fromElement(e.find('accelerationRelaxationFactor', namespaces=nsmap))
+        accelerationDampingFactor = PFloat.fromElement(e.find('accelerationDampingFactor', namespaces=nsmap))
 
         return RigidBodyMotion(
             mass=mass,
@@ -120,7 +121,7 @@ class RigidBodyMotion:
 
     def toElement(self):
         return E('rigidBodyMotion',
-                 E('mass', self.mass),
+                 self.mass.toElement('mass'),
                  self.centerOfMass.toElement('centerOfMass'),
                  self.centerOfRotation.toElement('centerOfRotation'),
                  E('orientation', self.orientation),
@@ -131,12 +132,12 @@ class RigidBodyMotion:
                  self.normal.toElement('normal'),
                  self.axis.toElement('axis'),
                  E('limitAngle', self.limitAngle),
-                 E('clockwise', self.clockwise),
-                 E('counterclockwise', self.counterclockwise),
+                 self.clockwise.toElement('clockwise'),
+                 self.counterclockwise.toElement('counterclockwise'),
                  E('rigidBodyRestraints', *[r.toElement() for r in self.restraints]),
                  self.solver.toElement(),
-                 E('accelerationRelaxationFactor', self.accelerationRelaxationFactor),
-                 E('accelerationDampingFactor', self.accelerationDampingFactor))
+                 self.accelerationRelaxationFactor.toElement('accelerationRelaxationFactor'),
+                 self.accelerationDampingFactor.toElement('accelerationDampingFactor'))
 
 
 @dataclass(kw_only=True)

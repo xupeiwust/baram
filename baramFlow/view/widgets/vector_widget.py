@@ -26,11 +26,10 @@ class VectorWidget(QWidget):
         layout.addWidget(QLabel(')'))
         layout.setContentsMargins(0, 0, 0, 0)
 
-    def setVector(self, vector):
-        self._x.setText(vector.x)
-        self._y.setText(vector.y)
-        self._z.setText(vector.z)
+    def setVector(self, vector: Vector):
+        self._x.setPFloat(vector.x)
+        self._y.setPFloat(vector.y)
+        self._z.setPFloat(vector.z)
 
     def vector(self, name):
-        return Vector(
-            str(PFloat(self._x.text(), name)), str(PFloat(self._y.text(), name)), str(PFloat(self._z.text(), name)))
+        return Vector(self._x.pFloat(name), self._y.pFloat(name), self._z.pFloat(name))
