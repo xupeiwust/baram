@@ -21,7 +21,7 @@ from vtkmodules.vtkParallelCore import vtkDummyController, vtkMultiProcessContro
 # noinspection PyUnresolvedReferences
 import resource_rc
 
-from libbaram.mpi import checkMPI, MPIStatus
+from libbaram.mpi import checkMPI, MPIStatus, MPI_PREFIX
 from libbaram.process import getAvailablePhysicalCores
 
 from baramFlow.app import app
@@ -63,6 +63,10 @@ def main():
             message = QApplication.translate('main', 'MPI package NOT available in the system.')
         elif mpiStatus == MPIStatus.LOW_VERSION:
             message = QApplication.translate('main', 'MPI package version low. Recent version required.')
+        elif mpiStatus == MPIStatus.INVALID_PREFIX:
+            message = QApplication.translate(
+                'main', f'Incorrect "$BARAM_MPI_PREFIX" environment variable.<br/>'
+                        f'"{MPI_PREFIX}/bin/mpirun" does NOT exist.')
 
         QMessageBox.information(None, QApplication.translate('main', 'Check MPI'), message)
         return
