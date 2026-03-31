@@ -128,8 +128,8 @@ class MonitorBaseConfiguration:
 
         return name
 
-    @classmethod
-    def fromElement(cls, e, monitorType):
+    @staticmethod
+    def fromElement(e, monitorType):
         return MonitorBaseConfiguration(
             type=monitorType,
             uuid=UUID(e.find('uuid', namespaces=nsmap).text),
@@ -157,8 +157,8 @@ class ForceDirection:
     angleOfAttack: str = '0'
     angleOfSideslip: str = '0'
 
-    @classmethod
-    def fromElement(cls, e):
+    @staticmethod
+    def fromElement(e):
         return ForceDirection(
             specificationMethod=DirectionSpecificationMethod(e.find('specificationMethod', namespaces=nsmap).text),
             dragDirection=Vector.fromElement(e.find('dragDirection', namespaces=nsmap)),
@@ -192,8 +192,8 @@ class ForceMonitorConfiguration:
             region='',
             boundaries=[])
 
-    @classmethod
-    def fromElement(cls, e):
+    @staticmethod
+    def fromElement(e):
         return ForceMonitorConfiguration(
             monitorBase=MonitorBaseConfiguration.fromElement(e, MonitorType.FORCE),
             forceDirection=ForceDirection.fromElement(e.find('forceDirection', namespaces=nsmap)),
@@ -230,8 +230,8 @@ class PointMonitorConfiguration:
             field=MonitorField(PRESSURE, VectorComponent.MAGNITUDE),
             coordinate=Vector.zero())
 
-    @classmethod
-    def fromElement(cls, e):
+    @staticmethod
+    def fromElement(e):
         snapOntoBoundary = xmlToBool(e.find('snapOntoBoundary', namespaces=nsmap).text)
         return PointMonitorConfiguration(
             monitorBase=MonitorBaseConfiguration.fromElement(e, MonitorType.POINT),
@@ -271,8 +271,8 @@ class SurfaceMonitorConfiguration:
             field=MonitorField(PRESSURE, VectorComponent.MAGNITUDE),
             surface='0')
 
-    @classmethod
-    def fromElement(cls, e):
+    @staticmethod
+    def fromElement(e):
         return SurfaceMonitorConfiguration(monitorBase=MonitorBaseConfiguration.fromElement(e, MonitorType.SURFACE),
                                            reportType=SurfaceReportType(e.find('reportType', namespaces=nsmap).text),
                                            field=getMonitorField(e),
@@ -306,8 +306,8 @@ class VolumeMonitorConfiguration:
             field=MonitorField(PRESSURE, VectorComponent.MAGNITUDE),
             volume='0')
 
-    @classmethod
-    def fromElement(cls, e):
+    @staticmethod
+    def fromElement(e):
         return VolumeMonitorConfiguration(monitorBase=MonitorBaseConfiguration.fromElement(e, MonitorType.VOLUME),
                                           reportType=VolumeReportType(e.find('reportType', namespaces=nsmap).text),
                                           field=getMonitorField(e),

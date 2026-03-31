@@ -198,7 +198,7 @@ class _Project(QObject):
 
         return status
 
-    def updateBatchStatuses(self, statuses: list[str]):
+    def updateBatchStatuses(self, statuses: dict):
         self._settings.set(SettingKey.BATCH_STATUS, statuses)
 
     def getBatchStatus(self, name) -> SolverStatus:
@@ -307,7 +307,7 @@ class Project:
         cls._instance = None
 
     @classmethod
-    def instance(cls):
+    def instance(cls) -> _Project:
         assert(cls._instance is not None)
         return cls._instance
 

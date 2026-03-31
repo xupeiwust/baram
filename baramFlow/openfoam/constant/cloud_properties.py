@@ -6,13 +6,14 @@ from baramFlow.coredb.models_db import ModelsDB
 from baramFlow.coredb.region_db import RegionDB
 from libbaram.openfoam.dictionary.dictionary_file import DictionaryFile, DataClass
 
-from baramFlow.base.boundary.boundary import BoundaryManager, PatchInteractionType
+from baramFlow.base.boundary.boundary import PatchInteractionType
+from baramFlow.base.boundary.boundary_manager import BoundaryManager
 from baramFlow.base.model.DPM_model import DPMModelManager, KinematicModel, FlowRate, DiameterDistribution, Injection
 from baramFlow.base.model.DPM_model import ConeInjection, PointInjection, SurfaceInjection
 from baramFlow.base.model.model import DPMEvaporationModel, DPMTrackingScheme, DPMParticleType, DPMTurbulentDispersion, DPMFlowRateSpec
 from baramFlow.base.model.model import DPMDragForce, DPMLiftForce, DPMInjectionType, DPMDiameterDistribution
 from baramFlow.base.model.model import DPMParticleVelocityType, DPMParticleSpeed
-from baramFlow.coredb.boundary_db import BoundaryDB, BoundaryType
+from baramFlow.coredb.boundary_db import BoundaryDB
 from baramFlow.coredb.coredb_reader import CoreDBReader
 from baramFlow.coredb.general_db import GeneralDB
 from baramFlow.coredb.material_db import MaterialDB

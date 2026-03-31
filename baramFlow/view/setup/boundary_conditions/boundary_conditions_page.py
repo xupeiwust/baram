@@ -79,8 +79,8 @@ class BoundaryItem(QTreeWidgetItem):
 
         self._widget = widget
 
-        self.setFlags(self.flags() | Qt.ItemIsUserCheckable)
-        self.setCheckState(0, Qt.Checked)
+        self.setFlags(self.flags() | Qt.ItemFlag.ItemIsUserCheckable)
+        self.setCheckState(0, Qt.CheckState.Checked)
 
         self.treeWidget().setItemWidget(self, 1, widget)
 
@@ -240,8 +240,8 @@ class BoundaryConditionsPage(ContentPage):
 
             self._edit()
 
-    def _boundaryTypeChanged(self, bcid):
-        self._boundaries[bcid].reloadType()
+    def _onCouplingBoundaryEdited(self):
+        self._boundaries[int(self._dialog.coupleBoundary())].reloadType()
 
     @qasync.asyncSlot()
     async def _copy(self):
@@ -271,7 +271,7 @@ class BoundaryConditionsPage(ContentPage):
                 if dialogClass:
                     self._dialog = dialogClass(self, str(bcid))
                     if BoundaryDB.needsCoupledBoundary(bctype):
-                        self._dialog.boundaryTypeChanged.connect(self._boundaryTypeChanged)
+                        self._dialog.accepted.connect(self._onCouplingBoundaryEdited)
                     self._dialog.open()
 
     def _showTypePicker(self, bcid, point):
