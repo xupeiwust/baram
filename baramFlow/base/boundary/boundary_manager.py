@@ -90,21 +90,21 @@ class BoundaryManager:
 
     @staticmethod
     def updateBoundaryType(bcid: str, newType: BoundaryType):
-        boundary = BoundaryManager.getBoundary(bcid).boundary
-        if boundary.bctype == newType:
+        boundaryModel = BoundaryManager.getBoundary(bcid)
+        if boundaryModel.bctype == newType:
             return
 
         keepCouple= True
-        if boundary.coupledBoundary != '0':
-            couple = BoundaryManager.getBoundary(boundary.coupledBoundary).boundary
+        if boundaryModel.boundary.coupledBoundary != '0':
+            coupleModel = BoundaryManager.getBoundary(boundaryModel.boundary.coupledBoundary)
             if (not BoundaryDB.needsCoupledBoundary(newType)
-                    or (newType != BoundaryType.THERMO_COUPLED_WALL and boundary.rname != couple.rname)
-                    or bcid != couple.coupledBoundary):
+                    or (newType != BoundaryType.THERMO_COUPLED_WALL and boundaryModel.rname != coupleModel.rname)
+                    or bcid != coupleModel.boundary.coupledBoundary):
                 keepCouple = False
 
         boundaryPatch = BoundaryTypeAndCouplePatch(bcid=bcid,
                                                      bctype=newType)
-        couplePatch = BoundaryTypeAndCouplePatch(bcid=boundary.coupledBoundary)
+        couplePatch = BoundaryTypeAndCouplePatch(bcid=boundaryModel.boundary.coupledBoundary)
 
         if keepCouple:
             couplePatch.bctype = newType

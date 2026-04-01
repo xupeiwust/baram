@@ -9,7 +9,7 @@ from baramFlow.base.boundary.boundary_data import BoundaryData
 from baramFlow.base.cell_zone.cell_zone import CellZoneData
 from baramFlow.base.xml_helper import Vector
 from baramFlow.coredb.libdb import E, nsmap
-
+from baramFlow.coredb.region_db import CELL_ZONE_NAME_FOR_REGION
 
 CELL_ZONE_PATH = 'configurations/cell_zone.xml'
 
@@ -133,8 +133,11 @@ class RegionModel:
     def getBoundaryNames(self):
         return [model.name for model in self.boundaries]
 
-    def getCellZoneNames(self):
-        return [model.name for model in self.cellZones]
+    def getCellZoneNames(self, includeEntireZone=True):
+        if includeEntireZone:
+            return [model.name for model in self.cellZones]
+        else:
+            return [model.name for model in self.cellZones if model.name != CELL_ZONE_NAME_FOR_REGION]
 
     def sortBoundaries(self):
         self.boundaries.sort(key=lambda b: b.startFace)

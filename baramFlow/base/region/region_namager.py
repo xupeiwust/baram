@@ -30,6 +30,18 @@ class _RegionsCache:
         self._boundaries: dict[str, BoundaryModel] = {}
         self._cellZones: dict[str, CellZoneModel] = {}
 
+    @property
+    def regions(self):
+        return self._regions
+
+    @property
+    def boundaries(self):
+        return self._boundaries
+
+    @property
+    def cellZones(self):
+        return self._cellZones
+
     def load(self):
         db = CoreDB()
 
@@ -53,32 +65,6 @@ class _RegionsCache:
         self._regions.clear()
         self._boundaries.clear()
         self._cellZones.clear()
-
-    @property
-    def regions(self):
-        return self._regions
-
-    @property
-    def boundaries(self):
-        return self._boundaries
-
-    @property
-    def cellZones(self):
-        return self._cellZones
-
-    def matches(self, vtkMesh: dict):
-        if set(self._regions.keys()) != set(rname for rname in vtkMesh if 'boundary' in vtkMesh[rname]):
-            return False
-
-        for rname, region in self._regions.items():
-            if set(region.getBoundaryNames()) != set(vtkMesh[rname]['boundary'].keys()):
-                return False
-
-            if 'zones' in vtkMesh[rname] and 'cellZones' in vtkMesh[rname]['zones']:
-                if set(region.getCellZoneNames()) != set(vtkMesh[rname]['zones']['cellZones'].keys()):
-                    return False
-
-        return True
 
     def replace(self, data: list[PolyMeshRegion]):
         self.clear()
@@ -116,6 +102,14 @@ class _RegionsCache:
                 self._addCellZone(CellZoneModel(cellZone=CellZoneData(name=name,
                                                                       rname=r.rname),
                                                 rname=r.rname))
+
+    def updatePolyMeshData(self, polyMeshBoundaries: dict):
+        for region in self._regions.values():
+            for model in region.boundaries:
+                model.startFace = polyMeshBoundaries[region.name][model.name]['startFace']
+
+            region.sortBoundaries()
+
 
     def toElement(self):
         element = E('regions')
@@ -165,13 +159,7 @@ class RegionsCache:
 
     @classmethod
     def reloadBoundary(cls, bcid):
-        old = cls._cache.boundaries[bcid]
-
         new = BoundaryData.fromElement(CoreDB().getElement(BoundaryDB.getXPath(bcid)))
-        new.startFace = old.startFace
-        new.rname = old.rname
-        new.zoneAverageDirection = old.zoneAverageDirection
-
         cls._cache.boundaries[bcid].boundary = new
 
     @classmethod
@@ -188,7 +176,7 @@ class RegionsCache:
                 return False
 
             if 'zones' in vtkMesh[rname] and 'cellZones' in vtkMesh[rname]['zones']:
-                if set(region.getCellZoneNames()) != set(vtkMesh[rname]['zones']['cellZones'].keys()):
+                if set(region.getCellZoneNames(includeEntireZone=False)) != set(vtkMesh[rname]['zones']['cellZones'].keys()):
                     return False
 
         return True
@@ -204,3 +192,7 @@ class RegionsCache:
         with CoreDB() as db:
             db.replaceElement(REGIONS_XPATH, cls._cache.toElement())
             db.increaseConfigCount()
+
+    @classmethod
+    def updatePolyMeshData(cls, polyMeshBoundaries: dict):
+        cls._cache.updatePolyMeshData(polyMeshBoundaries)

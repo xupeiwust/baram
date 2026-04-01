@@ -246,6 +246,7 @@ class PolyMeshLoader(QObject):
 
         db = coredb.CoreDB()
         if RegionsCache.matches(vtkMesh):
+            RegionsCache.updatePolyMeshData(boundaries)
             return False
 
         UserDefinedScalarsDB.clearUserDefinedScalars(db)
