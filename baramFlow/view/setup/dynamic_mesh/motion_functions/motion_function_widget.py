@@ -3,17 +3,17 @@
 
 from PySide6.QtWidgets import QWidget
 
-from baramFlow.base.dynamic_mesh.motion_function import MotionFunction, FunctionType
+from baramFlow.base.dynamic_mesh.motion_function import MotionFunction, MotionFunctionType
 
 from .motion_function_widget_ui import Ui_MotionFunctionWidget
 
 
 FUNCTION_TYPE_NAMES = {
-    FunctionType.ROTATION: 'Rotation',
-    FunctionType.ROTATING_OSCILLATION: 'Rotating Oscillation',
-    FunctionType.LINEAR_TRANSLATION: 'Linear Translation',
-    FunctionType.LINEAR_OSCILLATION: 'Linear Oscillation',
-    FunctionType.MANUAL_POSITION: 'Manual Position',
+    MotionFunctionType.ROTATION: 'Rotation',
+    MotionFunctionType.ROTATING_OSCILLATION: 'Rotating Oscillation',
+    MotionFunctionType.LINEAR_TRANSLATION: 'Linear Translation',
+    MotionFunctionType.LINEAR_OSCILLATION: 'Linear Oscillation',
+    MotionFunctionType.MANUAL_POSITION: 'Manual Position',
 }
 
 
@@ -38,15 +38,15 @@ class MotionFunctionWidget(QWidget):
         self._ui.nameLabel.setText(FUNCTION_TYPE_NAMES.get(f.functionType, str(f.functionType.value)))
 
         detail = ''
-        if f.functionType == FunctionType.ROTATION:
-            detail = f'{f.omega} rpm'
-        elif f.functionType == FunctionType.ROTATING_OSCILLATION:
-            detail = f'{f.omega} rpm'
-        elif f.functionType == FunctionType.LINEAR_TRANSLATION:
+        if f.functionType == MotionFunctionType.ROTATION:
+            detail = f'{f.rpm} rpm'
+        elif f.functionType == MotionFunctionType.ROTATING_OSCILLATION:
+            detail = f'{f.rpm} rpm'
+        elif f.functionType == MotionFunctionType.LINEAR_TRANSLATION:
             detail = f'{f.velocity} m/s'
-        elif f.functionType == FunctionType.LINEAR_OSCILLATION:
+        elif f.functionType == MotionFunctionType.LINEAR_OSCILLATION:
             detail = f'{f.frequency} Hz'
-        elif f.functionType == FunctionType.MANUAL_POSITION:
+        elif f.functionType == MotionFunctionType.MANUAL_POSITION:
             detail = 'Manual Positions'
 
         self._ui.detailLabel.setText(detail)

@@ -10,7 +10,7 @@ from PySide6.QtCore import QRegularExpression
 from PySide6.QtGui import QRegularExpressionValidator
 from PySide6.QtWidgets import QDialog, QListWidgetItem, QMenu
 
-from baramFlow.base.dynamic_mesh.motion_function import MotionFunction, FunctionType
+from baramFlow.base.dynamic_mesh.motion_function import MotionFunction, MotionFunctionType
 from baramFlow.coredb.cell_zone_db import CellZoneDB
 from baramFlow.view.setup.dynamic_mesh.motion_functions.motion_function_widget import MotionFunctionWidget, FUNCTION_TYPE_NAMES
 from baramFlow.view.setup.dynamic_mesh.motion_functions.motion_function_dialogs import MOTION_FUNCTION_DIALOGS
@@ -34,9 +34,9 @@ class MotionDefinitionDialog(QDialog):
         self._ui.name.setText(motionDefinition.name)
 
         self._addMenu = QMenu(self._ui.addButton)
-        for ft in [FunctionType.ROTATION, FunctionType.ROTATING_OSCILLATION,
-                    FunctionType.LINEAR_TRANSLATION, FunctionType.LINEAR_OSCILLATION,
-                    FunctionType.MANUAL_POSITION]:
+        for ft in [MotionFunctionType.ROTATION, MotionFunctionType.ROTATING_OSCILLATION,
+                    MotionFunctionType.LINEAR_TRANSLATION, MotionFunctionType.LINEAR_OSCILLATION,
+                    MotionFunctionType.MANUAL_POSITION]:
             action = self._addMenu.addAction(FUNCTION_TYPE_NAMES[ft])
             action.setData(ft)
             action.triggered.connect(lambda checked=False, ftype=ft: self._addMotionFunction(ftype))
@@ -69,7 +69,7 @@ class MotionDefinitionDialog(QDialog):
         for czid in cellZones:
             self._ui.cellZones.addItem(CellZoneDB.getCellZoneText(czid))
 
-    def _addMotionFunction(self, functionType: FunctionType):
+    def _addMotionFunction(self, functionType: MotionFunctionType):
         mf = MotionFunction(uuid=uuid4(), order=len(self._motionFunctions) + 1,
                             functionType=functionType)
         dialog = MOTION_FUNCTION_DIALOGS[functionType](self, mf)

@@ -2391,7 +2391,7 @@
                                     </xs:restriction>
                                 </xs:simpleType>
                             </xs:element>
-                            <xs:element name="center" type="vector"/>
+                            <xs:element name="origin" type="vector"/>
                             <xs:element name="axis" type="vector"/>
                             <xs:element name="omega" type="inputNumberType"/>
                             <xs:element name="velocity" type="vector"/>
@@ -3222,8 +3222,30 @@
                                                                 <xs:element name="mass" type="inputNumberType"/>
                                                                 <xs:element name="centerOfMass" type="vector"/>
                                                                 <xs:element name="centerOfRotation" type="vector"/>
-                                                                <xs:element name="orientation" type="inputNumberListType"/>  <!-- tensor (3x3 matrix) -->
-                                                                <xs:element name="momentOfInertia" type="inputNumberListType"/>  <!-- tensor (3x3 matrix) -->
+                                                                <xs:element name="orientation">
+                                                                    <xs:complexType>
+                                                                        <xs:sequence>
+                                                                            <xs:element name="r11" type="inputNumberType"/>
+                                                                            <xs:element name="r12" type="inputNumberType"/>
+                                                                            <xs:element name="r13" type="inputNumberType"/>
+                                                                            <xs:element name="r21" type="inputNumberType"/>
+                                                                            <xs:element name="r22" type="inputNumberType"/>
+                                                                            <xs:element name="r23" type="inputNumberType"/>
+                                                                            <xs:element name="r31" type="inputNumberType"/>
+                                                                            <xs:element name="r32" type="inputNumberType"/>
+                                                                            <xs:element name="r33" type="inputNumberType"/>
+                                                                        </xs:sequence>
+                                                                    </xs:complexType>
+                                                                </xs:element>
+                                                                <xs:element name="momentOfInertia">
+                                                                    <xs:complexType>
+                                                                        <xs:sequence>
+                                                                            <xs:element name="ixx" type="inputNumberType"/>
+                                                                            <xs:element name="iyy" type="inputNumberType"/>
+                                                                            <xs:element name="izz" type="inputNumberType"/>
+                                                                        </xs:sequence>
+                                                                    </xs:complexType>
+                                                                </xs:element>
                                                                 <xs:element name="translationalConstraintType" default="free">
                                                                     <xs:simpleType>
                                                                         <xs:restriction base="xs:string">
@@ -3280,8 +3302,33 @@
                                                                 <xs:element name="mass" type="inputNumberType"/>
                                                                 <xs:element name="centerOfMass" type="vector"/>
                                                                 <xs:element name="centerOfRotation" type="vector"/>
-                                                                <xs:element name="orientation" type="inputNumberListType"/>  <!-- tensor (3x3 matrix) -->
-                                                                <xs:element name="momentOfInertia" type="inputNumberListType"/>  <!-- tensor (3x3 matrix) -->
+                                                                <xs:element name="orientation">
+                                                                    <xs:complexType>
+                                                                        <xs:sequence>
+                                                                            <xs:element name="r11" type="inputNumberType"/>
+                                                                            <xs:element name="r12" type="inputNumberType"/>
+                                                                            <xs:element name="r13" type="inputNumberType"/>
+                                                                            <xs:element name="r21" type="inputNumberType"/>
+                                                                            <xs:element name="r22" type="inputNumberType"/>
+                                                                            <xs:element name="r23" type="inputNumberType"/>
+                                                                            <xs:element name="r31" type="inputNumberType"/>
+                                                                            <xs:element name="r32" type="inputNumberType"/>
+                                                                            <xs:element name="r33" type="inputNumberType"/>
+                                                                        </xs:sequence>
+                                                                    </xs:complexType>
+                                                                </xs:element>
+                                                                <xs:element name="momentOfInertia">
+                                                                    <xs:complexType>
+                                                                        <xs:sequence>
+                                                                            <xs:element name="ixx" type="inputNumberType"/>
+                                                                            <xs:element name="ixy" type="inputNumberType"/>
+                                                                            <xs:element name="ixz" type="inputNumberType"/>
+                                                                            <xs:element name="iyy" type="inputNumberType"/>
+                                                                            <xs:element name="iyz" type="inputNumberType"/>
+                                                                            <xs:element name="izz" type="inputNumberType"/>
+                                                                        </xs:sequence>
+                                                                    </xs:complexType>
+                                                                </xs:element>
                                                                 <xs:element name="boundaries">
                                                                     <xs:simpleType>
                                                                         <xs:list itemType="xs:positiveInteger"/>  <!-- boundary condition bcid -->

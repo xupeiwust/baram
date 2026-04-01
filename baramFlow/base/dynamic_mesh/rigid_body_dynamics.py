@@ -25,7 +25,7 @@ class JointType(Enum):
 class Joint:
     jointType: JointType
 
-    direction: Vector = dataClassField(default_factory=Vector)
+    direction: Vector = dataClassField(default_factory=Vector.xUnit)
     axis: Vector = dataClassField(default_factory=Vector.zUnit)
 
     @classmethod
@@ -36,8 +36,8 @@ class Joint:
 
         return Joint(jointType=jointType, direction=direction, axis=axis)
 
-    def toElement(self):
-        return E('joint',
+    def toElement(self, tag):
+        return E(tag,
                  E('jointType', self.jointType.value),
                  self.direction.toElement('direction'),
                  self.axis.toElement('axis'))
@@ -49,19 +49,22 @@ class Body:
     name: str
     parent: UUID
 
-    mass: PFloat = PFloat('0')
+    mass: PFloat = dataClassField(default_factory=lambda: PFloat('0'))
 
-    centerOfMass: Vector = dataClassField(default_factory=Vector)
-    centerOfRotation: Vector = dataClassField(default_factory=Vector)
+    centerOfMass: Vector = dataClassField(default_factory=Vector.zero)
+    centerOfRotation: Vector = dataClassField(default_factory=Vector.zero)
 
-    orientation: str = ''
-    momentOfInertia: str = ''
+    orientation: list[PFloat] = dataClassField(default_factory=lambda: [PFloat('1'), PFloat('0'), PFloat('0'),
+                                                                        PFloat('0'), PFloat('1'), PFloat('0'),
+                                                                        PFloat('0'), PFloat('0'), PFloat('1')])
+    momentOfInertia: list[PFloat] = dataClassField(default_factory=lambda: [PFloat('1'), PFloat('0'), PFloat('0'),
+                                                                        PFloat('0'), PFloat('1'), PFloat('1')])
 
     boundaries: list[str] = dataClassField(default_factory=list)
     joints: list[Joint] = dataClassField(default_factory=list)
 
-    deformationOffset: PFloat = PFloat('0')
-    deformationDistance: PFloat = PFloat('0')
+    deformationOffset: PFloat = dataClassField(default_factory=lambda: PFloat('0'))
+    deformationDistance: PFloat = dataClassField(default_factory=lambda: PFloat('0'))
 
     @classmethod
     def fromElement(cls, e):
@@ -74,8 +77,24 @@ class Body:
         centerOfMass = Vector.fromElement(e.find('centerOfMass', namespaces=nsmap))
         centerOfRotation = Vector.fromElement(e.find('centerOfRotation', namespaces=nsmap))
 
-        orientation = e.find('orientation', namespaces=nsmap).text or ''
-        momentOfInertia = e.find('momentOfInertia', namespaces=nsmap).text or ''
+        oe = e.find('orientation', namespaces=nsmap)
+        orientation =  [PFloat.fromElement(oe.find('r11', namespaces=nsmap)),
+                        PFloat.fromElement(oe.find('r12', namespaces=nsmap)),
+                        PFloat.fromElement(oe.find('r13', namespaces=nsmap)),
+                        PFloat.fromElement(oe.find('r21', namespaces=nsmap)),
+                        PFloat.fromElement(oe.find('r22', namespaces=nsmap)),
+                        PFloat.fromElement(oe.find('r23', namespaces=nsmap)),
+                        PFloat.fromElement(oe.find('r31', namespaces=nsmap)),
+                        PFloat.fromElement(oe.find('r32', namespaces=nsmap)),
+                        PFloat.fromElement(oe.find('r33', namespaces=nsmap))]
+
+        me = e.find('momentOfInertia', namespaces=nsmap)
+        momentOfInertia = [PFloat.fromElement(me.find('ixx', namespaces=nsmap)),
+                           PFloat.fromElement(me.find('ixy', namespaces=nsmap)),
+                           PFloat.fromElement(me.find('ixz', namespaces=nsmap)),
+                           PFloat.fromElement(me.find('iyy', namespaces=nsmap)),
+                           PFloat.fromElement(me.find('iyz', namespaces=nsmap)),
+                           PFloat.fromElement(me.find('izz', namespaces=nsmap))]
 
         boundariesText = e.find('boundaries', namespaces=nsmap).text or ''
         boundaries: list[str] = boundariesText.split() if boundariesText.strip() else []
@@ -99,20 +118,35 @@ class Body:
                     deformationOffset=deformationOffset,
                     deformationDistance=deformationDistance)
 
-    def toElement(self):
+    def toElement(self, tag):
         jointsElement = E('joints')
         for j in self.joints:
-            jointsElement.append(j.toElement())
+            jointsElement.append(j.toElement('joint'))
 
-        return E('body',
+        return E(tag,
                  E('uuid', str(self.uuid)),
                  E('name', self.name),
                  E('parent', str(self.parent)),
                  self.mass.toElement('mass'),
                  self.centerOfMass.toElement('centerOfMass'),
                  self.centerOfRotation.toElement('centerOfRotation'),
-                 E('orientation', self.orientation),
-                 E('momentOfInertia', self.momentOfInertia),
+                 E('orientation',
+                    self.orientation[0].toElement('r11'),
+                    self.orientation[1].toElement('r12'),
+                    self.orientation[2].toElement('r13'),
+                    self.orientation[3].toElement('r21'),
+                    self.orientation[4].toElement('r22'),
+                    self.orientation[5].toElement('r23'),
+                    self.orientation[6].toElement('r31'),
+                    self.orientation[7].toElement('r32'),
+                    self.orientation[8].toElement('r33')),
+                 E('momentOfInertia',
+                    self.momentOfInertia[0].toElement('ixx'),
+                    self.momentOfInertia[1].toElement('ixy'),
+                    self.momentOfInertia[2].toElement('ixz'),
+                    self.momentOfInertia[3].toElement('iyy'),
+                    self.momentOfInertia[4].toElement('iyz'),
+                    self.momentOfInertia[5].toElement('izz')),
                  E('boundaries', ' '.join(self.boundaries)),
                  jointsElement,
                  self.deformationOffset.toElement('deformationOffset'),
@@ -131,8 +165,8 @@ class Body:
 @dataclass
 class RigidBodyDynamics:
     solver: RigidBodySolver = dataClassField(default_factory=RigidBodySolver)
-    accelerationRelaxationFactor: PFloat = PFloat('0.7')
-    accelerationDampingFactor: PFloat = PFloat('1.0')
+    accelerationRelaxationFactor: PFloat = dataClassField(default_factory=lambda: PFloat('0.7'))
+    accelerationDampingFactor: PFloat = dataClassField(default_factory=lambda: PFloat('1.0'))
     bodies: list[Body] = dataClassField(default_factory=list)
     restraints: list[Restraint] = dataClassField(default_factory=list)
 
@@ -162,7 +196,7 @@ class RigidBodyDynamics:
     def toElement(self):
         bodiesElement = E('bodies')
         for b in self.bodies:
-            bodiesElement.append(b.toElement())
+            bodiesElement.append(b.toElement('body'))
 
         return E('rigidBodyDynamics',
                  self.solver.toElement(),

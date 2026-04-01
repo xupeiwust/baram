@@ -70,7 +70,7 @@
        </widget>
       </item>
       <item row="1" column="1">
-       <widget class="VectorWidget" name="com"/>
+       <widget class="VectorWidget" name="com" native="true"/>
       </item>
       <item row="2" column="0">
        <widget class="QLabel" name="corLabel">
@@ -80,7 +80,7 @@
        </widget>
       </item>
       <item row="2" column="1">
-       <widget class="VectorWidget" name="cor"/>
+       <widget class="VectorWidget" name="cor" native="true"/>
       </item>
      </layout>
     </widget>
@@ -200,7 +200,11 @@
           </widget>
          </item>
          <item row="3" column="0">
-          <widget class="PFloatLineEdit" name="moi10"/>
+          <widget class="PFloatLineEdit" name="moi10">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+          </widget>
          </item>
          <item row="3" column="1">
           <widget class="PFloatLineEdit" name="moi11"/>
@@ -239,10 +243,18 @@
           </widget>
          </item>
          <item row="5" column="0">
-          <widget class="PFloatLineEdit" name="moi20"/>
+          <widget class="PFloatLineEdit" name="moi20">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+          </widget>
          </item>
          <item row="5" column="1">
-          <widget class="PFloatLineEdit" name="moi21"/>
+          <widget class="PFloatLineEdit" name="moi21">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+          </widget>
          </item>
          <item row="5" column="2">
           <widget class="PFloatLineEdit" name="moi22"/>
@@ -284,7 +296,7 @@
          <item>
           <widget class="QListWidget" name="jointList">
            <property name="contextMenuPolicy">
-            <enum>Qt::CustomContextMenu</enum>
+            <enum>Qt::ContextMenuPolicy::CustomContextMenu</enum>
            </property>
           </widget>
          </item>
@@ -297,14 +309,14 @@
                <string>Add Joint</string>
               </property>
               <property name="popupMode">
-               <enum>QToolButton::InstantPopup</enum>
+               <enum>QToolButton::ToolButtonPopupMode::InstantPopup</enum>
               </property>
              </widget>
             </item>
             <item>
              <spacer name="addJointSpacer">
               <property name="orientation">
-               <enum>Qt::Horizontal</enum>
+               <enum>Qt::Orientation::Horizontal</enum>
               </property>
               <property name="sizeHint" stdset="0">
                <size>
@@ -355,7 +367,7 @@
    <item>
     <widget class="QDialogButtonBox" name="buttonBox">
      <property name="standardButtons">
-      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+      <set>QDialogButtonBox::StandardButton::Cancel|QDialogButtonBox::StandardButton::Ok</set>
      </property>
     </widget>
    </item>

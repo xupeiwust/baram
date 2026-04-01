@@ -54,9 +54,6 @@ class BodyDialog(QDialog):
         self._ui.cor.setVector(body.centerOfRotation)
 
         # Orientation Tensor
-        oriValues = body.orientation.split() if body.orientation.strip() else ['1','0','0','0','1','0','0','0','1']
-        while len(oriValues) < 9:
-            oriValues.append('0')
         oriEdits = [
             [self._ui.ori00, self._ui.ori01, self._ui.ori02],
             [self._ui.ori10, self._ui.ori11, self._ui.ori12],
@@ -64,24 +61,20 @@ class BodyDialog(QDialog):
         ]
         for i in range(3):
             for j in range(3):
-                oriEdits[i][j].setText(oriValues[i * 3 + j])
+                oriEdits[i][j].setPFloat(body.orientation[i * 3 + j])
 
         # Moment of Inertia Tensor
-        moiValues = body.momentOfInertia.split() if body.momentOfInertia.strip() else ['1','0','0','0','1','0','0','0','1']
-        while len(moiValues) < 9:
-            moiValues.append('0')
-        moiEdits = [
-            [self._ui.moi00, self._ui.moi01, self._ui.moi02],
-            [self._ui.moi10, self._ui.moi11, self._ui.moi12],
-            [self._ui.moi20, self._ui.moi21, self._ui.moi22],
-        ]
-        for i in range(3):
-            for j in range(3):
-                moiEdits[i][j].setText(moiValues[i * 3 + j])
+
+        self._ui.moi00.setPFloat(body.momentOfInertia[0])
+        self._ui.moi01.setPFloat(body.momentOfInertia[1])
+        self._ui.moi02.setPFloat(body.momentOfInertia[2])
+        self._ui.moi11.setPFloat(body.momentOfInertia[3])
+        self._ui.moi12.setPFloat(body.momentOfInertia[4])
+        self._ui.moi22.setPFloat(body.momentOfInertia[5])
 
         # Mesh Deformation
-        self._ui.deformationOffset.setText(body.deformationOffset)
-        self._ui.deformationDistance.setText(body.deformationDistance)
+        self._ui.deformationOffset.setPFloat(body.deformationOffset)
+        self._ui.deformationDistance.setPFloat(body.deformationDistance)
 
         # Add Joint menu
         jointMenu = QMenu(self._ui.addJointButton)
@@ -194,7 +187,7 @@ class BodyDialog(QDialog):
             return
 
         try:
-            mass = str(PFloat(self._ui.mass.text(), self.tr('Mass')))
+            mass = PFloat(self._ui.mass.text(), self.tr('Mass'), low=0, lowInclusive=False)
             centerOfMass = self._ui.com.vector('Center of Mass')
             centerOfRotation = self._ui.cor.vector('Center of Rotation')
 
@@ -203,23 +196,22 @@ class BodyDialog(QDialog):
                 [self._ui.ori10, self._ui.ori11, self._ui.ori12],
                 [self._ui.ori20, self._ui.ori21, self._ui.ori22],
             ]
-            oriValues = []
+            oriValues: list[PFloat] = []
             for i in range(3):
                 for j in range(3):
-                    oriValues.append(str(PFloat(oriEdits[i][j].text(), self.tr('Orientation'))))
+                    oriValues.append(oriEdits[i][j].pFloat(self.tr('Orientation')))
 
-            moiEdits = [
-                [self._ui.moi00, self._ui.moi01, self._ui.moi02],
-                [self._ui.moi10, self._ui.moi11, self._ui.moi12],
-                [self._ui.moi20, self._ui.moi21, self._ui.moi22],
+            moiValues = [
+                self._ui.moi00.pFloat(self.tr('Moment of Inertia')),
+                self._ui.moi01.pFloat(self.tr('Moment of Inertia')),
+                self._ui.moi02.pFloat(self.tr('Moment of Inertia')),
+                self._ui.moi11.pFloat(self.tr('Moment of Inertia')),
+                self._ui.moi12.pFloat(self.tr('Moment of Inertia')),
+                self._ui.moi22.pFloat(self.tr('Moment of Inertia')),
             ]
-            moiValues = []
-            for i in range(3):
-                for j in range(3):
-                    moiValues.append(str(PFloat(moiEdits[i][j].text(), self.tr('Moment of Inertia'))))
 
-            deformationOffset = str(PFloat(self._ui.deformationOffset.text(), self.tr('Deformation Offset')))
-            deformationDistance = str(PFloat(self._ui.deformationDistance.text(), self.tr('Deformation Distance')))
+            deformationOffset = self._ui.deformationOffset.pFloat(self.tr('Deformation Offset'), low=0)
+            deformationDistance = self._ui.deformationDistance.pFloat(self.tr('Deformation Distance'), low=0)
         except ValueError as e:
             await AsyncMessageBox().warning(self, self.tr('Warning'), str(e))
             return
@@ -229,8 +221,8 @@ class BodyDialog(QDialog):
         self._body.mass = mass
         self._body.centerOfMass = centerOfMass
         self._body.centerOfRotation = centerOfRotation
-        self._body.orientation = ' '.join(oriValues)
-        self._body.momentOfInertia = ' '.join(moiValues)
+        self._body.orientation = oriValues
+        self._body.momentOfInertia = moiValues
         self._body.boundaries = self._boundaries
         self._body.joints = self._joints
         self._body.deformationOffset = deformationOffset

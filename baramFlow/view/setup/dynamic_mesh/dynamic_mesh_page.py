@@ -16,7 +16,7 @@ from baramFlow.coredb.boundary_db import BoundaryDB
 from baramFlow.coredb.cell_zone_db import CellZoneDB
 from baramFlow.base.dynamic_mesh.moving_boundary import MovingBoundaryEntry, PointMotionType
 from baramFlow.base.dynamic_mesh.rigid_body_dynamics import Body
-from baramFlow.base.dynamic_mesh.rigid_body_solver import SolverType
+from baramFlow.base.dynamic_mesh.rigid_body_solver import RigidBodyDynamicsSolverType
 from baramFlow.base.dynamic_mesh.restraint import Restraint, RestraintType
 
 from baramFlow.services.dynamic_mesh.dynamic_mesh_service import DynamicMeshService
@@ -53,9 +53,9 @@ class DynamicMeshPage(ContentPage):
         self._dynamicMesh = DynamicMeshService().getDynamicMesh()  # self.__init__ is called again if another mesh is imported
 
         # Solver combo items
-        self._ui.rbdSolverCombo.addItem('Newmark', SolverType.NEWMARK)
-        self._ui.rbdSolverCombo.addItem('Crank-Nicolson', SolverType.CRANK_NICOLSON)
-        self._ui.rbdSolverCombo.addItem('Symplectic', SolverType.SYMPLECTIC)
+        self._ui.rbdSolverCombo.addItem('Newmark', RigidBodyDynamicsSolverType.NEWMARK)
+        self._ui.rbdSolverCombo.addItem('Crank-Nicolson', RigidBodyDynamicsSolverType.CRANK_NICOLSON)
+        self._ui.rbdSolverCombo.addItem('Symplectic', RigidBodyDynamicsSolverType.SYMPLECTIC)
 
         # Add Restraint menu
         restraintMenu = QMenu(self._ui.addRestraintButton)
@@ -90,6 +90,45 @@ class DynamicMeshPage(ContentPage):
         self._ui.removeBodyButton.clicked.connect(self._removeBody)
         self._ui.bodyList.currentItemChanged.connect(self._bodySelected)
         self._ui.rbdRestraintList.customContextMenuRequested.connect(self._showRbdRestraintMenu)
+
+    @qasync.asyncSlot()
+    async def save(self):
+        if self._dynamicMesh.motionType == MotionType.RIGID_BODY_DYNAMICS:
+            try:
+                solverType = self._ui.rbdSolverCombo.currentData()
+                if solverType == RigidBodyDynamicsSolverType.NEWMARK:
+                    vic = self._ui.rbdVelCoeff.pFloat(self.tr('Velocity Integration Coefficient'))
+                    pic = self._ui.rbdPosCoeff.pFloat(self.tr('Position Integration Coefficient'))
+
+                elif solverType == RigidBodyDynamicsSolverType.CRANK_NICOLSON:
+                    oac = self._ui.rbdAccOffCoeff.pFloat(self.tr('Acceleration Off-centering Coefficient'))
+                    ovc = self._ui.rbdVelOffCoeff.pFloat(self.tr('Velocity Off-centering Coefficient'))
+
+                relaxation = self._ui.rbdRelaxation.pFloat(self.tr('Acceleration Relaxation Factor'))
+                damping = self._ui.rbdDamping.pFloat(self.tr('Acceleration Damping Factor'))
+
+            except ValueError as e:
+                await AsyncMessageBox().warning(self, self.tr('Warning'), str(e))
+                return False
+
+            rbd = self._dynamicMesh.rigidBodyDynamics
+            solver = rbd.solver
+            
+            solver.solverType = solverType
+
+            if solverType == RigidBodyDynamicsSolverType.NEWMARK:
+                solver.velocityIntegrationCoefficient = vic
+                solver.positionIntegrationCoefficient = pic
+
+            elif solver.solverType == RigidBodyDynamicsSolverType.CRANK_NICOLSON:
+                solver.offCenteringAccelerationCoefficient = oac
+                solver.offCenteringVelocityCoefficient = ovc
+
+            rbd.accelerationRelaxationFactor = relaxation
+            rbd.accelerationDampingFactor = damping
+
+
+        return True
 
     def _updatePage(self):
         mt = self._dynamicMesh.motionType
@@ -265,11 +304,11 @@ class DynamicMeshPage(ContentPage):
 
     def _rbdSolverChanged(self, index):
         solverType = self._ui.rbdSolverCombo.itemData(index)
-        if solverType == SolverType.NEWMARK:
+        if solverType == RigidBodyDynamicsSolverType.NEWMARK:
             self._ui.rbdSolverStack.setCurrentIndex(0)
-        elif solverType == SolverType.CRANK_NICOLSON:
+        elif solverType == RigidBodyDynamicsSolverType.CRANK_NICOLSON:
             self._ui.rbdSolverStack.setCurrentIndex(1)
-        elif solverType == SolverType.SYMPLECTIC:
+        elif solverType == RigidBodyDynamicsSolverType.SYMPLECTIC:
             self._ui.rbdSolverStack.setCurrentIndex(2)
         else:
             self._ui.rbdSolverStack.setCurrentIndex(2)

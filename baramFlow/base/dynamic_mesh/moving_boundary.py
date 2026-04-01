@@ -46,8 +46,8 @@ class RotationalConstraintType(Enum):
 class RigidBodyMotion:
     mass: PFloat = PFloat('0')
 
-    centerOfMass: Vector = dataClassField(default_factory=Vector)
-    centerOfRotation: Vector = dataClassField(default_factory=Vector)
+    centerOfMass: Vector = dataClassField(default_factory=Vector.zero)
+    centerOfRotation: Vector = dataClassField(default_factory=Vector.zero)
 
     orientation: str = ''
     momentOfInertia: str = ''
@@ -55,19 +55,19 @@ class RigidBodyMotion:
     translationalConstraintType: TranslationalConstraintType = TranslationalConstraintType.FREE
     rotationalConstraintType: RotationalConstraintType = RotationalConstraintType.FREE
 
-    direction: Vector = dataClassField(default_factory=Vector)
-    normal: Vector = dataClassField(default_factory=Vector)
+    direction: Vector = dataClassField(default_factory=Vector.xUnit)
+    normal: Vector = dataClassField(default_factory=Vector.yUnit)
     axis: Vector = dataClassField(default_factory=Vector.zUnit)
 
     limitAngle: bool = False
-    clockwise: PFloat = PFloat('0')
-    counterclockwise: PFloat = PFloat('0')
+    clockwise: PFloat = dataClassField(default_factory=lambda: PFloat('0'))
+    counterclockwise: PFloat = dataClassField(default_factory=lambda: PFloat('0'))
 
     restraints: list[Restraint] = dataClassField(default_factory=list)
     solver: RigidBodySolver = dataClassField(default_factory=RigidBodySolver)
 
-    accelerationRelaxationFactor: PFloat = PFloat('0.7')
-    accelerationDampingFactor: PFloat = PFloat('1.0')
+    accelerationRelaxationFactor: PFloat = dataClassField(default_factory=lambda: PFloat('0.7'))
+    accelerationDampingFactor: PFloat = dataClassField(default_factory=lambda: PFloat('1.0'))
 
     @classmethod
     def fromElement(cls, e):
@@ -146,7 +146,7 @@ class MovingBoundaryEntry:
     boundary: str = '0'
     pointMotionType: PointMotionType = PointMotionType.FIXED
 
-    normal: Vector = dataClassField(default_factory=Vector)
+    normal: Vector = dataClassField(default_factory=Vector.yUnit)
 
     motionFunctions: list[MotionFunction] = dataClassField(default_factory=list)
     rigidBodyMotion: RigidBodyMotion = dataClassField(default_factory=RigidBodyMotion)

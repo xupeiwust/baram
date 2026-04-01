@@ -12,7 +12,7 @@ from PySide6.QtWidgets import QDialog, QListWidget, QListWidgetItem, QMenu, QToo
 from baramFlow.base.dynamic_mesh.moving_boundary import (
     RigidBodyMotion, TranslationalConstraintType, RotationalConstraintType,
 )
-from baramFlow.base.dynamic_mesh.rigid_body_solver import RigidBodySolver, SolverType
+from baramFlow.base.dynamic_mesh.rigid_body_solver import RigidBodySolver, RigidBodyDynamicsSolverType
 from baramFlow.base.dynamic_mesh.restraint import Restraint, RestraintType
 from baramFlow.view.setup.dynamic_mesh.restraints.restraint_widget import RestraintWidget, RESTRAINT_TYPE_NAMES
 from baramFlow.view.setup.dynamic_mesh.restraints.restraint_dialogs import RESTRAINT_DIALOGS
@@ -22,20 +22,20 @@ from .rigid_body_motion_dialog_ui import Ui_RigidBodyMotionDialog
 
 
 _SOLVER_TYPE_NAMES = {
-    SolverType.NEWMARK: 'Newmark',
-    SolverType.CRANK_NICOLSON: 'Crank-Nicolson',
-    SolverType.SYMPLECTIC: 'Symplectic',
+    RigidBodyDynamicsSolverType.NEWMARK: 'Newmark',
+    RigidBodyDynamicsSolverType.CRANK_NICOLSON: 'Crank-Nicolson',
+    RigidBodyDynamicsSolverType.SYMPLECTIC: 'Symplectic',
 }
 
 # Map combo box index to solver type
-_SOLVER_TYPES = [SolverType.NEWMARK, SolverType.CRANK_NICOLSON, SolverType.SYMPLECTIC]
+_SOLVER_TYPES = [RigidBodyDynamicsSolverType.NEWMARK, RigidBodyDynamicsSolverType.CRANK_NICOLSON, RigidBodyDynamicsSolverType.SYMPLECTIC]
 
 # Newmark and Symplectic use integration coefficients (page 0),
 # Crank-Nicolson uses off-centering coefficients (page 1)
 _SOLVER_STACKED_INDEX = {
-    SolverType.NEWMARK: 0,
-    SolverType.CRANK_NICOLSON: 1,
-    SolverType.SYMPLECTIC: 2,
+    RigidBodyDynamicsSolverType.NEWMARK: 0,
+    RigidBodyDynamicsSolverType.CRANK_NICOLSON: 1,
+    RigidBodyDynamicsSolverType.SYMPLECTIC: 2,
 }
 
 

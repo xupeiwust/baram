@@ -404,7 +404,7 @@ class ControlDict(DictionaryFile):
             pRef = referencePressure + operatingPressure
 
         data = foForcesMonitor(
-            patches, monitor.centerOfRotation.toList(), pRef, monitor.region, int(monitor.monitorBase.writeInterval))
+            patches, monitor.centerOfRotation.toFloatList(), pRef, monitor.region, int(monitor.monitorBase.writeInterval))
 
         return data
 
@@ -413,8 +413,8 @@ class ControlDict(DictionaryFile):
         lRef = float(self._db.getValue(ReferenceValuesDB.REFERENCE_VALUES_XPATH + '/length'))
         magUInf = float(self._db.getValue(ReferenceValuesDB.REFERENCE_VALUES_XPATH + '/velocity'))
         rhoInf = float(self._db.getValue(ReferenceValuesDB.REFERENCE_VALUES_XPATH + '/density'))
-        dragDir = monitor.forceDirection.dragDirection.toList()
-        liftDir = monitor.forceDirection.liftDirection.toList()
+        dragDir = monitor.forceDirection.dragDirection.toFloatList()
+        liftDir = monitor.forceDirection.liftDirection.toFloatList()
 
         if monitor.forceDirection.specificationMethod == DirectionSpecificationMethod.AOA_AOS:
             dragDir, liftDir = calucateDirectionsByRotation(
@@ -429,7 +429,7 @@ class ControlDict(DictionaryFile):
             pRef = referencePressure + operatingPressure
 
         data = foForceCoeffsMonitor(patches, aRef, lRef, magUInf, rhoInf, dragDir, liftDir,
-                                    monitor.centerOfRotation.toList(), pRef, monitor.region,
+                                    monitor.centerOfRotation.toFloatList(), pRef, monitor.region,
                                     int(monitor.monitorBase.writeInterval))
 
         return data
@@ -438,7 +438,7 @@ class ControlDict(DictionaryFile):
         if monitor.snapOntoBoundary == '0':
             if not monitor.region:
                 for name in self._db.getRegions():
-                    if isPointInDataSet(monitor.coordinate.toList(), app.internalMeshActor(name).dataSet):
+                    if isPointInDataSet(monitor.coordinate.toFloatList(), app.internalMeshActor(name).dataSet):
                         monitor.region = name
                         MonitorManager.updatePointMonitorRegion(monitor.monitorBase.uuid, name)
                         break
@@ -447,13 +447,13 @@ class ControlDict(DictionaryFile):
 
             self._appendAdditionalFO(monitor.field, monitor.region)
             data = foProbesMonitor(
-                monitor.field.openfoamField(), monitor.coordinate.toList(), monitor.region,
+                monitor.field.openfoamField(), monitor.coordinate.toFloatList(), monitor.region,
                 int(monitor.monitorBase.writeInterval))
         else:
             boundary = BoundaryDB.getBoundaryName(monitor.snapOntoBoundary)
             rname = BoundaryDB.getBoundaryRegion(monitor.snapOntoBoundary)
             data = foPatchProbesMonitor(
-                boundary, monitor.field.openfoamField(), monitor.coordinate.toList(), rname,
+                boundary, monitor.field.openfoamField(), monitor.coordinate.toFloatList(), rname,
                 int(monitor.monitorBase.writeInterval))
 
         return data

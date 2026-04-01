@@ -5,7 +5,7 @@ import qasync
 
 from PySide6.QtWidgets import QDialog
 
-from baramFlow.base.dynamic_mesh.motion_function import FunctionType, MotionFunction
+from baramFlow.base.dynamic_mesh.motion_function import MotionFunctionType, MotionFunction
 from libbaram.pfloat import PFloat
 from widgets.async_message_box import AsyncMessageBox
 
@@ -23,9 +23,9 @@ class RotationDialog(QDialog):
         self._ui.setupUi(self)
         self._mf = motionFunction
 
-        self._ui.origin.setVector(motionFunction.center)
+        self._ui.origin.setVector(motionFunction.origin)
         self._ui.axis.setVector(motionFunction.axis)
-        self._ui.speed.setPFloat(motionFunction.omega)
+        self._ui.speed.setPFloat(motionFunction.rpm)
 
         self._ui.buttonBox.accepted.connect(self._accept)
         self._ui.buttonBox.rejected.connect(self.reject)
@@ -35,14 +35,14 @@ class RotationDialog(QDialog):
         try:
             center = self._ui.origin.vector(self.tr('Origin'))
             axis = self._ui.axis.vector(self.tr('Axis'))
-            omega = self._ui.speed.pFloat(self.tr('Speed'))
+            rpm = self._ui.speed.pFloat(self.tr('Speed'))
         except ValueError as e:
             await AsyncMessageBox().warning(self, self.tr('Warning'), str(e))
             return
 
-        self._mf.center = center
+        self._mf.origin = center
         self._mf.axis = axis
-        self._mf.omega = omega
+        self._mf.rpm = rpm
 
         self.accept()
 
@@ -54,9 +54,9 @@ class RotatingOscillationDialog(QDialog):
         self._ui.setupUi(self)
         self._mf = motionFunction
 
-        self._ui.origin.setVector(motionFunction.center)
+        self._ui.origin.setVector(motionFunction.origin)
         self._ui.amplitude.setVector(motionFunction.angularAmplitude)
-        self._ui.speed.setPFloat(motionFunction.omega)
+        self._ui.speed.setPFloat(motionFunction.rpm)
 
         self._ui.buttonBox.accepted.connect(self._accept)
         self._ui.buttonBox.rejected.connect(self.reject)
@@ -71,9 +71,9 @@ class RotatingOscillationDialog(QDialog):
             await AsyncMessageBox().warning(self, self.tr('Warning'), str(e))
             return
 
-        self._mf.center = center
+        self._mf.origin = center
         self._mf.angularAmplitude = angularAmplitude
-        self._mf.omega = omega
+        self._mf.rpm = omega
 
         self.accept()
 
@@ -138,7 +138,7 @@ class ManualPositionDialog(QDialog):
         self._ui.setupUi(self)
         self._mf = motionFunction
 
-        self._ui.cog.setVector(motionFunction.center)
+        self._ui.cog.setVector(motionFunction.origin)
 
         self._ui.buttonBox.accepted.connect(self._accept)
         self._ui.buttonBox.rejected.connect(self.reject)
@@ -146,20 +146,20 @@ class ManualPositionDialog(QDialog):
     @qasync.asyncSlot()
     async def _accept(self):
         try:
-            center = self._ui.cog.vector('Center of Gravity')
+            origin = self._ui.cog.vector('Center of Gravity')
         except ValueError as e:
             await AsyncMessageBox().warning(self, self.tr('Warning'), str(e))
             return
 
-        self._mf.center = center
+        self._mf.origin = origin
 
         self.accept()
 
 
 MOTION_FUNCTION_DIALOGS = {
-    FunctionType.ROTATION: RotationDialog,
-    FunctionType.ROTATING_OSCILLATION: RotatingOscillationDialog,
-    FunctionType.LINEAR_TRANSLATION: LinearTranslationDialog,
-    FunctionType.LINEAR_OSCILLATION: LinearOscillationDialog,
-    FunctionType.MANUAL_POSITION: ManualPositionDialog,
+    MotionFunctionType.ROTATION: RotationDialog,
+    MotionFunctionType.ROTATING_OSCILLATION: RotatingOscillationDialog,
+    MotionFunctionType.LINEAR_TRANSLATION: LinearTranslationDialog,
+    MotionFunctionType.LINEAR_OSCILLATION: LinearOscillationDialog,
+    MotionFunctionType.MANUAL_POSITION: ManualPositionDialog,
 }

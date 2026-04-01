@@ -8,7 +8,7 @@ import qasync
 
 from PySide6.QtWidgets import QDialog, QButtonGroup, QMenu, QListWidgetItem
 
-from baramFlow.base.dynamic_mesh.motion_function import MotionFunction, FunctionType
+from baramFlow.base.dynamic_mesh.motion_function import MotionFunction, MotionFunctionType
 from baramFlow.base.dynamic_mesh.moving_boundary import (
     MovingBoundaryEntry, PointMotionType, RigidBodyMotion,
 )
@@ -89,9 +89,9 @@ class PointMotionDialog(QDialog):
 
         # Add motion function menu
         addMenu = QMenu(self._ui.addMfButton)
-        for ft in [FunctionType.ROTATION, FunctionType.ROTATING_OSCILLATION,
-                    FunctionType.LINEAR_TRANSLATION, FunctionType.LINEAR_OSCILLATION,
-                    FunctionType.MANUAL_POSITION]:
+        for ft in [MotionFunctionType.ROTATION, MotionFunctionType.ROTATING_OSCILLATION,
+                    MotionFunctionType.LINEAR_TRANSLATION, MotionFunctionType.LINEAR_OSCILLATION,
+                    MotionFunctionType.MANUAL_POSITION]:
             action = addMenu.addAction(FUNCTION_TYPE_NAMES[ft])
             action.triggered.connect(lambda checked=False, ftype=ft: self._addMotionFunction(ftype))
         self._ui.addMfButton.setMenu(addMenu)
@@ -133,7 +133,7 @@ class PointMotionDialog(QDialog):
             self._ui.mfList.addItem(item)
             self._ui.mfList.setItemWidget(item, widget)
 
-    def _addMotionFunction(self, functionType: FunctionType):
+    def _addMotionFunction(self, functionType: MotionFunctionType):
         mf = MotionFunction(uuid=uuid4(), order=len(self._motionFunctions) + 1,
                             functionType=functionType)
         dialog = MOTION_FUNCTION_DIALOGS[functionType](self, mf)

@@ -21,7 +21,7 @@ class SimpleDamperDialog(QDialog):
         self._ui.setupUi(self)
         self._restraint = restraint
 
-        self._ui.dampingConstant.setText(restraint.dampingConstant)
+        self._ui.dampingConstant.setPFloat(restraint.dampingConstant)
 
         self._ui.buttonBox.accepted.connect(self._accept)
         self._ui.buttonBox.rejected.connect(self.reject)
@@ -29,7 +29,7 @@ class SimpleDamperDialog(QDialog):
     @qasync.asyncSlot()
     async def _accept(self):
         try:
-            dampingConstant = str(PFloat(self._ui.dampingConstant.text(), self.tr('Damping Constant')))
+            dampingConstant = self._ui.dampingConstant.pFloat(self.tr('Damping Constant'))
         except ValueError as e:
             await AsyncMessageBox().warning(self, self.tr('Warning'), str(e))
             return
@@ -47,9 +47,9 @@ class TranslationalSpringDialog(QDialog):
 
         self._ui.attachmentPoint.setVector(restraint.attachmentPoint)
         self._ui.anchorPoint.setVector(restraint.anchorPoint)
-        self._ui.restLength.setText(restraint.restLength)
-        self._ui.springConstant.setText(restraint.springConstant)
-        self._ui.dampingConstant.setText(restraint.dampingConstant)
+        self._ui.restLength.setPFloat(restraint.restLength)
+        self._ui.springConstant.setPFloat(restraint.springConstant)
+        self._ui.dampingConstant.setPFloat(restraint.dampingConstant)
 
         self._ui.buttonBox.accepted.connect(self._accept)
         self._ui.buttonBox.rejected.connect(self.reject)
@@ -59,9 +59,9 @@ class TranslationalSpringDialog(QDialog):
         try:
             attachmentPoint = self._ui.attachmentPoint.vector('Attachment Point')
             anchorPoint = self._ui.anchorPoint.vector('Anchor Point')
-            restLength = str(PFloat(self._ui.restLength.text(), self.tr('Rest Length')))
-            springConstant = str(PFloat(self._ui.springConstant.text(), self.tr('Spring Constant')))
-            dampingConstant = str(PFloat(self._ui.dampingConstant.text(), self.tr('Damping Constant')))
+            restLength = self._ui.restLength.pFloat(self.tr('Rest Length'), low=0)
+            springConstant = self._ui.springConstant.pFloat(self.tr('Spring Constant'))
+            dampingConstant = self._ui.dampingConstant.pFloat(self.tr('Damping Constant'))
         except ValueError as e:
             await AsyncMessageBox().warning(self, self.tr('Warning'), str(e))
             return
@@ -82,8 +82,8 @@ class RotationalSpringDialog(QDialog):
         self._restraint = restraint
 
         self._ui.axis.setVector(restraint.axis)
-        self._ui.springConstant.setText(restraint.springConstant)
-        self._ui.dampingConstant.setText(restraint.dampingConstant)
+        self._ui.springConstant.setPFloat(restraint.springConstant)
+        self._ui.dampingConstant.setPFloat(restraint.dampingConstant)
 
         self._ui.buttonBox.accepted.connect(self._accept)
         self._ui.buttonBox.rejected.connect(self.reject)
@@ -92,8 +92,8 @@ class RotationalSpringDialog(QDialog):
     async def _accept(self):
         try:
             axis = self._ui.axis.vector('Axis')
-            springConstant = str(PFloat(self._ui.springConstant.text(), self.tr('Spring Constant')))
-            dampingConstant = str(PFloat(self._ui.dampingConstant.text(), self.tr('Damping Constant')))
+            springConstant = self._ui.springConstant.pFloat(self.tr('Spring Constant'), low=0)
+            dampingConstant = self._ui.dampingConstant.pFloat(self.tr('Damping Constant'), low=0)
         except ValueError as e:
             await AsyncMessageBox().warning(self, self.tr('Warning'), str(e))
             return

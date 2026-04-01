@@ -11,7 +11,7 @@ from baramFlow.base.xml_helper import Vector
 from libbaram.pfloat import PFloat
 
 
-class FunctionType(Enum):
+class MotionFunctionType(Enum):
     ROTATION              = 'rotation'
     ROTATING_OSCILLATION  = 'rotatingOscillation'
     LINEAR_TRANSLATION    = 'linearTranslation'
@@ -57,17 +57,17 @@ class Positions:
 class MotionFunction:
     uuid: UUID = dataClassField(default_factory=uuid4)
     order: int
-    functionType: FunctionType
+    functionType: MotionFunctionType
 
-    center: Vector = dataClassField(default_factory=Vector)
+    origin: Vector = dataClassField(default_factory=Vector.zero)
     axis: Vector = dataClassField(default_factory=Vector.zUnit)
-    omega: PFloat = PFloat('0')
+    rpm: PFloat = dataClassField(default_factory=lambda: PFloat('0'))
 
-    velocity: Vector = dataClassField(default_factory=Vector)
-    angularAmplitude: Vector = dataClassField(default_factory=Vector)
-    linearAmplitude: Vector = dataClassField(default_factory=Vector)
+    velocity: Vector = dataClassField(default_factory=Vector.zero)
+    angularAmplitude: Vector = dataClassField(default_factory=Vector.zero)
+    linearAmplitude: Vector = dataClassField(default_factory=Vector.zero)
 
-    frequency: PFloat = PFloat('0')
+    frequency: PFloat = dataClassField(default_factory=lambda: PFloat('0'))
 
     positions: Positions = None
 
@@ -79,11 +79,11 @@ class MotionFunction:
     def fromElement(cls, e):
         uuid = UUID(e.find('uuid', namespaces=nsmap).text)
         order = int(e.find('order', namespaces=nsmap).text)
-        functionType = FunctionType(e.find('functionType', namespaces=nsmap).text)
+        functionType = MotionFunctionType(e.find('functionType', namespaces=nsmap).text)
 
-        center = Vector.fromElement(e.find('center', namespaces=nsmap))
+        origin = Vector.fromElement(e.find('origin', namespaces=nsmap))
         axis = Vector.fromElement(e.find('axis', namespaces=nsmap))
-        omega = PFloat.fromElement(e.find('omega', namespaces=nsmap))
+        rpm = PFloat.fromElement(e.find('rpm', namespaces=nsmap))
 
         velocity = Vector.fromElement(e.find('velocity', namespaces=nsmap))
         angularAmplitude = Vector.fromElement(e.find('angularAmplitude', namespaces=nsmap))
@@ -94,9 +94,9 @@ class MotionFunction:
         positions = Positions.fromElement(e.find('positions', namespaces=nsmap))
 
         return MotionFunction(uuid=uuid, order=order, functionType=functionType,
-                              center=center,
+                              origin=origin,
                               axis=axis,
-                              omega=omega,
+                              rpm=rpm,
                               velocity=velocity,
                               angularAmplitude=angularAmplitude,
                               linearAmplitude=linearAmplitude,
@@ -108,9 +108,9 @@ class MotionFunction:
                  E('uuid', str(self.uuid)),
                  E('order', str(self.order)),
                  E('functionType', self.functionType.value),
-                 self.center.toElement('center'),
+                 self.origin.toElement('origin'),
                  self.axis.toElement('axis'),
-                 self.omega.toElement('omega'),
+                 self.rpm.toElement('rpm'),
                  self.velocity.toElement('velocity'),
                  self.angularAmplitude.toElement('angularAmplitude'),
                  self.linearAmplitude.toElement('linearAmplitude'),

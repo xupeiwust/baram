@@ -2,13 +2,14 @@
 # -*- coding: utf-8 -*-
 
 from dataclasses import dataclass
+from dataclasses import field as dataClassField
 from enum import Enum
 
 from baramFlow.coredb.libdb import E, nsmap
 from libbaram.pfloat import PFloat
 
 
-class SolverType(Enum):
+class RigidBodyDynamicsSolverType(Enum):
     NEWMARK         = 'newmark'
     CRANK_NICOLSON  = 'crankNicolson'
     SYMPLECTIC      = 'symplectic'
@@ -16,15 +17,15 @@ class SolverType(Enum):
 
 @dataclass
 class RigidBodySolver:
-    solverType: SolverType = SolverType.NEWMARK
-    velocityIntegrationCoefficient: PFloat = PFloat('0.7')
-    positionIntegrationCoefficient: PFloat = PFloat('1.0')
-    offCenteringAccelerationCoefficient: PFloat = PFloat('0.5')
-    offCenteringVelocityCoefficient: PFloat = PFloat('0.5')
+    solverType: RigidBodyDynamicsSolverType = RigidBodyDynamicsSolverType.NEWMARK
+    velocityIntegrationCoefficient: PFloat = dataClassField(default_factory=lambda: PFloat('0.7'))
+    positionIntegrationCoefficient: PFloat = dataClassField(default_factory=lambda: PFloat('1.0'))
+    offCenteringAccelerationCoefficient: PFloat = dataClassField(default_factory=lambda: PFloat('0.5'))
+    offCenteringVelocityCoefficient: PFloat = dataClassField(default_factory=lambda: PFloat('0.5'))
 
     @classmethod
     def fromElement(cls, e):
-        solverType = SolverType(e.find('solverType', namespaces=nsmap).text)
+        solverType = RigidBodyDynamicsSolverType(e.find('solverType', namespaces=nsmap).text)
         velocityIntegrationCoefficient = PFloat.fromElement(e.find('velocityIntegrationCoefficient', namespaces=nsmap))
         positionIntegrationCoefficient = PFloat.fromElement(e.find('positionIntegrationCoefficient', namespaces=nsmap))
         offCenteringAccelerationCoefficient = PFloat.fromElement(e.find('offCenteringAccelerationCoefficient', namespaces=nsmap))

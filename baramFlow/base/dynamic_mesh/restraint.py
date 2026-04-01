@@ -23,13 +23,13 @@ class Restraint:
     order: int
     restraintType: RestraintType
 
-    dampingConstant: PFloat = PFloat('0')
-    springConstant: PFloat = PFloat('0')
-    restLength: PFloat = PFloat('0')
+    dampingConstant: PFloat = dataClassField(default_factory=lambda: PFloat('0'))
+    springConstant: PFloat = dataClassField(default_factory=lambda: PFloat('0'))
+    restLength: PFloat = dataClassField(default_factory=lambda: PFloat('0'))
 
     axis: Vector = dataClassField(default_factory=Vector.zUnit)
-    attachmentPoint: Vector = dataClassField(default_factory=Vector)
-    anchorPoint: Vector = dataClassField(default_factory=Vector)
+    attachmentPoint: Vector = dataClassField(default_factory=Vector.zero)
+    anchorPoint: Vector = dataClassField(default_factory=Vector.zero)
 
     @classmethod
     def fromElement(cls, e):
