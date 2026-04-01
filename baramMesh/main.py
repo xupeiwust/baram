@@ -60,7 +60,7 @@ def main():
         elif mpiStatus == MPIStatus.INVALID_PREFIX:
             message = QApplication.translate(
                 'main', f'Incorrect "$BARAM_MPI_PREFIX" environment variable.<br/>'
-                        f'"{MPI_PREFIX}/bin/mpirun" does NOT exist.')
+                        f'"{MPI_PREFIX}/mpirun" does NOT exist.')
 
         QMessageBox.information(None, QApplication.translate('main', 'Check MPI'), message)
         return
