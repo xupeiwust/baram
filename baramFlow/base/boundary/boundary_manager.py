@@ -2,12 +2,12 @@
 # -*- coding: utf-8 -*-
 
 from dataclasses import dataclass
-from xml.etree.ElementTree import Element
 
 from baramFlow.app import app
 from baramFlow.base.boundary.boundary import PatchInteraction
 from baramFlow.base.boundary.boundary_data import BoundaryData
 from baramFlow.base.boundary.wall import WallHeatTransfer
+from baramFlow.base.model.DPM_model import DPMModelManager
 from baramFlow.base.region.region_namager import RegionsCache
 from baramFlow.coredb.boundary_db import BoundaryDB, BoundaryType
 from baramFlow.coredb.coredb import CoreDB
@@ -16,17 +16,19 @@ from baramFlow.coredb.libdb import ValueException, dbErrorToMessage, nsmap
 
 
 @dataclass
-class CoupledBoundary:
+class BoundaryTypeAndCouplePatch:
     bcid: str
-    coupledBoundary: str
     bctype: BoundaryType = None
+    coupledBoundary: str = None
 
     def applyToDB(self, db):
         xpath = BoundaryDB.getXPath(self.bcid)
 
-        db.setValue(xpath + '/coupledBoundary', self.coupledBoundary)
         if self.bctype is not None:
             db.setValue(xpath + '/physicalType', self.bctype.value)
+
+        if self.coupledBoundary is not None:
+            db.setValue(xpath + '/coupledBoundary', self.coupledBoundary)
 
 
 class BoundaryManager:
@@ -36,7 +38,7 @@ class BoundaryManager:
 
         couplingAffected = None
         if BoundaryDB.needsCoupledBoundary(boundary.bctype):
-            couplingAffected = cls.updateCouple(boundary, cls.getBoundary(condition.coupledBoundary).boundary)
+            couplingAffected = cls.makePatchToUpdateCouple(boundary, cls.getBoundary(condition.coupledBoundary).boundary)
 
         try:
             with CoreDB() as db:
@@ -47,37 +49,77 @@ class BoundaryManager:
 
                 if couplingAffected is not None:
                     for a in couplingAffected:
-                        a.applyToDB(db)
+                        cls.updateTypeAndCoupleWithPatch(db, a)
 
                 db.increaseConfigCount()
         except ValueException as e:
             raise ValueError(dbErrorToMessage(e))
         finally:
-            RegionsCache.reloadBoundary(bcid)
-
-            if couplingAffected is not None:
+            if couplingAffected is None:
+                RegionsCache.reloadBoundary(bcid)
+            else:
                 for a in couplingAffected:
                     RegionsCache.reloadBoundary(a.bcid)
 
     @staticmethod
-    def updateCouple(boundary: BoundaryData, partner: BoundaryData):
+    def updateTypeAndCoupleWithPatch(db, patch: BoundaryTypeAndCouplePatch):
+        patch.applyToDB(db)
+        if patch.bctype is not None:
+            interactionType = DPMModelManager.getDefaultPatchInteractionType(patch.bctype)
+            db.setValue(BoundaryDB.getXPath(patch.bcid) + '/patchInteraction/type', interactionType.value)
+
+    @staticmethod
+    def makePatchToUpdateCouple(boundary: BoundaryData, partner: BoundaryData):
         if boundary.coupledBoundary == partner.bcid:
             return None
 
-        affected = [CoupledBoundary(bcid=boundary.bcid,
-                                    coupledBoundary=partner.bcid),
-                    CoupledBoundary(bcid=partner.bcid,
-                                    coupledBoundary=boundary.bcid,
-                                    bctype=boundary.bctype if boundary.bctype != partner.bctype else None)]
+        affected = [BoundaryTypeAndCouplePatch(bcid=boundary.bcid,
+                                               coupledBoundary=partner.bcid),
+                    BoundaryTypeAndCouplePatch(bcid=partner.bcid,
+                                               coupledBoundary=boundary.bcid,
+                                               bctype=boundary.bctype if boundary.bctype != partner.bctype else None)]
 
         if boundary.coupledBoundary != '0':
-            affected.append(CoupledBoundary(bcid=boundary.coupledBoundary,
-                                            coupledBoundary='0'))
+            affected.append(BoundaryTypeAndCouplePatch(bcid=boundary.coupledBoundary,
+                                                       coupledBoundary='0'))
         if partner.coupledBoundary != '0':
-            affected.append(CoupledBoundary(bcid=partner.coupledBoundary,
-                                            coupledBoundary='0'))
+            affected.append(BoundaryTypeAndCouplePatch(bcid=partner.coupledBoundary,
+                                                       coupledBoundary='0'))
 
         return affected
+
+    @staticmethod
+    def updateBoundaryType(bcid: str, newType: BoundaryType):
+        boundary = BoundaryManager.getBoundary(bcid).boundary
+        if boundary.bctype == newType:
+            return
+
+        keepCouple= True
+        if boundary.coupledBoundary != '0':
+            couple = BoundaryManager.getBoundary(boundary.coupledBoundary).boundary
+            if (not BoundaryDB.needsCoupledBoundary(newType)
+                    or (newType != BoundaryType.THERMO_COUPLED_WALL and boundary.rname != couple.rname)
+                    or bcid != couple.coupledBoundary):
+                keepCouple = False
+
+        boundaryPatch = BoundaryTypeAndCouplePatch(bcid=bcid,
+                                                     bctype=newType)
+        couplePatch = BoundaryTypeAndCouplePatch(bcid=boundary.coupledBoundary)
+
+        if keepCouple:
+            couplePatch.bctype = newType
+        else:
+            boundaryPatch.coupledBoundary = '0'
+            couplePatch.coupledBoundary = '0'
+
+        with CoreDB() as db:
+            BoundaryManager.updateTypeAndCoupleWithPatch(db, boundaryPatch)
+            if couplePatch.bcid != '0':
+                BoundaryManager.updateTypeAndCoupleWithPatch(db, couplePatch)
+
+            RegionsCache.reloadBoundary(bcid)
+            if couplePatch.bcid != '0':
+                RegionsCache.reloadBoundary(couplePatch.bcid)
 
     @staticmethod
     def patchInteraction(bcid: str):
@@ -85,22 +127,8 @@ class BoundaryManager:
 
     @staticmethod
     def updatePatchInteractionInDB(db, bcid, patchInteraction):
-        try:
-            p = db.getElement(BoundaryDB.getXPath(bcid))
-
-            new: Element = patchInteraction.toElement()
-
-            for i, child in enumerate(p):
-                if child.tag == new.tag:
-                    p.remove(child)
-                    p.insert(i, new)
-                    break
-            else:
-                assert False
-
-            db.increaseConfigCount()
-        except ValueException as e:
-            raise ValueError(e)
+        db.replaceElement(BoundaryDB.getXPath(bcid) + '/patchInteraction', patchInteraction.toElement())
+        db.increaseConfigCount()
 
     @staticmethod
     def updateWallHeatTransferInDB(db, bcid, new: WallHeatTransfer):
@@ -137,3 +165,4 @@ class BoundaryManager:
             master.zoneAverageDirection = app.meshModel().actorInfo(int(master.bcid)).getZoneAverageDirection()
 
         return master.zoneAverageDirection
+
