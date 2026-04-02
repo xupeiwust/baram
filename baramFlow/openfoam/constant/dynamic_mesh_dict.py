@@ -5,32 +5,51 @@ import math
 from uuid import UUID
 
 from baramFlow.base.dynamic_mesh.dynamic_mesh import MotionType
-from baramFlow.base.dynamic_mesh.motion_function import MotionFunctionType
+from baramFlow.base.dynamic_mesh.motion_function import MotionFunction, MotionFunctionType
 from baramFlow.base.dynamic_mesh.moving_boundary import PointMotionType
 from baramFlow.base.dynamic_mesh.restraint import RestraintType
 from baramFlow.base.dynamic_mesh.rigid_body_dynamics import Joint, JointType
 from baramFlow.base.dynamic_mesh.rigid_body_solver import RigidBodyDynamicsSolverType
-from baramFlow.base.xml_helper import Vector
 from baramFlow.coredb.boundary_db import BoundaryDB
 from baramFlow.services.dynamic_mesh.dynamic_mesh_service import DynamicMeshService
 from libbaram.natural_name_uuid import uuidToNnstr
 from libbaram.openfoam.dictionary.dictionary_file import DictionaryFile
 
-from baramFlow.coredb.cell_zone_db import ZoneType, CellZoneDB
-from baramFlow.coredb.coredb_reader import CoreDBReader
 from baramFlow.openfoam.file_system import FileSystem
 
 
-_motionFunctionNames = {
-    MotionFunctionType.ROTATION: 'rotatingMotion',
-    MotionFunctionType.ROTATING_OSCILLATION: 'oscillatingRotatingMotion',
-    MotionFunctionType.LINEAR_TRANSLATION: 'linearMotion',
-    MotionFunctionType.LINEAR_OSCILLATION: 'oscillatingLinearMotion',
-    MotionFunctionType.MANUAL_POSITION: 'tabulated6DoFMotion'
-}
-
-
-
+def getMotionFunctionDict(f: MotionFunction):
+    if f.functionType == MotionFunctionType.ROTATION:
+        return {
+            'solidBodyMotionFunction': 'rotatingMotion',
+            'origin': f.origin.toFloatList(),
+            'axis': f.axis.toFloatList(),
+            'omega': float(f.rpm) * 2 * math.pi / 60.0
+        }
+    elif f.functionType == MotionFunctionType.ROTATING_OSCILLATION:
+        return {
+            'solidBodyMotionFunction': 'oscillatingRotatingMotion',
+            'origin': f.origin.toFloatList(),
+            'amplitude': f.angularAmplitude.toFloatList(),
+            'omega': float(f.rpm) * 2 * math.pi / 60.0
+        }
+    elif f.functionType == MotionFunctionType.LINEAR_TRANSLATION:
+        return {
+            'solidBodyMotionFunction': 'linearMotion',
+            'velocity': f.velocity.toFloatList()
+        }
+    elif f.functionType == MotionFunctionType.LINEAR_OSCILLATION:
+        return {
+            'solidBodyMotionFunction': 'oscillatingLinearMotion',
+            'amplitude': f.linearAmplitude.toFloatList(),
+            'omega': float(f.frequency) * 2 * math.pi
+        }
+    elif f.functionType == MotionFunctionType.MANUAL_POSITION:
+        return {
+            'solidBodyMotionFunction': 'tabulated6DoFMotion',
+            'CofG': f.origin.toFloatList()
+        }
+        # ToDo: save data to file and add the name into the dictionary
 
 class DynamicMeshDict(DictionaryFile):
     def __init__(self, rname: str):
@@ -98,41 +117,21 @@ class DynamicMeshDict(DictionaryFile):
                 mdData['cellZone'] = '(' + '|'.join(motionDefinition.cellZones) + ')'
 
             for mFunction in motionDefinition.motionFunctions:
-                mfData: dict = {
-                    'solidBodyMotionFunction': _motionFunctionNames[mFunction.functionType]
-                }
-
-                if mFunction.functionType == MotionFunctionType.ROTATION:
-                    mfData['origin'] = mFunction.origin.toFloatList()
-                    mfData['axis'] = mFunction.axis.toFloatList()
-                    mfData['omega'] = float(mFunction.rpm) * 2 * math.pi / 60.0
-                elif mFunction.functionType == MotionFunctionType.ROTATING_OSCILLATION:
-                    mfData['origin'] = mFunction.origin.toFloatList()
-                    mfData['amplitude'] = mFunction.angularAmplitude.toFloatList()
-                    mfData['omega'] = float(mFunction.rpm) * 2 * math.pi / 60.0
-                elif mFunction.functionType == MotionFunctionType.LINEAR_TRANSLATION:
-                    mfData['velocity'] = mFunction.velocity.toFloatList()
-                elif mFunction.functionType == MotionFunctionType.LINEAR_OSCILLATION:
-                    mfData['amplitude'] = mFunction.linearAmplitude.toFloatList()
-                    mfData['omega'] = float(mFunction.frequency) * 2 * math.pi
-                elif mFunction.functionType == MotionFunctionType.MANUAL_POSITION:
-                    mfData['CofG'] = mFunction.origin.toFloatList()
-                    # ToDo: save data to file and add the name into the dictionary
-
-                mdData['multiMotionCoeffs'][uuidToNnstr(mFunction.uuid)] = mfData
+                data = getMotionFunctionDict(mFunction)
+                mdData['multiMotionCoeffs'][uuidToNnstr(mFunction.uuid)] = data
 
             self._data['solvers'][uuidToNnstr(motionDefinition.uuid)]
 
     def _buildMovingBoundary(self):
         movingBoundaries = [BoundaryDB.getBoundaryName(mb.boundary) for mb in self._dynamicMesh.movingBoundaries
-                            if mb.pointMotionType in (PointMotionType.PRESCRIBED_MOTION, PointMotionType.RIGID_BODY_MOTION)]
+                            if mb.pointMotionType in (PointMotionType.NORMAL, PointMotionType.PRESCRIBED_MOTION, PointMotionType.RIGID_BODY_MOTION)]
 
         self._data = {
             'dynamicFvMesh': 'dynamicMotionSolverFvMesh',
             'motionSolverLibs': ['fvMotionSolvers'],
             'motionSolver': 'displacementLaplacian',
             'displacementLaplacianCoeffs': {
-                'diffusivity': ('inverseDistance', [movingBoundaries])
+                'diffusivity': ('inverseDistance', movingBoundaries)
             }
         }
 
@@ -184,29 +183,32 @@ class DynamicMeshDict(DictionaryFile):
 
             bodies[uuidToNnstr(body.uuid)] = bDict
 
-        restraints = {}
-        for r in rbd.restraints:
-            if r.restraintType == RestraintType.SIMPLE_DAMPER:
-                restraints[uuidToNnstr(r.uuid)] = {
-                    'type': 'linearDamper',
-                    'coeff': float(r.dampingConstant)
-                }
-            elif r.restraintType == RestraintType.TRANSLATIONAL_SPRING:
-                restraints[uuidToNnstr(r.uuid)] = {
-                    'type': 'linearSpring',
-                    'refAttachmentPt': r.attachmentPoint.toFloatList(),
-                    'anchor': r.anchorPoint.toFloatList(),
-                    'restLength': float(r.restLength),
-                    'stiffness': float(r.springConstant),
-                    'damping': float(r.dampingConstant)
-                }
-            elif r.restraintType == RestraintType.ROTATIONAL_SPRING:
-                restraints[uuidToNnstr(r.uuid)] = {
-                    'type': 'linearAxialAngularSpring',
-                    'axis': r.axis.toFloatList(),
-                    'stiffness': float(r.springConstant),
-                    'damping': float(r.dampingConstant)
-                }
+            restraints = {}
+            for r in body.restraints:
+                if r.restraintType == RestraintType.SIMPLE_DAMPER:
+                    restraints[uuidToNnstr(r.uuid)] = {
+                        'type': 'linearDamper',
+                        'body': uuidToNnstr(body.uuid),
+                        'coeff': float(r.dampingConstant)
+                    }
+                elif r.restraintType == RestraintType.TRANSLATIONAL_SPRING:
+                    restraints[uuidToNnstr(r.uuid)] = {
+                        'type': 'linearSpring',
+                        'body': uuidToNnstr(body.uuid),
+                        'refAttachmentPt': r.attachmentPoint.toFloatList(),
+                        'anchor': r.anchorPoint.toFloatList(),
+                        'restLength': float(r.restLength),
+                        'stiffness': float(r.springConstant),
+                        'damping': float(r.dampingConstant)
+                    }
+                elif r.restraintType == RestraintType.ROTATIONAL_SPRING:
+                    restraints[uuidToNnstr(r.uuid)] = {
+                        'type': 'linearAxialAngularSpring',
+                        'body': uuidToNnstr(body.uuid),
+                        'axis': r.axis.toFloatList(),
+                        'stiffness': float(r.springConstant),
+                        'damping': float(r.dampingConstant)
+                    }
 
         self._data = {
             'dynamicFvMesh': 'dynamicMotionSolverFvMesh',

@@ -2,10 +2,10 @@
 # -*- coding: utf-8 -*-
 
 
-from dataclasses import dataclass
 from threading import Lock
 from typing import TypedDict
 
+from baramFlow.coredb.boundary_db import BoundaryType
 from libbaram.async_signal import AsyncSignal
 
 
@@ -35,3 +35,4 @@ class EventBus:
         self.onMeshLoading = AsyncSignal(dict[str, RegionComponents], dict[str, RegionComponents])
         self.onProjectOpen = AsyncSignal()
         self.onProjectClose = AsyncSignal()
+        self.onBoundaryTypeChange = AsyncSignal(str, BoundaryType, BoundaryType)  # bcid, oldType, newType

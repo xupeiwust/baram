@@ -114,26 +114,19 @@ class RigidBodyMotionDialog(QDialog):
         self._ui.centerOfRotation.setVector(m.centerOfRotation)
 
         # Orientation tensor (row-major: 9 space-separated values)
-        orientValues = (m.orientation or '1 0 0 0 1 0 0 0 1').split()
-        if len(orientValues) == 9:
-            orientFields = [
-                self._ui.ori00, self._ui.ori01, self._ui.ori02,
-                self._ui.ori10, self._ui.ori11, self._ui.ori12,
-                self._ui.ori20, self._ui.ori21, self._ui.ori22,
-            ]
-            for field, val in zip(orientFields, orientValues):
-                field.setText(val)
+        oriEdits = [
+            [self._ui.ori00, self._ui.ori01, self._ui.ori02],
+            [self._ui.ori10, self._ui.ori11, self._ui.ori12],
+            [self._ui.ori20, self._ui.ori21, self._ui.ori22],
+        ]
+        for i in range(3):
+            for j in range(3):
+                oriEdits[i][j].setPFloat(m.orientation[i * 3 + j])
 
         # Moment of Inertia tensor (row-major: 9 space-separated values)
-        moiValues = (m.momentOfInertia or '0 0 0 0 0 0 0 0 0').split()
-        if len(moiValues) == 9:
-            moiFields = [
-                self._ui.moi00, self._ui.moi01, self._ui.moi02,
-                self._ui.moi10, self._ui.moi11, self._ui.moi12,
-                self._ui.moi20, self._ui.moi21, self._ui.moi22,
-            ]
-            for field, val in zip(moiFields, moiValues):
-                field.setText(val)
+        self._ui.moi00.setPFloat(m.momentOfInertia[0])
+        self._ui.moi11.setPFloat(m.momentOfInertia[1])
+        self._ui.moi22.setPFloat(m.momentOfInertia[2])
 
         # Translational constraint
         radioMap = {
@@ -303,19 +296,26 @@ class RigidBodyMotionDialog(QDialog):
             centerOfMass = self._ui.centerOfMass.vector('Center of Mass')
             centerOfRotation = self._ui.centerOfRotation.vector('Center of Rotation')
 
-            orientFields = [
-                self._ui.ori00, self._ui.ori01, self._ui.ori02,
-                self._ui.ori10, self._ui.ori11, self._ui.ori12,
-                self._ui.ori20, self._ui.ori21, self._ui.ori22,
+            oriEdits = [
+                [self._ui.ori00, self._ui.ori01, self._ui.ori02],
+                [self._ui.ori10, self._ui.ori11, self._ui.ori12],
+                [self._ui.ori20, self._ui.ori21, self._ui.ori22],
             ]
-            orientation = ' '.join(str(PFloat(f.text(), self.tr('Orientation'))) for f in orientFields)
+            orientation: list[PFloat] = []
+            for i in range(3):
+                for j in range(3):
+                    orientation.append(oriEdits[i][j].pFloat(self.tr('Orientation')))
 
             moiFields = [
                 self._ui.moi00, self._ui.moi01, self._ui.moi02,
                 self._ui.moi10, self._ui.moi11, self._ui.moi12,
                 self._ui.moi20, self._ui.moi21, self._ui.moi22,
             ]
-            momentOfInertia = ' '.join(str(PFloat(f.text(), self.tr('Moment of Inertia'))) for f in moiFields)
+            momentOfInertia = [
+                self._ui.moi00.pFloat(self.tr('Moment of Inertia')),
+                self._ui.moi11.pFloat(self.tr('Moment of Inertia')),
+                self._ui.moi22.pFloat(self.tr('Moment of Inertia'))
+            ]
 
             translationalConstraintType = self._selectedTranslationalConstraintType()
             direction = self._ui.direction.vector('Direction')

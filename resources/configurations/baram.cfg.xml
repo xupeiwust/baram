@@ -248,7 +248,6 @@
             <accelerationRelaxationFactor>0.7</accelerationRelaxationFactor>
             <accelerationDampingFactor>1.0</accelerationDampingFactor>
             <bodies/>
-            <rigidBodyRestraints/>
         </rigidBodyDynamics>
     </dynamicMesh>
 

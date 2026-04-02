@@ -58,10 +58,11 @@ class Body:
                                                                         PFloat('0'), PFloat('1'), PFloat('0'),
                                                                         PFloat('0'), PFloat('0'), PFloat('1')])
     momentOfInertia: list[PFloat] = dataClassField(default_factory=lambda: [PFloat('1'), PFloat('0'), PFloat('0'),
-                                                                        PFloat('0'), PFloat('1'), PFloat('1')])
+                                                                        PFloat('1'), PFloat('0'), PFloat('1')])
 
     boundaries: list[str] = dataClassField(default_factory=list)
     joints: list[Joint] = dataClassField(default_factory=list)
+    restraints: list[Restraint] = dataClassField(default_factory=list)
 
     deformationOffset: PFloat = dataClassField(default_factory=lambda: PFloat('0'))
     deformationDistance: PFloat = dataClassField(default_factory=lambda: PFloat('0'))
@@ -104,6 +105,11 @@ class Body:
         for je in jointsElement.findall('joint', namespaces=nsmap):
             joints.append(Joint.fromElement(je))
 
+        restraints = []
+        for re_ in e.find('rigidBodyRestraints', namespaces=nsmap).findall('restraint', namespaces=nsmap):
+            restraints.append(Restraint.fromElement(re_))
+        restraints.sort(key=lambda r: r.order)
+
         deformationOffset = PFloat.fromElement(e.find('deformationOffset', namespaces=nsmap))
         deformationDistance = PFloat.fromElement(e.find('deformationDistance', namespaces=nsmap))
 
@@ -115,14 +121,11 @@ class Body:
                     momentOfInertia=momentOfInertia,
                     boundaries=boundaries,
                     joints=joints,
+                    restraints=restraints,
                     deformationOffset=deformationOffset,
                     deformationDistance=deformationDistance)
 
     def toElement(self, tag):
-        jointsElement = E('joints')
-        for j in self.joints:
-            jointsElement.append(j.toElement('joint'))
-
         return E(tag,
                  E('uuid', str(self.uuid)),
                  E('name', self.name),
@@ -148,7 +151,8 @@ class Body:
                     self.momentOfInertia[4].toElement('iyz'),
                     self.momentOfInertia[5].toElement('izz')),
                  E('boundaries', ' '.join(self.boundaries)),
-                 jointsElement,
+                 E('joints', *[j.toElement('joint') for j in self.joints]),
+                 E('rigidBodyRestraints', *[r.toElement('restraint') for r in self.restraints]),
                  self.deformationOffset.toElement('deformationOffset'),
                  self.deformationDistance.toElement('deformationDistance'))
 
@@ -168,7 +172,6 @@ class RigidBodyDynamics:
     accelerationRelaxationFactor: PFloat = dataClassField(default_factory=lambda: PFloat('0.7'))
     accelerationDampingFactor: PFloat = dataClassField(default_factory=lambda: PFloat('1.0'))
     bodies: list[Body] = dataClassField(default_factory=list)
-    restraints: list[Restraint] = dataClassField(default_factory=list)
 
     @classmethod
     def fromElement(cls, e):
@@ -181,17 +184,11 @@ class RigidBodyDynamics:
         for be in bodiesElement.findall('body', namespaces=nsmap):
             bodies.append(Body.fromElement(be))
 
-        restraints = []
-        for re_ in e.find('rigidBodyRestraints', namespaces=nsmap).findall('restraint', namespaces=nsmap):
-            restraints.append(Restraint.fromElement(re_))
-        restraints.sort(key=lambda r: r.order)
-
         return RigidBodyDynamics(
             solver=solver,
             accelerationRelaxationFactor=accelerationRelaxationFactor,
             accelerationDampingFactor=accelerationDampingFactor,
-            bodies=bodies,
-            restraints=restraints)
+            bodies=bodies)
 
     def toElement(self):
         bodiesElement = E('bodies')
@@ -202,5 +199,4 @@ class RigidBodyDynamics:
                  self.solver.toElement(),
                  self.accelerationRelaxationFactor.toElement('accelerationRelaxationFactor'),
                  self.accelerationDampingFactor.toElement('accelerationDampingFactor'),
-                 bodiesElement,
-                 E('rigidBodyRestraints', *[r.toElement() for r in self.restraints]))
+                 bodiesElement)

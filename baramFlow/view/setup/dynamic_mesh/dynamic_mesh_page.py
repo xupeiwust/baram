@@ -57,13 +57,6 @@ class DynamicMeshPage(ContentPage):
         self._ui.rbdSolverCombo.addItem('Crank-Nicolson', RigidBodyDynamicsSolverType.CRANK_NICOLSON)
         self._ui.rbdSolverCombo.addItem('Symplectic', RigidBodyDynamicsSolverType.SYMPLECTIC)
 
-        # Add Restraint menu
-        restraintMenu = QMenu(self._ui.addRestraintButton)
-        for rt in RestraintType:
-            action = restraintMenu.addAction(RESTRAINT_TYPE_NAMES[rt])
-            action.triggered.connect(lambda checked=False, rtype=rt: self._addRbdRestraint(rtype))
-        self._ui.addRestraintButton.setMenu(restraintMenu)
-
         self._connectSignalsSlots()
 
         self._updatePage()
@@ -89,7 +82,12 @@ class DynamicMeshPage(ContentPage):
         self._ui.editBodyButton.clicked.connect(self._editBody)
         self._ui.removeBodyButton.clicked.connect(self._removeBody)
         self._ui.bodyList.currentItemChanged.connect(self._bodySelected)
-        self._ui.rbdRestraintList.customContextMenuRequested.connect(self._showRbdRestraintMenu)
+
+    def showEvent(self, ev):
+        if not ev.spontaneous():
+            self._updatePage()
+
+        return super().showEvent(ev)
 
     @qasync.asyncSlot()
     async def save(self):
@@ -113,7 +111,7 @@ class DynamicMeshPage(ContentPage):
 
             rbd = self._dynamicMesh.rigidBodyDynamics
             solver = rbd.solver
-            
+
             solver.solverType = solverType
 
             if solverType == RigidBodyDynamicsSolverType.NEWMARK:
@@ -297,11 +295,6 @@ class DynamicMeshPage(ContentPage):
         for body in rbd.bodies:
             self._addBodyItem(body)
 
-        # Restraints
-        self._ui.rbdRestraintList.clear()
-        for r in rbd.restraints:
-            self._addRbdRestraintItem(r)
-
     def _rbdSolverChanged(self, index):
         solverType = self._ui.rbdSolverCombo.itemData(index)
         if solverType == RigidBodyDynamicsSolverType.NEWMARK:
@@ -380,62 +373,3 @@ class DynamicMeshPage(ContentPage):
             self._ui.bodyList.takeItem(row)
             self._ui.bodyList.updateGeometry()
 
-    def _addRbdRestraint(self, restraintType: RestraintType):
-        order = self._ui.rbdRestraintList.count() + 1
-        restraint = Restraint(uuid=uuid4(), order=order, restraintType=restraintType)
-        dialogClass = RESTRAINT_DIALOGS.get(restraintType)
-        if dialogClass:
-            dialog = dialogClass(self, restraint)
-            if not dialog.exec():
-                return
-        self._dynamicMesh.rigidBodyDynamics.restraints.append(restraint)
-        self._addRbdRestraintItem(restraint)
-
-    def _addRbdRestraintItem(self, restraint: Restraint):
-        widget = RestraintWidget(restraint)
-        item = QListWidgetItem()
-        item.setSizeHint(QSize(0, 48))
-        self._ui.rbdRestraintList.addItem(item)
-        self._ui.rbdRestraintList.setItemWidget(item, widget)
-        self._ui.rbdRestraintList.updateGeometry()
-
-    def _showRbdRestraintMenu(self, pos):
-        row = self._ui.rbdRestraintList.currentRow()
-        if row < 0:
-            return
-        menu = QMenu(self)
-        if row > 0:
-            menu.addAction(self.tr('Move Up')).triggered.connect(
-                lambda: self._moveRbdRestraint(row, row - 1))
-        if row < self._ui.rbdRestraintList.count() - 1:
-            menu.addAction(self.tr('Move Down')).triggered.connect(
-                lambda: self._moveRbdRestraint(row, row + 1))
-        menu.addAction(self.tr('Edit')).triggered.connect(self._editRbdRestraint)
-        menu.addAction(self.tr('Remove')).triggered.connect(self._removeRbdRestraint)
-        menu.exec(self._ui.rbdRestraintList.mapToGlobal(pos))
-
-    def _moveRbdRestraint(self, fromRow, toRow):
-        rs = self._dynamicMesh.rigidBodyDynamics.restraints
-        rs[fromRow], rs[toRow] = rs[toRow], rs[fromRow]
-        self._updateRigidBodyDynamics()
-        self._ui.rbdRestraintList.setCurrentRow(toRow)
-
-    def _editRbdRestraint(self):
-        row = self._ui.rbdRestraintList.currentRow()
-        if row < 0:
-            return
-        restraint = self._dynamicMesh.rigidBodyDynamics.restraints[row]
-        dialogClass = RESTRAINT_DIALOGS.get(restraint.restraintType)
-        if dialogClass:
-            dialog = dialogClass(self, restraint)
-            if dialog.exec():
-                widget = self._ui.rbdRestraintList.itemWidget(self._ui.rbdRestraintList.item(row))
-                if isinstance(widget, RestraintWidget):
-                    widget.load()
-
-    def _removeRbdRestraint(self):
-        row = self._ui.rbdRestraintList.currentRow()
-        if row >= 0:
-            del self._dynamicMesh.rigidBodyDynamics.restraints[row]
-            self._ui.rbdRestraintList.takeItem(row)
-            self._ui.rbdRestraintList.updateGeometry()

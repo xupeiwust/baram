@@ -16,6 +16,13 @@ from baramFlow.coredb.boundary_db import BoundaryDB, BoundaryType
 _mutex = Lock()
 
 
+_CONSTRAINT_BOUNDARY_TYPE_MAP = {
+    BoundaryType.SYMMETRY: PointMotionType.SYMMETRY,
+    BoundaryType.EMPTY:    PointMotionType.EMPTY,
+    BoundaryType.WEDGE:    PointMotionType.WEDGE,
+    BoundaryType.CYCLIC:   PointMotionType.CYCLIC
+}
+
 class DynamicMeshService:
     GRAPHICS_PATH = '/graphics'
 
@@ -36,6 +43,7 @@ class DynamicMeshService:
         EventBus().onMeshLoading.asyncConnect(self._handleMeshUpdate)
         EventBus().onProjectOpen.asyncConnect(self._handleProjectOpen)
         EventBus().onProjectClose.asyncConnect(self._handleProjectClose)
+        EventBus().onBoundaryTypeChange.asyncConnect(self._handleBoundaryTypeChange)
 
         self._dynamicMesh = DynamicMesh()
 
@@ -110,19 +118,21 @@ class DynamicMeshService:
 
         for mb in newMovingBoundaries:
             bctype = BoundaryDB.getBoundaryType(mb.boundary)
-            if bctype == BoundaryType.SYMMETRY:
-                mb.pointMotionType = PointMotionType.SYMMETRY
-            elif bctype == BoundaryType.EMPTY:
-                mb.pointMotionType = PointMotionType.EMPTY
-            elif bctype == BoundaryType.WEDGE:
-                mb.pointMotionType = PointMotionType.WEDGE
-            elif bctype == BoundaryType.CYCLIC:
-                mb.pointMotionType = PointMotionType.CYCLIC
+            if bctype in _CONSTRAINT_BOUNDARY_TYPE_MAP:
+                mb.pointMotionType = _CONSTRAINT_BOUNDARY_TYPE_MAP[bctype]
 
         self._dynamicMesh.movingBoundaries = newMovingBoundaries
 
         for body in self._dynamicMesh.rigidBodyDynamics.bodies:
             body.processMeshUpdate(oldBoundaries, newBoundaries)
+
+    async def _handleBoundaryTypeChange(self, bcid: str, oldType: BoundaryType, newType: BoundaryType):
+        boundaryEntry = next((be for be in self._dynamicMesh.movingBoundaries if be.boundary == bcid), None)
+        if boundaryEntry is None:
+            raise AssertionError
+
+        if newType in _CONSTRAINT_BOUNDARY_TYPE_MAP:
+            boundaryEntry.pointMotionType = _CONSTRAINT_BOUNDARY_TYPE_MAP[newType]
 
 
 # Auto-instantiate the singleton so that event bus connections are established at import time

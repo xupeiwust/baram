@@ -1,0 +1,213 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+import math
+
+from baramFlow.base.dynamic_mesh.dynamic_mesh import MotionType
+from baramFlow.base.dynamic_mesh.moving_boundary import MovingBoundaryEntry, PointMotionType, RotationalConstraintType, TranslationalConstraintType
+from baramFlow.base.dynamic_mesh.restraint import RestraintType
+from baramFlow.base.dynamic_mesh.rigid_body_solver import RigidBodyDynamicsSolverType
+from baramFlow.base.xml_helper import Vector
+from baramFlow.coredb.boundary_db import BoundaryType
+from baramFlow.coredb.coredb_reader import Region
+from baramFlow.openfoam.boundary_conditions.boundary_condition import BoundaryCondition
+from baramFlow.openfoam.constant.dynamic_mesh_dict import getMotionFunctionDict
+from baramFlow.services.dynamic_mesh.dynamic_mesh_service import DynamicMeshService
+from libbaram.natural_name_uuid import uuidToNnstr
+from libbaram.openfoam.dictionary.dictionary_file import DataClass
+
+
+class PointDisplacement(BoundaryCondition):
+    DIMENSIONS = '[0 1 0 0 0 0 0]'
+
+    def __init__(self, region: Region, time, processorNo):
+        super().__init__(region, time, processorNo, 'pointDisplacement', DataClass.CLASS_VOL_VECTOR_FIELD)
+
+        self._initialValue = Vector.zero()
+
+        self._dynamicMesh = DynamicMeshService().getDynamicMesh()
+
+    def build0(self):
+        if self._dynamicMesh.motionType == MotionType.NONE:
+            self._data = None
+        else:
+            self._data = {
+                'dimensions': self.DIMENSIONS,
+                'internalField': ('uniform', self._initialValue.toFloatList()),
+                'boundaryField': self._constructBoundaryField()
+            }
+
+        return self
+
+    def _constructBoundaryField(self):
+        field = {}
+
+        for bcidInt, name, type_ in self._region.boundaries:
+            bcid = str(bcidInt)
+
+            field[name] = {
+                BoundaryType.VELOCITY_INLET.value:      (lambda: self._constructPointDisplacement(bcid)),
+                BoundaryType.FLOW_RATE_INLET.value:     (lambda: self._constructPointDisplacement(bcid)),
+                BoundaryType.FLOW_RATE_OUTLET.value:    (lambda: self._constructPointDisplacement(bcid)),
+                BoundaryType.PRESSURE_INLET.value:      (lambda: self._constructPointDisplacement(bcid)),
+                BoundaryType.PRESSURE_OUTLET.value:     (lambda: self._constructPointDisplacement(bcid)),
+                BoundaryType.INTAKE_FAN.value:          (lambda: self._constructPointDisplacement(bcid)),
+                BoundaryType.EXHAUST_FAN.value:         (lambda: self._constructPointDisplacement(bcid)),
+                BoundaryType.ABL_INLET.value:           (lambda: self._constructPointDisplacement(bcid)),
+                BoundaryType.OPEN_CHANNEL_INLET.value:  (lambda: self._constructPointDisplacement(bcid)),
+                BoundaryType.OPEN_CHANNEL_OUTLET.value: (lambda: self._constructPointDisplacement(bcid)),
+                BoundaryType.OUTFLOW.value:             (lambda: self._constructPointDisplacement(bcid)),
+                BoundaryType.FREE_STREAM.value:         (lambda: self._constructPointDisplacement(bcid)),
+                BoundaryType.FAR_FIELD_RIEMANN.value:   (lambda: self._constructPointDisplacement(bcid)),
+                BoundaryType.SUBSONIC_INLET.value:      (lambda: self._constructPointDisplacement(bcid)),
+                BoundaryType.SUBSONIC_OUTFLOW.value:    (lambda: self._constructPointDisplacement(bcid)),
+                BoundaryType.SUPERSONIC_INFLOW.value:   (lambda: self._constructPointDisplacement(bcid)),
+                BoundaryType.SUPERSONIC_OUTFLOW.value:  (lambda: self._constructPointDisplacement(bcid)),
+                BoundaryType.WALL.value:                (lambda: self._constructPointDisplacement(bcid)),
+                BoundaryType.THERMO_COUPLED_WALL.value: (lambda: self._constructPointDisplacement(bcid)),
+                BoundaryType.SYMMETRY.value:            (lambda: self._constructSymmetry()),
+                BoundaryType.INTERFACE.value:           (lambda: self._constructPointDisplacement(bcid)),
+                BoundaryType.POROUS_JUMP.value:         (lambda: self._constructCyclic()),
+                BoundaryType.FAN.value:                 (lambda: self._constructCyclic()),
+                BoundaryType.EMPTY.value:               (lambda: self._constructEmpty()),
+                BoundaryType.CYCLIC.value:              (lambda: self._constructCyclic()),
+                BoundaryType.WEDGE.value:               (lambda: self._constructWedge()),
+            }.get(type_, lambda: None)()
+
+        return field
+
+    def _constructPointDisplacement(self, bcid: str):
+
+        boundaryEntry = next((be for be in self._dynamicMesh.movingBoundaries if be.boundary == bcid), None)
+
+        if boundaryEntry is None:
+            return self._constructFixedValue(Vector.zero().toFloatList())
+
+        if boundaryEntry.pointMotionType == PointMotionType.FIXED:
+            return self._constructFixedValue(Vector.zero().toFloatList())
+
+        elif boundaryEntry.pointMotionType == PointMotionType.SLIP:
+            return {'type': 'slip'}
+
+        elif boundaryEntry.pointMotionType == PointMotionType.NORMAL:
+            return {
+                        'type': 'fixedNormalSlip',
+                        'n': boundaryEntry.normal.toFloatList()
+                    }
+
+        elif boundaryEntry.pointMotionType == PointMotionType.PRESCRIBED_MOTION:
+            return self._constructPrescribedMotion(boundaryEntry)
+
+        elif boundaryEntry.pointMotionType == PointMotionType.RIGID_BODY_MOTION:
+            return self._constructRigidBodyMotion(boundaryEntry)
+
+    def _constructPrescribedMotion(self, be: MovingBoundaryEntry):
+        multiMotionCoeffs = {}
+        for mFunction in be.motionFunctions:
+            data = getMotionFunctionDict(mFunction)
+            multiMotionCoeffs[uuidToNnstr(mFunction.uuid)] = data
+
+        return {
+            'type': 'solidBodyMotionDisplacement',
+            'solidBodyMotionFunction': 'multiMotion',
+            'multiMotionCoeffs': multiMotionCoeffs
+        }
+
+    def _constructRigidBodyMotion(self, be: MovingBoundaryEntry):
+        rbm = be.rigidBodyMotion
+
+        if rbm.solver.solverType == RigidBodyDynamicsSolverType.NEWMARK:
+            solver = {
+                'type': 'Newmakr',
+                'gamma': float(rbm.solver.velocityIntegrationCoefficient),
+                'beta': float(rbm.solver.positionIntegrationCoefficient)
+            }
+        elif rbm.solver.solverType == RigidBodyDynamicsSolverType.CRANK_NICOLSON:
+            solver = {
+                'type': 'CrankNicolson',
+                'aoc': float(rbm.solver.offCenteringAccelerationCoefficient),
+                'beta': float(rbm.solver.offCenteringVelocityCoefficient)
+            }
+        elif rbm.solver.solverType == RigidBodyDynamicsSolverType.SYMPLECTIC:
+            solver = {
+                'type': 'symplectic',
+            }
+        else:
+            raise AssertionError
+
+        constraints = {}
+
+        if rbm.translationalConstraintType == TranslationalConstraintType.PLANE:
+            constraints['translation'] = {
+                'sixDoFRigidBodyMotionConstraint': 'plane',
+                'normal': rbm.normal.toFloatList(),
+                'centreOfRotation': rbm.centerOfRotation.toFloatList()
+            }
+        elif rbm.translationalConstraintType == TranslationalConstraintType.LINE:
+            constraints['translation'] = {
+                'sixDoFRigidBodyMotionConstraint': 'plane',
+                'normal': rbm.normal.toFloatList(),
+                'centreOfRotation': rbm.centerOfRotation.toFloatList()
+            }
+        elif rbm.translationalConstraintType == TranslationalConstraintType.FIXED:
+            constraints['translation'] = {
+                'sixDoFRigidBodyMotionConstraint': 'point',
+                'centreOfRotation': rbm.centerOfRotation.toFloatList()
+            }
+
+        if rbm.rotationalConstraintType == RotationalConstraintType.AXIS:
+            constraints['rotation'] = {
+                'sixDoFRigidBodyMotionConstraint': 'axis',
+                'axis': rbm.axis.toFloatList(),
+            }
+
+            if rbm.limitAngle:
+                constraints['rotation'].update({
+                    'thetaUnits': 'degrees',
+                    'maxClockwiseTheta': float(rbm.clockwise),
+                    'maxCounterclockwiseTheta': float(rbm.counterclockwise),
+                    'referenceOrientation': ([float(i) for i in rbm.orientation]),
+                })
+
+        elif rbm.rotationalConstraintType == RotationalConstraintType.FIXED:
+            constraints['rotation'] = {
+                'sixDoFRigidBodyMotionConstraint': 'orientation',
+            }
+
+        restraints = {}
+        for r in rbm.restraints:
+            if r.restraintType == RestraintType.SIMPLE_DAMPER:
+                restraints[uuidToNnstr(r.uuid)] = {
+                    'sixDoFRigidBodyMotionRestraint': 'linearDamper',
+                    'coeff': float(r.dampingConstant)
+                }
+            elif r.restraintType == RestraintType.TRANSLATIONAL_SPRING:
+                restraints[uuidToNnstr(r.uuid)] = {
+                    'sixDoFRigidBodyMotionRestraint': 'linearSpring',
+                    'refAttachmentPt': r.attachmentPoint.toFloatList(),
+                    'anchor': r.anchorPoint.toFloatList(),
+                    'restLength': float(r.restLength),
+                    'stiffness': float(r.springConstant),
+                    'damping': float(r.dampingConstant)
+                }
+            elif r.restraintType == RestraintType.ROTATIONAL_SPRING:
+                restraints[uuidToNnstr(r.uuid)] = {
+                    'sixDoFRigidBodyMotionRestraint': 'linearAxialAngularSpring',
+                    'axis': r.axis.toFloatList(),
+                    'stiffness': float(r.springConstant),
+                    'damping': float(r.dampingConstant)
+                }
+
+        return {
+            'type': 'sixDoFRigidBodyDisplacement',
+            'mass': float(rbm.mass),
+            'centreOfMass': rbm.centerOfMass.toFloatList(),
+            'momentOfInertia': [float(i) for i in rbm.momentOfInertia],
+            'orientation': [float(i) for i in rbm.orientation],
+            'centreOfRotation': rbm.centerOfRotation.toFloatList(),
+            'accelerationRelaxation': float(rbm.accelerationRelaxationFactor),
+            'accelerationDamping': float(rbm.accelerationDampingFactor),
+            'solver': solver,
+            'constraints': constraints,
+            'restraints': restraints
+        }

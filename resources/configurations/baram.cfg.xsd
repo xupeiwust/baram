@@ -3357,6 +3357,7 @@
                                                                         </xs:sequence>
                                                                     </xs:complexType>
                                                                 </xs:element>
+                                                                <xs:element ref="rigidBodyRestraints"/>
                                                                 <xs:element name="deformationOffset" type="inputNumberType"/>
                                                                 <xs:element name="deformationDistance" type="inputNumberType"/>
                                                             </xs:sequence>
@@ -3365,7 +3366,6 @@
                                                 </xs:sequence>
                                             </xs:complexType>
                                         </xs:element>
-                                        <xs:element ref="rigidBodyRestraints"/>
                                     </xs:sequence>
                                 </xs:complexType>
                             </xs:element>

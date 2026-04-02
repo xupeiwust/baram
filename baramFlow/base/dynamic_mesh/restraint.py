@@ -53,8 +53,8 @@ class Restraint:
                          attachmentPoint=attachmentPoint,
                          anchorPoint=anchorPoint)
 
-    def toElement(self):
-        return E('restraint',
+    def toElement(self, tag):
+        return E(tag,
                  E('uuid', str(self.uuid)),
                  E('order', str(self.order)),
                  E('restraintType', self.restraintType.value),

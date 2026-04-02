@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>311</width>
-    <height>672</height>
+    <width>304</width>
+    <height>572</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -36,7 +36,7 @@
    <item>
     <widget class="Line" name="line">
      <property name="orientation">
-      <enum>Qt::Horizontal</enum>
+      <enum>Qt::Orientation::Horizontal</enum>
      </property>
     </widget>
    </item>
@@ -70,7 +70,7 @@
       <item>
        <spacer name="typeSpacer">
         <property name="orientation">
-         <enum>Qt::Horizontal</enum>
+         <enum>Qt::Orientation::Horizontal</enum>
         </property>
         <property name="sizeHint" stdset="0">
          <size>
@@ -112,7 +112,7 @@
           <item>
            <widget class="QListWidget" name="mdList">
             <property name="contextMenuPolicy">
-             <enum>Qt::CustomContextMenu</enum>
+             <enum>Qt::ContextMenuPolicy::CustomContextMenu</enum>
             </property>
            </widget>
           </item>
@@ -129,7 +129,7 @@
              <item>
               <spacer name="addMdSpacer">
                <property name="orientation">
-                <enum>Qt::Horizontal</enum>
+                <enum>Qt::Orientation::Horizontal</enum>
                </property>
                <property name="sizeHint" stdset="0">
                 <size>
@@ -170,10 +170,10 @@
           <item>
            <widget class="QListWidget" name="mbList">
             <property name="horizontalScrollBarPolicy">
-             <enum>Qt::ScrollBarAlwaysOff</enum>
+             <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
             </property>
             <property name="sizeAdjustPolicy">
-             <enum>QAbstractScrollArea::AdjustToContents</enum>
+             <enum>QAbstractScrollArea::SizeAdjustPolicy::AdjustToContents</enum>
             </property>
            </widget>
           </item>
@@ -193,7 +193,7 @@
              <item>
               <spacer name="editMbSpacer">
                <property name="orientation">
-                <enum>Qt::Horizontal</enum>
+                <enum>Qt::Orientation::Horizontal</enum>
                </property>
                <property name="sizeHint" stdset="0">
                 <size>
@@ -228,13 +228,13 @@
        <item>
         <widget class="QScrollArea" name="rbdScrollArea">
          <property name="frameShape">
-          <enum>QFrame::NoFrame</enum>
+          <enum>QFrame::Shape::NoFrame</enum>
          </property>
          <property name="horizontalScrollBarPolicy">
-          <enum>Qt::ScrollBarAlwaysOff</enum>
+          <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
          </property>
          <property name="sizeAdjustPolicy">
-          <enum>QAbstractScrollArea::AdjustToContents</enum>
+          <enum>QAbstractScrollArea::SizeAdjustPolicy::AdjustToContents</enum>
          </property>
          <property name="widgetResizable">
           <bool>true</bool>
@@ -244,11 +244,11 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>293</width>
-            <height>567</height>
+            <width>286</width>
+            <height>465</height>
            </rect>
           </property>
-          <layout class="QVBoxLayout" name="rbdScrollLayout" stretch="0,0,0,0">
+          <layout class="QVBoxLayout" name="rbdScrollLayout" stretch="0,0,0">
            <property name="leftMargin">
             <number>0</number>
            </property>
@@ -428,13 +428,13 @@
               <item>
                <widget class="ContentSizedListWidget" name="bodyList">
                 <property name="verticalScrollBarPolicy">
-                 <enum>Qt::ScrollBarAlwaysOff</enum>
+                 <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
                 </property>
                 <property name="horizontalScrollBarPolicy">
-                 <enum>Qt::ScrollBarAlwaysOff</enum>
+                 <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
                 </property>
                 <property name="sizeAdjustPolicy">
-                 <enum>QAbstractScrollArea::AdjustToContents</enum>
+                 <enum>QAbstractScrollArea::SizeAdjustPolicy::AdjustToContents</enum>
                 </property>
                </widget>
               </item>
@@ -477,67 +477,7 @@
                  <item>
                   <spacer name="bodyButtonSpacer">
                    <property name="orientation">
-                    <enum>Qt::Horizontal</enum>
-                   </property>
-                   <property name="sizeHint" stdset="0">
-                    <size>
-                     <width>40</width>
-                     <height>20</height>
-                    </size>
-                   </property>
-                  </spacer>
-                 </item>
-                </layout>
-               </widget>
-              </item>
-             </layout>
-            </widget>
-           </item>
-           <item>
-            <widget class="QGroupBox" name="restraintsGroup">
-             <property name="title">
-              <string>Restraints</string>
-             </property>
-             <layout class="QVBoxLayout" name="restraintsGroupLayout">
-              <item>
-               <widget class="ContentSizedListWidget" name="rbdRestraintList">
-                <property name="contextMenuPolicy">
-                 <enum>Qt::CustomContextMenu</enum>
-                </property>
-                <property name="verticalScrollBarPolicy">
-                 <enum>Qt::ScrollBarAlwaysOff</enum>
-                </property>
-                <property name="horizontalScrollBarPolicy">
-                 <enum>Qt::ScrollBarAlwaysOff</enum>
-                </property>
-                <property name="sizeAdjustPolicy">
-                 <enum>QAbstractScrollArea::AdjustToContents</enum>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QWidget" name="addRestraintWidget" native="true">
-                <layout class="QHBoxLayout" name="addRestraintLayout">
-                 <property name="leftMargin">
-                  <number>0</number>
-                 </property>
-                 <property name="rightMargin">
-                  <number>0</number>
-                 </property>
-                 <item>
-                  <widget class="QToolButton" name="addRestraintButton">
-                   <property name="text">
-                    <string>Add Restraint</string>
-                   </property>
-                   <property name="popupMode">
-                    <enum>QToolButton::InstantPopup</enum>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <spacer name="addRestraintSpacer">
-                   <property name="orientation">
-                    <enum>Qt::Horizontal</enum>
+                    <enum>Qt::Orientation::Horizontal</enum>
                    </property>
                    <property name="sizeHint" stdset="0">
                     <size>
@@ -570,14 +510,14 @@
    <header location="global">widgets.python_combo_box</header>
   </customwidget>
   <customwidget>
-   <class>ContentSizedListWidget</class>
-   <extends>QListWidget</extends>
-   <header location="global">widgets.content_sized_list_widget</header>
-  </customwidget>
-  <customwidget>
    <class>PFloatLineEdit</class>
    <extends>QLineEdit</extends>
    <header location="global">widgets.pfloat_line_edit</header>
+  </customwidget>
+  <customwidget>
+   <class>ContentSizedListWidget</class>
+   <extends>QListWidget</extends>
+   <header location="global">widgets.content_sized_list_widget</header>
   </customwidget>
  </customwidgets>
  <resources/>

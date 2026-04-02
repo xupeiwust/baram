@@ -2,14 +2,18 @@
 # -*- coding: utf-8 -*-
 
 from copy import deepcopy
-from uuid import UUID
+from uuid import UUID, uuid4
 
+from PySide6.QtCore import QSize
 import qasync
 
 from PySide6.QtWidgets import QDialog, QMenu, QListWidgetItem
 
+from baramFlow.base.dynamic_mesh.restraint import Restraint, RestraintType
 from baramFlow.base.dynamic_mesh.rigid_body_dynamics import Body, Joint, JointType
 from baramFlow.coredb.boundary_db import BoundaryDB
+from baramFlow.view.setup.dynamic_mesh.restraints.restraint_dialogs import RESTRAINT_DIALOGS
+from baramFlow.view.setup.dynamic_mesh.restraints.restraint_widget import RESTRAINT_TYPE_NAMES, RestraintWidget
 from baramFlow.view.setup.dynamic_mesh.rigid_body_dynamics.joint_widget import JointWidget, JOINT_TYPE_NAMES
 from baramFlow.view.setup.dynamic_mesh.rigid_body_dynamics.joint_dialogs import JOINT_DIALOGS
 from baramFlow.view.widgets.multi_selector_dialog import MultiSelectorDialog
@@ -34,6 +38,7 @@ class BodyDialog(QDialog):
 
         self._body = body
         self._joints = [deepcopy(j) for j in body.joints]
+        self._restraints = [deepcopy(r) for r in body.restraints]
         self._boundaries = list(body.boundaries)
         self._existingNames = {bName for bUuid, bName in existingBodies if bUuid != body.uuid}
         self._dialog = None
@@ -83,13 +88,22 @@ class BodyDialog(QDialog):
             action.triggered.connect(lambda checked=False, jtype=jt: self._addJoint(jtype))
         self._ui.addJointButton.setMenu(jointMenu)
 
+        # Add Restraint menu
+        restraintMenu = QMenu(self._ui.addRestraintButton)
+        for rt in RestraintType:
+            action = restraintMenu.addAction(RESTRAINT_TYPE_NAMES[rt])
+            action.triggered.connect(lambda checked=False, rtype=rt: self._addRbdRestraint(rtype))
+        self._ui.addRestraintButton.setMenu(restraintMenu)
+
         self._setBoundaries(self._boundaries)
         self._connectSignalsSlots()
         self._loadJoints()
+        self._loadRbdRestraints()
 
     def _connectSignalsSlots(self):
         self._ui.selectBoundariesButton.clicked.connect(self._selectBoundariesClicked)
         self._ui.jointList.customContextMenuRequested.connect(self._showJointContextMenu)
+        self._ui.rbdRestraintList.customContextMenuRequested.connect(self._showRbdRestraintMenu)
         self._ui.buttonBox.accepted.connect(self._accept)
         self._ui.buttonBox.rejected.connect(self.reject)
 
@@ -113,11 +127,7 @@ class BodyDialog(QDialog):
     def _loadJoints(self):
         self._ui.jointList.clear()
         for j in self._joints:
-            widget = JointWidget(j)
-            item = QListWidgetItem()
-            item.setSizeHint(widget.size())
-            self._ui.jointList.addItem(item)
-            self._ui.jointList.setItemWidget(item, widget)
+            self._addJointItem(j)
 
     def _addJoint(self, jointType: JointType):
         joint = Joint(jointType=jointType)
@@ -128,6 +138,9 @@ class BodyDialog(QDialog):
                 return
         # Spherical has no dialog, just add directly
         self._joints.append(joint)
+        self._addJointItem(joint)
+
+    def _addJointItem(self, joint: Joint):
         widget = JointWidget(joint)
         item = QListWidgetItem()
         item.setSizeHint(widget.size())
@@ -173,6 +186,70 @@ class BodyDialog(QDialog):
             del self._joints[row]
             self._ui.jointList.takeItem(row)
 
+    def _loadRbdRestraints(self):
+        self._ui.rbdRestraintList.clear()
+        for r in self._restraints:
+            self._addRbdRestraintItem(r)
+
+    def _addRbdRestraint(self, restraintType: RestraintType):
+        order = self._ui.rbdRestraintList.count() + 1
+        restraint = Restraint(uuid=uuid4(), order=order, restraintType=restraintType)
+        dialogClass = RESTRAINT_DIALOGS.get(restraintType)
+        if dialogClass:
+            dialog = dialogClass(self, restraint)
+            if not dialog.exec():
+                return
+        self._restraints.append(restraint)
+        self._addRbdRestraintItem(restraint)
+
+    def _addRbdRestraintItem(self, restraint: Restraint):
+        widget = RestraintWidget(restraint)
+        item = QListWidgetItem()
+        item.setSizeHint(QSize(0, 48))
+        self._ui.rbdRestraintList.addItem(item)
+        self._ui.rbdRestraintList.setItemWidget(item, widget)
+        #self._ui.rbdRestraintList.updateGeometry()
+
+    def _showRbdRestraintMenu(self, pos):
+        row = self._ui.rbdRestraintList.currentRow()
+        if row < 0:
+            return
+        menu = QMenu(self)
+        if row > 0:
+            menu.addAction(self.tr('Move Up')).triggered.connect(
+                lambda: self._moveRbdRestraint(row, row - 1))
+        if row < self._ui.rbdRestraintList.count() - 1:
+            menu.addAction(self.tr('Move Down')).triggered.connect(
+                lambda: self._moveRbdRestraint(row, row + 1))
+        menu.addAction(self.tr('Edit')).triggered.connect(self._editRbdRestraint)
+        menu.addAction(self.tr('Remove')).triggered.connect(self._removeRbdRestraint)
+        menu.exec(self._ui.rbdRestraintList.mapToGlobal(pos))
+
+    def _moveRbdRestraint(self, fromRow, toRow):
+        self._restraints[fromRow], self._restraints[toRow] = self._restraints[toRow], self._restraints[fromRow]
+        self._loadRbdRestraints()
+        self._ui.rbdRestraintList.setCurrentRow(toRow)
+
+    def _editRbdRestraint(self):
+        row = self._ui.rbdRestraintList.currentRow()
+        if row < 0:
+            return
+        restraint = self._restraints[row]
+        dialogClass = RESTRAINT_DIALOGS.get(restraint.restraintType)
+        if dialogClass:
+            dialog = dialogClass(self, restraint)
+            if dialog.exec():
+                widget = self._ui.rbdRestraintList.itemWidget(self._ui.rbdRestraintList.item(row))
+                if isinstance(widget, RestraintWidget):
+                    widget.load()
+
+    def _removeRbdRestraint(self):
+        row = self._ui.rbdRestraintList.currentRow()
+        if row >= 0:
+            del self._restraints[row]
+            self._ui.rbdRestraintList.takeItem(row)
+            #self._ui.rbdRestraintList.updateGeometry()
+
     @qasync.asyncSlot()
     async def _accept(self):
         name = self._ui.name.text()
@@ -196,18 +273,18 @@ class BodyDialog(QDialog):
                 [self._ui.ori10, self._ui.ori11, self._ui.ori12],
                 [self._ui.ori20, self._ui.ori21, self._ui.ori22],
             ]
-            oriValues: list[PFloat] = []
+            orientation: list[PFloat] = []
             for i in range(3):
                 for j in range(3):
-                    oriValues.append(oriEdits[i][j].pFloat(self.tr('Orientation')))
+                    orientation.append(oriEdits[i][j].pFloat(self.tr('Orientation')))
 
-            moiValues = [
+            momentOfInertia = [
                 self._ui.moi00.pFloat(self.tr('Moment of Inertia')),
                 self._ui.moi01.pFloat(self.tr('Moment of Inertia')),
                 self._ui.moi02.pFloat(self.tr('Moment of Inertia')),
                 self._ui.moi11.pFloat(self.tr('Moment of Inertia')),
                 self._ui.moi12.pFloat(self.tr('Moment of Inertia')),
-                self._ui.moi22.pFloat(self.tr('Moment of Inertia')),
+                self._ui.moi22.pFloat(self.tr('Moment of Inertia'))
             ]
 
             deformationOffset = self._ui.deformationOffset.pFloat(self.tr('Deformation Offset'), low=0)
@@ -221,10 +298,11 @@ class BodyDialog(QDialog):
         self._body.mass = mass
         self._body.centerOfMass = centerOfMass
         self._body.centerOfRotation = centerOfRotation
-        self._body.orientation = oriValues
-        self._body.momentOfInertia = moiValues
+        self._body.orientation = orientation
+        self._body.momentOfInertia = momentOfInertia
         self._body.boundaries = self._boundaries
         self._body.joints = self._joints
+        self._body.restraints = self._restraints
         self._body.deformationOffset = deformationOffset
         self._body.deformationDistance = deformationDistance
 

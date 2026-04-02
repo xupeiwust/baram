@@ -49,8 +49,10 @@ class RigidBodyMotion:
     centerOfMass: Vector = dataClassField(default_factory=Vector.zero)
     centerOfRotation: Vector = dataClassField(default_factory=Vector.zero)
 
-    orientation: str = ''
-    momentOfInertia: str = ''
+    orientation: list[PFloat] = dataClassField(default_factory=lambda: [PFloat('1'), PFloat('0'), PFloat('0'),
+                                                                        PFloat('0'), PFloat('1'), PFloat('0'),
+                                                                        PFloat('0'), PFloat('0'), PFloat('1')])
+    momentOfInertia: list[PFloat] = dataClassField(default_factory=lambda: [PFloat('1'), PFloat('1'), PFloat('1')])
 
     translationalConstraintType: TranslationalConstraintType = TranslationalConstraintType.FREE
     rotationalConstraintType: RotationalConstraintType = RotationalConstraintType.FREE
@@ -76,8 +78,20 @@ class RigidBodyMotion:
         centerOfMass = Vector.fromElement(e.find('centerOfMass', namespaces=nsmap))
         centerOfRotation = Vector.fromElement(e.find('centerOfRotation', namespaces=nsmap))
 
-        orientation = e.find('orientation', namespaces=nsmap).text or ''
-        momentOfInertia = e.find('momentOfInertia', namespaces=nsmap).text or ''
+        oe = e.find('orientation', namespaces=nsmap)
+        orientation =  [PFloat.fromElement(oe.find('r11', namespaces=nsmap)),
+                        PFloat.fromElement(oe.find('r12', namespaces=nsmap)),
+                        PFloat.fromElement(oe.find('r13', namespaces=nsmap)),
+                        PFloat.fromElement(oe.find('r21', namespaces=nsmap)),
+                        PFloat.fromElement(oe.find('r22', namespaces=nsmap)),
+                        PFloat.fromElement(oe.find('r23', namespaces=nsmap)),
+                        PFloat.fromElement(oe.find('r31', namespaces=nsmap)),
+                        PFloat.fromElement(oe.find('r32', namespaces=nsmap)),
+                        PFloat.fromElement(oe.find('r33', namespaces=nsmap))]
+        me = e.find('momentOfInertia', namespaces=nsmap)
+        momentOfInertia = [PFloat.fromElement(me.find('ixx', namespaces=nsmap)),
+                           PFloat.fromElement(me.find('iyy', namespaces=nsmap)),
+                           PFloat.fromElement(me.find('izz', namespaces=nsmap))]
 
         translationalConstraintType = TranslationalConstraintType(
             e.find('translationalConstraintType', namespaces=nsmap).text)
@@ -124,8 +138,20 @@ class RigidBodyMotion:
                  self.mass.toElement('mass'),
                  self.centerOfMass.toElement('centerOfMass'),
                  self.centerOfRotation.toElement('centerOfRotation'),
-                 E('orientation', self.orientation),
-                 E('momentOfInertia', self.momentOfInertia),
+                 E('orientation',
+                    self.orientation[0].toElement('r11'),
+                    self.orientation[1].toElement('r12'),
+                    self.orientation[2].toElement('r13'),
+                    self.orientation[3].toElement('r21'),
+                    self.orientation[4].toElement('r22'),
+                    self.orientation[5].toElement('r23'),
+                    self.orientation[6].toElement('r31'),
+                    self.orientation[7].toElement('r32'),
+                    self.orientation[8].toElement('r33')),
+                 E('momentOfInertia',
+                    self.momentOfInertia[0].toElement('ixx'),
+                    self.momentOfInertia[1].toElement('iyy'),
+                    self.momentOfInertia[2].toElement('izz')),
                  E('translationalConstraintType', self.translationalConstraintType.value),
                  E('rotationalConstraintType', self.rotationalConstraintType.value),
                  self.direction.toElement('direction'),
@@ -134,7 +160,7 @@ class RigidBodyMotion:
                  E('limitAngle', self.limitAngle),
                  self.clockwise.toElement('clockwise'),
                  self.counterclockwise.toElement('counterclockwise'),
-                 E('rigidBodyRestraints', *[r.toElement() for r in self.restraints]),
+                 E('rigidBodyRestraints', *[r.toElement('restraint') for r in self.restraints]),
                  self.solver.toElement(),
                  self.accelerationRelaxationFactor.toElement('accelerationRelaxationFactor'),
                  self.accelerationDampingFactor.toElement('accelerationDampingFactor'))

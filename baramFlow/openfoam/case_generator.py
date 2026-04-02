@@ -6,6 +6,7 @@ import logging
 
 from PySide6.QtCore import QCoreApplication, QObject, Signal
 
+from baramFlow.openfoam.boundary_conditions.pointDisplacement import PointDisplacement
 from baramFlow.openfoam.constant.cloud_properties import CloudProperties
 from libbaram import utils
 from libbaram.exception import CanceledException
@@ -64,7 +65,7 @@ class CaseGenerator(QObject):
         self._errors = None
         self._cm = None
         self._canceled: bool = False
-        self._files = None
+        self._files = []
 
     def getErrors(self):
         return self._errors
@@ -167,6 +168,8 @@ class CaseGenerator(QObject):
         self._files.append(P(region, time, processorNo, 'p'))
         self._files.append(U(region, time, processorNo))
         self._files.append(T(region, time, processorNo))
+
+        self._files.append(PointDisplacement(region, time, processorNo))
 
         if ModelsDB.isMultiphaseModelOn():
             for mid in region.secondaryMaterials:
