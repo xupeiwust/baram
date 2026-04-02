@@ -27,8 +27,14 @@ class PointDisplacement(BoundaryCondition):
 
         self._dynamicMesh = DynamicMeshService().getDynamicMesh()
 
+        if self._dynamicMesh.motionType == MotionType.RIGID_BODY_DYNAMICS:
+            self._rigidBodyDynamicsBoundary = set()
+            for body in self._dynamicMesh.rigidBodyDynamics.bodies:
+                for bcid in body.boundaries:
+                    self._rigidBodyDynamicsBoundary.add(bcid)
+
     def build0(self):
-        if self._dynamicMesh.motionType == MotionType.NONE:
+        if self._dynamicMesh.motionType in [MotionType.NONE, MotionType.MOVING_CELL_ZONE]:
             self._data = None
         else:
             self._data = {
@@ -78,28 +84,37 @@ class PointDisplacement(BoundaryCondition):
 
     def _constructPointDisplacement(self, bcid: str):
 
-        boundaryEntry = next((be for be in self._dynamicMesh.movingBoundaries if be.boundary == bcid), None)
+        if self._dynamicMesh.motionType == MotionType.MOVING_BOUNDARY:
+            boundaryEntry = next((be for be in self._dynamicMesh.movingBoundaries if be.boundary == bcid), None)
 
-        if boundaryEntry is None:
-            return self._constructFixedValue(Vector.zero().toFloatList())
+            if boundaryEntry is None:
+                return self._constructFixedValue(Vector.zero().toFloatList())
 
-        if boundaryEntry.pointMotionType == PointMotionType.FIXED:
-            return self._constructFixedValue(Vector.zero().toFloatList())
+            if boundaryEntry.pointMotionType == PointMotionType.FIXED:
+                return self._constructFixedValue(Vector.zero().toFloatList())
 
-        elif boundaryEntry.pointMotionType == PointMotionType.SLIP:
-            return {'type': 'slip'}
+            elif boundaryEntry.pointMotionType == PointMotionType.SLIP:
+                return {'type': 'slip'}
 
-        elif boundaryEntry.pointMotionType == PointMotionType.NORMAL:
-            return {
-                        'type': 'fixedNormalSlip',
-                        'n': boundaryEntry.normal.toFloatList()
-                    }
+            elif boundaryEntry.pointMotionType == PointMotionType.NORMAL:
+                return {
+                            'type': 'fixedNormalSlip',
+                            'n': boundaryEntry.normal.toFloatList()
+                        }
 
-        elif boundaryEntry.pointMotionType == PointMotionType.PRESCRIBED_MOTION:
-            return self._constructPrescribedMotion(boundaryEntry)
+            elif boundaryEntry.pointMotionType == PointMotionType.PRESCRIBED_MOTION:
+                return self._constructPrescribedMotion(boundaryEntry)
 
-        elif boundaryEntry.pointMotionType == PointMotionType.RIGID_BODY_MOTION:
-            return self._constructRigidBodyMotion(boundaryEntry)
+            elif boundaryEntry.pointMotionType == PointMotionType.RIGID_BODY_MOTION:
+                return self._constructRigidBodyMotion(boundaryEntry)
+
+        elif self._dynamicMesh.motionType == MotionType.RIGID_BODY_DYNAMICS:
+            if bcid in self._rigidBodyDynamicsBoundary:
+                return {
+                    'type': 'calculated'
+                }
+            else:
+                return self._constructFixedValue(Vector.zero().toFloatList())
 
     def _constructPrescribedMotion(self, be: MovingBoundaryEntry):
         multiMotionCoeffs = {}
