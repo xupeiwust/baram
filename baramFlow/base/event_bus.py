@@ -2,11 +2,13 @@
 # -*- coding: utf-8 -*-
 
 
+from enum import Enum
 from threading import Lock
 from typing import TypedDict
 
-from baramFlow.coredb.boundary_db import BoundaryType
+# from baramFlow.coredb.boundary_db import BoundaryType # Enum type instead of BoundaryType is used to avoid circular import
 from libbaram.async_signal import AsyncSignal
+from libbaram.sync_signal import SyncSignal
 
 
 _mutex = Lock()
@@ -35,4 +37,8 @@ class EventBus:
         self.onMeshLoading = AsyncSignal(dict[str, RegionComponents], dict[str, RegionComponents])
         self.onProjectOpen = AsyncSignal()
         self.onProjectClose = AsyncSignal()
-        self.onBoundaryTypeChange = AsyncSignal(str, BoundaryType, BoundaryType)  # bcid, oldType, newType
+        # self.onBoundaryTypeChange = AsyncSignal(str, BoundaryType, BoundaryType)  # bcid, oldType, newType
+        self.onBoundaryTypeChange = AsyncSignal(str, Enum, Enum)  # Enum type is used to avoid circular import
+
+        self.onSaving = SyncSignal()
+        self.onConfigChanged = SyncSignal()

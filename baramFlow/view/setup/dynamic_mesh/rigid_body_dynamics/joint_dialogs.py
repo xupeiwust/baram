@@ -6,6 +6,7 @@ import qasync
 from PySide6.QtWidgets import QDialog
 
 from baramFlow.base.dynamic_mesh.rigid_body_dynamics import Joint, JointType
+from baramFlow.base.event_bus import EventBus
 from widgets.async_message_box import AsyncMessageBox
 
 from .prismatic_joint_dialog_ui import Ui_PrismaticJointDialog
@@ -33,6 +34,9 @@ class PrismaticJointDialog(QDialog):
             return
 
         self._joint.direction = direction
+
+        EventBus().onConfigChanged.emit()
+
         self.accept()
 
 
@@ -57,6 +61,9 @@ class RevoluteJointDialog(QDialog):
             return
 
         self._joint.axis = axis
+
+        EventBus().onConfigChanged.emit()
+
         self.accept()
 
 

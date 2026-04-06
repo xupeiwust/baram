@@ -14,6 +14,7 @@ from xmlschema.names import XSD_DOUBLE, XSD_MIN_INCLUSIVE, XSD_MAX_INCLUSIVE, XS
 
 # To use ".qrc" QT Resource files
 # noinspection PyUnresolvedReferences
+from baramFlow.base.event_bus import EventBus
 import resource_rc
 
 from resources import resource
@@ -93,6 +94,8 @@ class _CoreDB(object):
         self._xmlParser = etree.XMLParser(schema=self._xmlSchema)
 
         self._xmlTree = None
+
+        EventBus().onConfigChanged.connect(self.increaseConfigCount, self)
 
     def __enter__(self):
         logger.debug('enter')

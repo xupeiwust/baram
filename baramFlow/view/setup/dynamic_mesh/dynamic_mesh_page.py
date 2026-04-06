@@ -57,6 +57,8 @@ class DynamicMeshPage(ContentPage):
         self._ui.rbdSolverCombo.addItem('Crank-Nicolson', RigidBodyDynamicsSolverType.CRANK_NICOLSON)
         self._ui.rbdSolverCombo.addItem('Symplectic', RigidBodyDynamicsSolverType.SYMPLECTIC)
 
+        self._dialog = None
+
         self._connectSignalsSlots()
 
         self._updatePage()
@@ -143,13 +145,14 @@ class DynamicMeshPage(ContentPage):
             self._ui.stack.setCurrentWidget(self._ui.rigidBodyDynamicsPage)
             self._updateRigidBodyDynamics()
 
-    @qasync.asyncSlot()
-    async def _changeMotionType(self):
-        dialog = MotionTypeDialog(self, self._dynamicMesh.motionType)
-        if not dialog.exec():
-            return
+    def _changeMotionType(self):
+        self._dialog = MotionTypeDialog(self, self._dynamicMesh.motionType)
+        self._dialog.accepted.connect(self._motionTypeChanged)
+        self._dialog.open()
 
-        newType = dialog.selectedType
+    @qasync.asyncSlot()
+    async def _motionTypeChanged(self):
+        newType = self._dialog.selectedType
         if newType == self._dynamicMesh.motionType:
             return
 
@@ -177,10 +180,13 @@ class DynamicMeshPage(ContentPage):
         while f'Motion-{n}' in existingNames:
             n += 1
         md = MotionDefinition(name=f'Motion-{n}', order=order)
-        dialog = MotionDefinitionDialog(self, md, existingNames)
-        if dialog.exec():
-            self._dynamicMesh.motionDefinitions.append(md)
-            self._addMdItem(md)
+        self._dialog = MotionDefinitionDialog(self, md, existingNames)
+        self._dialog.accepted.connect(lambda: self._motionDefinitionAdded(md))
+        self._dialog.open()
+
+    def _motionDefinitionAdded(self, md):
+        self._dynamicMesh.motionDefinitions.append(md)
+        self._addMdItem(md)
 
     def _addMdItem(self, md: MotionDefinition):
         widget = QWidget()
@@ -224,9 +230,9 @@ class DynamicMeshPage(ContentPage):
             return
         md = self._dynamicMesh.motionDefinitions[row]
         existingNames = {m.name for m in self._dynamicMesh.motionDefinitions if m is not md}
-        dialog = MotionDefinitionDialog(self, md, existingNames)
-        if dialog.exec():
-            self._updateMotionDefinitions()
+        self._dialog = MotionDefinitionDialog(self, md, existingNames)
+        self._dialog.accepted.connect(self._updateMotionDefinitions)
+        self._dialog.open()
 
     def _removeMd(self):
         row = self._ui.mdList.currentRow()
@@ -269,9 +275,9 @@ class DynamicMeshPage(ContentPage):
             return
         uuid = item.data(Qt.ItemDataRole.UserRole)
         entry = next(mb for mb in self._dynamicMesh.movingBoundaries if mb.uuid == uuid)
-        dialog = PointMotionDialog(self, entry)
-        if dialog.exec():
-            self._updateMovingBoundaries()
+        self._dialog = PointMotionDialog(self, entry)
+        self._dialog.accepted.connect(self._updateMovingBoundaries)
+        self._dialog.open()
 
     # ── Rigid Body Dynamics ──
 
@@ -334,10 +340,13 @@ class DynamicMeshPage(ContentPage):
         while f'Body-{n}' in existingNames:
             n += 1
         body = Body(uuid=uuid4(), name=f'Body-{n}', parent=UUID(int=0))
-        dialog = BodyDialog(self, body, existingBodies)
-        if dialog.exec():
-            self._dynamicMesh.rigidBodyDynamics.bodies.append(body)
-            self._addBodyItem(body)
+        self._dialog = BodyDialog(self, body, existingBodies)
+        self._dialog.accepted.connect(lambda: self._bodyAdded(body))
+        self._dialog.open()
+
+    def _bodyAdded(self, body):
+        self._dynamicMesh.rigidBodyDynamics.bodies.append(body)
+        self._addBodyItem(body)
 
     def _editBody(self):
         row = self._ui.bodyList.currentRow()
@@ -345,9 +354,9 @@ class DynamicMeshPage(ContentPage):
             return
         body = self._dynamicMesh.rigidBodyDynamics.bodies[row]
         existingBodies = [(b.uuid, b.name) for b in self._dynamicMesh.rigidBodyDynamics.bodies]
-        dialog = BodyDialog(self, body, existingBodies)
-        if dialog.exec():
-            self._updateRigidBodyDynamics()
+        self._dialog = BodyDialog(self, body, existingBodies)
+        self._dialog.accepted.connect(self._updateRigidBodyDynamics)
+        self._dialog.open()
 
     @qasync.asyncSlot()
     async def _removeBody(self):

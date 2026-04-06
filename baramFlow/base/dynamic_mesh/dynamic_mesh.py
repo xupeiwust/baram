@@ -52,7 +52,7 @@ class DynamicMesh:
                            movingBoundaries=movingBoundaries,
                            rigidBodyDynamics=rigidBodyDynamics)
 
-    def toElement(self):
+    def toElement(self, tag):
         movingCellZoneElement = E('movingCellZone')
         for md in self.motionDefinitions:
             movingCellZoneElement.append(md.toElement())
@@ -61,7 +61,7 @@ class DynamicMesh:
         for mb in self.movingBoundaries:
             movingBoundaryElement.append(mb.toElement())
 
-        return E('dynamicMesh',
+        return E(tag,
                  E('motionType', self.motionType.value),
                  movingCellZoneElement,
                  movingBoundaryElement,

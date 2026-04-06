@@ -6,7 +6,7 @@ import qasync
 from PySide6.QtWidgets import QDialog
 
 from baramFlow.base.dynamic_mesh.restraint import Restraint, RestraintType
-from libbaram.pfloat import PFloat
+from baramFlow.base.event_bus import EventBus
 from widgets.async_message_box import AsyncMessageBox
 
 from .simple_damper_dialog_ui import Ui_SimpleDamperDialog
@@ -35,6 +35,9 @@ class SimpleDamperDialog(QDialog):
             return
 
         self._restraint.dampingConstant = dampingConstant
+
+        EventBus().onConfigChanged.emit()
+
         self.accept()
 
 
@@ -71,6 +74,9 @@ class TranslationalSpringDialog(QDialog):
         self._restraint.restLength = restLength
         self._restraint.springConstant = springConstant
         self._restraint.dampingConstant = dampingConstant
+
+        EventBus().onConfigChanged.emit()
+
         self.accept()
 
 
@@ -101,6 +107,9 @@ class RotationalSpringDialog(QDialog):
         self._restraint.axis = axis
         self._restraint.springConstant = springConstant
         self._restraint.dampingConstant = dampingConstant
+
+        EventBus().onConfigChanged.emit()
+
         self.accept()
 
 

@@ -45,6 +45,8 @@ class DynamicMeshService:
         EventBus().onProjectClose.asyncConnect(self._handleProjectClose)
         EventBus().onBoundaryTypeChange.asyncConnect(self._handleBoundaryTypeChange)
 
+        EventBus().onSaving.connect(self._handleSave)
+
         self._dynamicMesh = DynamicMesh()
 
     def getDynamicMesh(self):
@@ -80,6 +82,9 @@ class DynamicMeshService:
                 self._dynamicMesh.movingBoundaries = movingBoundaries
 
         # End
+
+    def saveToCoreDB(self):
+        coredb.CoreDB().replaceElement(DYNAMIC_MESH_PATH, self._dynamicMesh.toElement('dynamicMesh'))
 
     async def _handleProjectOpen(self):
         await self.load()
@@ -133,6 +138,9 @@ class DynamicMeshService:
 
         if newType in _CONSTRAINT_BOUNDARY_TYPE_MAP:
             boundaryEntry.pointMotionType = _CONSTRAINT_BOUNDARY_TYPE_MAP[newType]
+
+    def _handleSave(self):
+        self.saveToCoreDB()
 
 
 # Auto-instantiate the singleton so that event bus connections are established at import time

@@ -164,9 +164,11 @@ class _Project(QObject):
         self._projectSettings.setProcess(process)
 
     def save(self):
+        EventBus().onSaving.emit()
         self._fileDB.save()
 
     async def saveAs(self, directory):
+        EventBus().onSaving.emit()
         self._fileDB.saveAs(directory)
         await self._close()
         await self._open(directory, ProjectOpenType.SAVE_AS)

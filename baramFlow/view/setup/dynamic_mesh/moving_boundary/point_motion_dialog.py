@@ -12,6 +12,7 @@ from baramFlow.base.dynamic_mesh.motion_function import MotionFunction, MotionFu
 from baramFlow.base.dynamic_mesh.moving_boundary import (
     MovingBoundaryEntry, PointMotionType, RigidBodyMotion,
 )
+from baramFlow.base.event_bus import EventBus
 from baramFlow.view.setup.dynamic_mesh.motion_functions.motion_function_widget import MotionFunctionWidget, FUNCTION_TYPE_NAMES
 from baramFlow.view.setup.dynamic_mesh.motion_functions.motion_function_dialogs import MOTION_FUNCTION_DIALOGS
 from widgets.async_message_box import AsyncMessageBox
@@ -119,10 +120,13 @@ class PointMotionDialog(QDialog):
             self._ui.stack.setCurrentWidget(self._ui.emptyPage)
 
     def _changeType(self):
-        dialog = PointMotionTypeDialog(self, self._pointMotionType)
-        if dialog.exec():
-            self._pointMotionType = dialog.selectedType
-            self._updatePage()
+        self._dialog = PointMotionTypeDialog(self, self._pointMotionType)
+        self._dialog.accepted.connect(self._typeChanged)
+        self._dialog.open()
+
+    def _typeChanged(self):
+        self._pointMotionType = self._dialog.selectedType
+        self._updatePage()
 
     def _loadMotionFunctions(self):
         self._ui.mfList.clear()
@@ -136,14 +140,17 @@ class PointMotionDialog(QDialog):
     def _addMotionFunction(self, functionType: MotionFunctionType):
         mf = MotionFunction(uuid=uuid4(), order=len(self._motionFunctions) + 1,
                             functionType=functionType)
-        dialog = MOTION_FUNCTION_DIALOGS[functionType](self, mf)
-        if dialog.exec():
-            self._motionFunctions.append(mf)
-            widget = MotionFunctionWidget(mf)
-            item = QListWidgetItem()
-            item.setSizeHint(widget.size())
-            self._ui.mfList.addItem(item)
-            self._ui.mfList.setItemWidget(item, widget)
+        self._dialog = MOTION_FUNCTION_DIALOGS[functionType](self, mf)
+        self._dialog.accepted.connect(lambda: self._motionFunctionAdded(mf))
+        self._dialog.open()
+
+    def _motionFunctionAdded(self, mf):
+        self._motionFunctions.append(mf)
+        widget = MotionFunctionWidget(mf)
+        item = QListWidgetItem()
+        item.setSizeHint(widget.size())
+        self._ui.mfList.addItem(item)
+        self._ui.mfList.setItemWidget(item, widget)
 
     def _showMfContextMenu(self, pos):
         row = self._ui.mfList.currentRow()
@@ -171,11 +178,14 @@ class PointMotionDialog(QDialog):
         mf = self._motionFunctions[row]
         dialogClass = MOTION_FUNCTION_DIALOGS.get(mf.functionType)
         if dialogClass:
-            dialog = dialogClass(self, mf)
-            if dialog.exec():
-                widget = self._ui.mfList.itemWidget(self._ui.mfList.item(row))
-                if isinstance(widget, MotionFunctionWidget):
-                    widget.load()
+            self._dialog = dialogClass(self, mf)
+            self._dialog.accepted.connect(lambda: self._mfEdited(row))
+            self._dialog.open()
+
+    def _mfEdited(self, row):
+        widget = self._ui.mfList.itemWidget(self._ui.mfList.item(row))
+        if isinstance(widget, MotionFunctionWidget):
+            widget.load()
 
     def _removeMf(self):
         row = self._ui.mfList.currentRow()
@@ -185,8 +195,8 @@ class PointMotionDialog(QDialog):
 
     def _editRigidBodyMotion(self):
         from baramFlow.view.setup.dynamic_mesh.moving_boundary.rigid_body_motion_dialog import RigidBodyMotionDialog
-        dialog = RigidBodyMotionDialog(self, self._rigidBodyMotion)
-        dialog.exec()
+        self._dialog = RigidBodyMotionDialog(self, self._rigidBodyMotion)
+        self._dialog.open()
 
     @qasync.asyncSlot()
     async def _accept(self):
@@ -208,5 +218,7 @@ class PointMotionDialog(QDialog):
         self._entry.normal = normal
         self._entry.motionFunctions = self._motionFunctions
         self._entry.rigidBodyMotion = self._rigidBodyMotion
+
+        EventBus().onConfigChanged.emit()
 
         self.accept()

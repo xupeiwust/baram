@@ -224,10 +224,13 @@ class RigidBodyMotionDialog(QDialog):
         )
         dialogClass = RESTRAINT_DIALOGS.get(restraintType)
         if dialogClass:
-            dialog = dialogClass(self, restraint)
-            if dialog.exec():
-                self._restraints.append(restraint)
-                self._addRestraintItem(restraint)
+            self._dialog = dialogClass(self, restraint)
+            self._dialog.accepted.connect(lambda: self._restraintAdded(restraint))
+            self._dialog.open()
+
+    def _restraintAdded(self, restraint):
+        self._restraints.append(restraint)
+        self._addRestraintItem(restraint)
 
     def _showRestraintContextMenu(self, pos):
         row = self._restraintList.currentRow()
@@ -256,11 +259,14 @@ class RigidBodyMotionDialog(QDialog):
         restraint = self._restraints[row]
         dialogClass = RESTRAINT_DIALOGS.get(restraint.restraintType)
         if dialogClass:
-            dialog = dialogClass(self, restraint)
-            if dialog.exec():
-                widget = self._restraintList.itemWidget(self._restraintList.item(row))
-                if isinstance(widget, RestraintWidget):
-                    widget.load()
+            self._dialog = dialogClass(self, restraint)
+            self._dialog.accepted.connect(lambda: self._restraintEdited(row))
+            self._dialog.open()
+
+    def _restraintEdited(self, row):
+        widget = self._restraintList.itemWidget(self._restraintList.item(row))
+        if isinstance(widget, RestraintWidget):
+            widget.load()
 
     def _removeRestraint(self):
         row = self._restraintList.currentRow()

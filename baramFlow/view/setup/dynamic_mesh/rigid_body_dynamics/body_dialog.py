@@ -11,6 +11,7 @@ from PySide6.QtWidgets import QDialog, QMenu, QListWidgetItem
 
 from baramFlow.base.dynamic_mesh.restraint import Restraint, RestraintType
 from baramFlow.base.dynamic_mesh.rigid_body_dynamics import Body, Joint, JointType
+from baramFlow.base.event_bus import EventBus
 from baramFlow.coredb.boundary_db import BoundaryDB
 from baramFlow.view.setup.dynamic_mesh.restraints.restraint_dialogs import RESTRAINT_DIALOGS
 from baramFlow.view.setup.dynamic_mesh.restraints.restraint_widget import RESTRAINT_TYPE_NAMES, RestraintWidget
@@ -133,10 +134,14 @@ class BodyDialog(QDialog):
         joint = Joint(jointType=jointType)
         dialogClass = JOINT_DIALOGS.get(jointType)
         if dialogClass:
-            dialog = dialogClass(self, joint)
-            if not dialog.exec():
-                return
-        # Spherical has no dialog, just add directly
+            self._dialog = dialogClass(self, joint)
+            self._dialog.accepted.connect(lambda: self._jointAdded(joint))
+            self._dialog.open()
+        else:
+            # Spherical has no dialog, just add directly
+            self._jointAdded(joint)
+
+    def _jointAdded(self, joint):
         self._joints.append(joint)
         self._addJointItem(joint)
 
@@ -174,11 +179,14 @@ class BodyDialog(QDialog):
         joint = self._joints[row]
         dialogClass = JOINT_DIALOGS.get(joint.jointType)
         if dialogClass:
-            dialog = dialogClass(self, joint)
-            if dialog.exec():
-                widget = self._ui.jointList.itemWidget(self._ui.jointList.item(row))
-                if isinstance(widget, JointWidget):
-                    widget.load()
+            self._dialog = dialogClass(self, joint)
+            self._dialog.accepted.connect(lambda: self._jointEdited(row))
+            self._dialog.open()
+
+    def _jointEdited(self, row):
+        widget = self._ui.jointList.itemWidget(self._ui.jointList.item(row))
+        if isinstance(widget, JointWidget):
+            widget.load()
 
     def _removeJoint(self):
         row = self._ui.jointList.currentRow()
@@ -196,9 +204,13 @@ class BodyDialog(QDialog):
         restraint = Restraint(uuid=uuid4(), order=order, restraintType=restraintType)
         dialogClass = RESTRAINT_DIALOGS.get(restraintType)
         if dialogClass:
-            dialog = dialogClass(self, restraint)
-            if not dialog.exec():
-                return
+            self._dialog = dialogClass(self, restraint)
+            self._dialog.accepted.connect(lambda: self._rbdRestraintAdded(restraint))
+            self._dialog.open()
+        else:
+            self._rbdRestraintAdded(restraint)
+
+    def _rbdRestraintAdded(self, restraint):
         self._restraints.append(restraint)
         self._addRbdRestraintItem(restraint)
 
@@ -237,11 +249,14 @@ class BodyDialog(QDialog):
         restraint = self._restraints[row]
         dialogClass = RESTRAINT_DIALOGS.get(restraint.restraintType)
         if dialogClass:
-            dialog = dialogClass(self, restraint)
-            if dialog.exec():
-                widget = self._ui.rbdRestraintList.itemWidget(self._ui.rbdRestraintList.item(row))
-                if isinstance(widget, RestraintWidget):
-                    widget.load()
+            self._dialog = dialogClass(self, restraint)
+            self._dialog.accepted.connect(lambda: self._rbdRestraintEdited(row))
+            self._dialog.open()
+
+    def _rbdRestraintEdited(self, row):
+        widget = self._ui.rbdRestraintList.itemWidget(self._ui.rbdRestraintList.item(row))
+        if isinstance(widget, RestraintWidget):
+            widget.load()
 
     def _removeRbdRestraint(self):
         row = self._ui.rbdRestraintList.currentRow()
@@ -305,5 +320,7 @@ class BodyDialog(QDialog):
         self._body.restraints = self._restraints
         self._body.deformationOffset = deformationOffset
         self._body.deformationDistance = deformationDistance
+
+        EventBus().onConfigChanged.emit()
 
         self.accept()

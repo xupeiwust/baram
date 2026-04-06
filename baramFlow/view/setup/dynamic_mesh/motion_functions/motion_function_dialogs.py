@@ -6,7 +6,7 @@ import qasync
 from PySide6.QtWidgets import QDialog
 
 from baramFlow.base.dynamic_mesh.motion_function import MotionFunctionType, MotionFunction
-from libbaram.pfloat import PFloat
+from baramFlow.base.event_bus import EventBus
 from widgets.async_message_box import AsyncMessageBox
 
 from .rotation_dialog_ui import Ui_RotationDialog
@@ -44,6 +44,8 @@ class RotationDialog(QDialog):
         self._mf.axis = axis
         self._mf.rpm = rpm
 
+        EventBus().onConfigChanged.emit()
+
         self.accept()
 
 
@@ -75,6 +77,8 @@ class RotatingOscillationDialog(QDialog):
         self._mf.angularAmplitude = angularAmplitude
         self._mf.rpm = omega
 
+        EventBus().onConfigChanged.emit()
+
         self.accept()
 
 
@@ -99,6 +103,8 @@ class LinearTranslationDialog(QDialog):
             return
 
         self._mf.velocity = velocity
+
+        EventBus().onConfigChanged.emit()
 
         self.accept()
 
@@ -128,6 +134,8 @@ class LinearOscillationDialog(QDialog):
         self._mf.linearAmplitude = linearAmplitude
         self._mf.frequency = frequency
 
+        EventBus().onConfigChanged.emit()
+
         self.accept()
 
 
@@ -152,6 +160,8 @@ class ManualPositionDialog(QDialog):
             return
 
         self._mf.origin = origin
+
+        EventBus().onConfigChanged.emit()
 
         self.accept()
 

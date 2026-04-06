@@ -6,11 +6,10 @@ from uuid import uuid4
 
 import qasync
 
-from PySide6.QtCore import QRegularExpression
-from PySide6.QtGui import QRegularExpressionValidator
 from PySide6.QtWidgets import QDialog, QListWidgetItem, QMenu
 
 from baramFlow.base.dynamic_mesh.motion_function import MotionFunction, MotionFunctionType
+from baramFlow.base.event_bus import EventBus
 from baramFlow.coredb.cell_zone_db import CellZoneDB
 from baramFlow.view.setup.dynamic_mesh.motion_functions.motion_function_widget import MotionFunctionWidget, FUNCTION_TYPE_NAMES
 from baramFlow.view.setup.dynamic_mesh.motion_functions.motion_function_dialogs import MOTION_FUNCTION_DIALOGS
@@ -72,14 +71,17 @@ class MotionDefinitionDialog(QDialog):
     def _addMotionFunction(self, functionType: MotionFunctionType):
         mf = MotionFunction(uuid=uuid4(), order=len(self._motionFunctions) + 1,
                             functionType=functionType)
-        dialog = MOTION_FUNCTION_DIALOGS[functionType](self, mf)
-        if dialog.exec():
-            self._motionFunctions.append(mf)
-            widget = MotionFunctionWidget(mf)
-            item = QListWidgetItem()
-            item.setSizeHint(widget.size())
-            self._ui.mfList.addItem(item)
-            self._ui.mfList.setItemWidget(item, widget)
+        self._dialog = MOTION_FUNCTION_DIALOGS[functionType](self, mf)
+        self._dialog.accepted.connect(lambda: self._motionFunctionAdded(mf))
+        self._dialog.open()
+
+    def _motionFunctionAdded(self, mf):
+        self._motionFunctions.append(mf)
+        widget = MotionFunctionWidget(mf)
+        item = QListWidgetItem()
+        item.setSizeHint(widget.size())
+        self._ui.mfList.addItem(item)
+        self._ui.mfList.setItemWidget(item, widget)
 
     def _showContextMenu(self, pos):
         row = self._ui.mfList.currentRow()
@@ -110,11 +112,14 @@ class MotionDefinitionDialog(QDialog):
         mf = self._motionFunctions[row]
         dialogClass = MOTION_FUNCTION_DIALOGS.get(mf.functionType)
         if dialogClass:
-            dialog = dialogClass(self, mf)
-            if dialog.exec():
-                widget = self._ui.mfList.itemWidget(self._ui.mfList.item(row))
-                if isinstance(widget, MotionFunctionWidget):
-                    widget.load()
+            self._dialog = dialogClass(self, mf)
+            self._dialog.accepted.connect(lambda: self._motionFunctionEdited(row))
+            self._dialog.open()
+
+    def _motionFunctionEdited(self, row):
+        widget = self._ui.mfList.itemWidget(self._ui.mfList.item(row))
+        if isinstance(widget, MotionFunctionWidget):
+            widget.load()
 
     def _removeCurrentMotionFunction(self):
         row = self._ui.mfList.currentRow()
@@ -153,5 +158,7 @@ class MotionDefinitionDialog(QDialog):
 
         self._motionDefinition.name = name
         self._motionDefinition.motionFunctions = self._motionFunctions
+
+        EventBus().onConfigChanged.emit()
 
         self.accept()

@@ -2,8 +2,10 @@
 # -*- coding: utf-8 -*-
 
 from PySide6.QtWidgets import QDialog, QButtonGroup
+import qasync
 
 from baramFlow.base.dynamic_mesh.dynamic_mesh import MotionType
+from baramFlow.base.event_bus import EventBus
 
 from .motion_type_dialog_ui import Ui_MotionTypeDialog
 
@@ -30,7 +32,7 @@ class MotionTypeDialog(QDialog):
 
         self._radioMap[currentType].setChecked(True)
 
-        self._ui.buttonBox.accepted.connect(self.accept)
+        self._ui.buttonBox.accepted.connect(self._accept)
         self._ui.buttonBox.rejected.connect(self.reject)
 
     @property
@@ -39,3 +41,9 @@ class MotionTypeDialog(QDialog):
             if radio.isChecked():
                 return motionType
         return MotionType.NONE
+
+    @qasync.asyncSlot()
+    async def _accept(self):
+        EventBus().onConfigChanged.emit()
+
+        self.accept()
