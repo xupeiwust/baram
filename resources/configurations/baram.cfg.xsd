@@ -2375,7 +2375,7 @@
     <xs:element name="motionFunctions">
         <xs:complexType>
             <xs:sequence>
-                <xs:element name="motionFunction" minOccurs="1" maxOccurs="unbounded">
+                <xs:element name="motionFunction" minOccurs="0" maxOccurs="unbounded">
                     <xs:complexType>
                         <xs:sequence>
                             <xs:element name="uuid" type="uuidType"/>
@@ -2393,7 +2393,7 @@
                             </xs:element>
                             <xs:element name="origin" type="vector"/>
                             <xs:element name="axis" type="vector"/>
-                            <xs:element name="omega" type="inputNumberType"/>
+                            <xs:element name="rpm" type="inputNumberType"/>
                             <xs:element name="velocity" type="vector"/>
                             <xs:element name="angularAmplitude" type="vector"/>
                             <xs:element name="linearAmplitude" type="vector"/>
