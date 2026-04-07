@@ -126,7 +126,7 @@ class LinearOscillationDialog(QDialog):
     async def _accept(self):
         try:
             linearAmplitude = self._ui.amplitude.vector('Amplitude')
-            frequency = self._ui.frequency.pFloat(self.tr('Frequency'), low=0, lowInclusive=True)
+            frequency = self._ui.frequency.pFloat(self.tr('Frequency'), low=0, lowInclusive=False)
         except ValueError as e:
             await AsyncMessageBox().warning(self, self.tr('Warning'), str(e))
             return

@@ -1409,9 +1409,8 @@ def _version_12(root: etree.Element, path):
                     ),
                     E('accelerationRelaxationFactor', '0.7'),
                     E('accelerationDampingFactor', '1.0'),
-                    E('bodies'),
-                    E('rigidBodyRestraints')
-                )
+                    E('bodies')
+                 )
             )
         index = root.index(root.find('regions', namespaces=_nsmap))
         root.insert(index + 1, p)

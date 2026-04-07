@@ -99,28 +99,32 @@ class DynamicMeshDict(DictionaryFile):
         return self
 
     def _buildMovingCellZone(self):
-        self._data = {
-            'dynamicFvMesh': 'dynamicMotionSolverListFvMesh',
-            'motionSolverLibs': ['fvMotionSolvers'],
-            'solvers': {}
-        }
+        solvers = {}
 
         for motionDefinition in self._dynamicMesh.motionDefinitions:
+            multiMotionCoeffs = {}
+
+            for mFunction in motionDefinition.motionFunctions:
+                multiMotionCoeffs[uuidToNnstr(mFunction.uuid)] = getMotionFunctionDict(mFunction)
+
             mdData = {
                 'motionSolver': 'solidBody',
                 'solidBodyCoeffs': {
                     'solidBodyMotionFunction': 'multiMotion',
-                    'multiMotionCoeffs': {}
+                    'multiMotionCoeffs': multiMotionCoeffs
                 }
             }
+
             if motionDefinition.cellZones:
                 mdData['cellZone'] = '(' + '|'.join(motionDefinition.cellZones) + ')'
 
-            for mFunction in motionDefinition.motionFunctions:
-                data = getMotionFunctionDict(mFunction)
-                mdData['multiMotionCoeffs'][uuidToNnstr(mFunction.uuid)] = data
+            solvers[uuidToNnstr(motionDefinition.uuid)] = mdData
 
-            self._data['solvers'][uuidToNnstr(motionDefinition.uuid)]
+        self._data = {
+            'dynamicFvMesh': 'dynamicMotionSolverListFvMesh',
+            'motionSolverLibs': ['fvMotionSolvers'],
+            'solvers': solvers
+        }
 
     def _buildMovingBoundary(self):
         movingBoundaries = [BoundaryDB.getBoundaryName(mb.boundary) for mb in self._dynamicMesh.movingBoundaries
@@ -141,7 +145,7 @@ class DynamicMeshDict(DictionaryFile):
 
         if rbd.solver.solverType == RigidBodyDynamicsSolverType.NEWMARK:
             solver = {
-                'type': 'Newmakr',
+                'type': 'Newmark',
                 'gamma': float(rbd.solver.velocityIntegrationCoefficient),
                 'beta': float(rbd.solver.positionIntegrationCoefficient)
             }
@@ -161,7 +165,7 @@ class DynamicMeshDict(DictionaryFile):
         bodies = {}
         for body in rbd.bodies:
             bDict = {
-                'type': 'ridigBody',
+                'type': 'rigidBody',
                 'parent': 'root' if body.parent == UUID(int=0) else uuidToNnstr(body.parent),
                 'mass': float(body.mass),
                 'centreOfMass': body.centerOfMass.toFloatList(),

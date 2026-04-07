@@ -21,7 +21,7 @@ class PointDisplacement(BoundaryCondition):
     DIMENSIONS = '[0 1 0 0 0 0 0]'
 
     def __init__(self, region: Region, time, processorNo):
-        super().__init__(region, time, processorNo, 'pointDisplacement', DataClass.CLASS_VOL_VECTOR_FIELD)
+        super().__init__(region, time, processorNo, 'pointDisplacement', DataClass.CLASS_POINT_VECTOR_FIELD)
 
         self._initialValue = Vector.zero()
 

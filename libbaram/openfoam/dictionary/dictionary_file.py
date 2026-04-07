@@ -24,6 +24,7 @@ class DataClass(Enum):
     CLASS_VOL_SCALAR_FIELD = 'volScalarField'
     CLASS_VOL_VECTOR_FIELD = 'volVectorField'
     CLASS_VECTOR_FIELD = 'vectorField'
+    CLASS_POINT_VECTOR_FIELD = 'pointVectorField'
 
 
 class DictionaryFile:
