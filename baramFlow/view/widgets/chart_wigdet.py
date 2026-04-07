@@ -177,7 +177,7 @@ class ChartWidget(QWidget):
         right = maxX + margin
 
         d = data[(data.index >= minX) & (data.index <= maxX)]
-        minY = d.min().min()
+        minY = d[d>0].min().min()
         maxY = d.max().max()
 
         if self._logScale:
