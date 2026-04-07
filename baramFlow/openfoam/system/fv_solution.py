@@ -102,6 +102,16 @@ class FvSolution(DictionaryFile):
                     'minIter': 1,
                     'maxIter': 10,
                 },
+                'cellDisplacement': {
+                    'solver': 'GAMG',
+                    'tolerance': '1e-5',
+                    'relTol': '0',
+                    'smoother': 'GaussSeidel',
+                    'cacheAgglomeration': 'true',
+                    'nCellsInCoarsestLevel': '10',
+                    'agglomerator': 'faceAreaPair',
+                    'mergeLevels': '1',
+                },
                 '"(p|pcorr)"': (p := self._constructSolversP()),
                 '"(p|pcorr)Final"': p,
                 'p_rgh': (p_rgh := {

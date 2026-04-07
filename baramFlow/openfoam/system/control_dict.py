@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from baramFlow.base.dynamic_mesh.dynamic_mesh import MotionType
+from baramFlow.base.dynamic_mesh.moving_boundary import PointMotionType
+from baramFlow.services.dynamic_mesh.dynamic_mesh_service import DynamicMeshService
 from libbaram.math import calucateDirectionsByRotation
 from libbaram.openfoam.dictionary.dictionary_file import DictionaryFile
 
@@ -230,10 +233,19 @@ class ControlDict(DictionaryFile):
         if ModelsDB.isMultiphaseModelOn():
             self._data['maxAlphaCo'] = self._db.getValue(xpath + '/VoFMaxCourantNumber')
 
+        libs = []
         if (BoundaryDB.getBoundaryConditionsByType(BoundaryType.ABL_INLET)
                 or any([isAtmosphericWall(bcid)
                         for bcid, _ in BoundaryDB.getBoundaryConditionsByType(BoundaryType.WALL)])):
-            self._data['libs'] = ['atmosphericModels']
+            libs.append('atmosphericModels')
+
+        dm = DynamicMeshService().getDynamicMesh()
+        if dm.motionType == MotionType.MOVING_BOUNDARY:
+            if any([mb.pointMotionType == PointMotionType.RIGID_BODY_MOTION  for mb in dm.movingBoundaries]):
+                libs.append('sixDoFRigidBodyMotion')
+
+        if len(libs) > 0:
+            self._data['libs'] = libs
 
         # calling order is important for these three function objects
         # scalar transport FO should be called first so that monitoring and residual can refer the scalar fields

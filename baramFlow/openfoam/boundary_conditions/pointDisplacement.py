@@ -133,7 +133,7 @@ class PointDisplacement(BoundaryCondition):
 
         if rbm.solver.solverType == RigidBodyDynamicsSolverType.NEWMARK:
             solver = {
-                'type': 'Newmakr',
+                'type': 'Newmark',
                 'gamma': float(rbm.solver.velocityIntegrationCoefficient),
                 'beta': float(rbm.solver.positionIntegrationCoefficient)
             }
@@ -224,5 +224,6 @@ class PointDisplacement(BoundaryCondition):
             'accelerationDamping': float(rbm.accelerationDampingFactor),
             'solver': solver,
             'constraints': constraints,
-            'restraints': restraints
+            'restraints': restraints,
+            'value': ('uniform', Vector.zero().toFloatList())
         }
