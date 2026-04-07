@@ -21,7 +21,7 @@ def setListHeight(widget):
 
 
 class BoundaryTypePicker(QWidget):
-    picked = Signal(int, BoundaryType)
+    picked = Signal(str, BoundaryType)
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -59,7 +59,7 @@ class BoundaryTypePicker(QWidget):
             self._ui.FAN:               BoundaryType.FAN,
         }
 
-        self.setWindowFlags(Qt.Popup)
+        self.setWindowFlags(Qt.WindowType.Popup)
 
         isCompressible = GeneralDB.isCompressible()
         isEnergyOn = ModelsDB.isEnergyModelOn()
@@ -88,7 +88,7 @@ class BoundaryTypePicker(QWidget):
 
         self._connectSignalsSlots()
 
-    def open(self, bcid, point):
+    def open(self, bcid: str, point):
         self._bcid = bcid
 
         screenHeight = app.window.windowHandle().screen().availableSize().height()

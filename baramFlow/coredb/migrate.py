@@ -1287,8 +1287,15 @@ def _version_12(root: etree.Element, path):
     logger.debug('  Upgrading to v13')
 
     # root.set('version', '13')
+    #
+    for b in root.findall(f'regions/region/boundaryConditions/boundaryCondition', namespaces=_nsmap):
+        if b.find('fan', namespaces=_nsmap) is None:
+            logger.debug(f'    Adding "fan" to  {b}')
+            b.insert(21,
+                     E('fan',
+                        E('reverseDirection', 'false')))
 
-    for p in root.findall(f'regions/region/boundaryConditions/boundaryCondition/wall', namespaces=_nsmap):
+        p = b.find('wall', namespaces=_nsmap)
         if p.find('heatTransfer', namespaces=_nsmap) is None:
             logger.debug(f'    Replacing "temperature" to "heatTransfer" in {p}')
             e = p.find('temperature', namespaces=_nsmap)
@@ -1296,7 +1303,7 @@ def _version_12(root: etree.Element, path):
             e.insert(3,
                      etree.fromstring(f'<temperatureDistributionName xmlns="{_ns}">00000000-0000-0000-0000-000000000000</temperatureDistributionName>'))
 
-    for p in root.findall(f'regions/region/boundaryConditions/boundaryCondition/velocityInlet/velocity', namespaces=_nsmap):
+        p = b.find('velocityInlet/velocity', namespaces=_nsmap)
         if p.find('coordinateSystem', namespaces=_nsmap) is None:
             logger.debug(f'    Adding "coordinateSystem" to {p}')
             child = etree.Element(f'{{{_ns}}}coordinateSystem')
@@ -1363,7 +1370,7 @@ def _version_12(root: etree.Element, path):
             ''')
             p.append(e)
 
-    for p in root.findall(f'regions/region/boundaryConditions/boundaryCondition/temperature', namespaces=_nsmap):
+        p = b.find('temperature', namespaces=_nsmap)
         old = p.find('spatialDistribution', namespaces=_nsmap)
         table = getFileData(path, old.text)
         if table is not None:

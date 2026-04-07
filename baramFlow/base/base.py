@@ -179,6 +179,10 @@ class SimpleSheetData:
     def __init__(self, data: list[list[float]]):
         self._data = data
 
+    @classmethod
+    def default(cls):
+        return cls([[0 for i in range(len(cls.columns))]])
+
     def data(self):
         return self._data
 

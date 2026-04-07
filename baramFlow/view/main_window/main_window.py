@@ -33,6 +33,7 @@ from widgets.progress_dialog import ProgressDialog
 from widgets.parallel.parallel_environment_dialog import ParallelEnvironmentDialog
 
 from baramFlow.app import app
+from baramFlow.base.cache_manager import CacheManager
 from baramFlow.base.monitor.monitor import MonitorManager
 from baramFlow.base.model.model import ModelManager
 from baramFlow.case_manager import CaseManager, LiveCase
@@ -654,6 +655,7 @@ class MainWindow(QMainWindow, expert_mode.IExpertModeObserver):
 
         progressDialog = ProgressDialog(self, self.tr('Case Loading'))
         progressDialog.open()
+        CacheManager.load()
 
         db = coredb.CoreDB()
         if db.hasMesh():

@@ -260,6 +260,9 @@
         <inertialCoefficient>5</inertialCoefficient>
         <porousMediaThickness>0.05</porousMediaThickness>
     </porousJump>
+    <fan>
+        <reverseDirection>false</reverseDirection>
+    </fan>
     <turbulence>
         <k-epsilon>
             <specification>intensityAndViscosityRatio</specification>

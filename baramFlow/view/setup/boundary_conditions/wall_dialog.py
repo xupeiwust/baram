@@ -1,16 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from uuid import uuid4
-
 import qasync
 from PySide6.QtWidgets import QWidget, QGridLayout, QLabel, QVBoxLayout
 
-from libbaram.natural_name_uuid import uuidToNnstr
 from widgets.async_message_box import AsyncMessageBox
 from widgets.enum_button_group import EnumButtonGroup
 
-from baramFlow.base.boundary.boundary import BoundaryManager
+from baramFlow.base.boundary.boundary_manager import BoundaryManager
 from baramFlow.base.model.DPM_model import DPMModelManager
 from baramFlow.coredb import coredb
 from baramFlow.coredb.coredb_writer import boolToDBText
@@ -20,7 +17,6 @@ from baramFlow.coredb.boundary_db import WallMotion, ShearCondition, MovingWallM
 from baramFlow.coredb.general_db import GeneralDB
 from baramFlow.coredb.material_db import MaterialDB
 from baramFlow.coredb.models_db import ModelsDB
-from baramFlow.coredb.project import Project
 from baramFlow.coredb.region_db import RegionDB
 from baramFlow.view.widgets.batchable_float_edit import BatchableFloatEdit
 from baramFlow.view.widgets.resizable_dialog import ResizableDialog
@@ -150,9 +146,9 @@ class WallDialog(ResizableDialog):
             if wallRoughnessEnabled:
                 self._ui.roughnessHeight.validate(self.tr('Wall Roughness Height'), low=0)
                 self._ui.roughnessConstant.validate(self.tr('Wall Roughness Constant'), low=0.5, high=1)
-
-            if ModelsDB.isEnergyModelOn():
-                self._heatTransferContent.validate()
+            #
+            # if ModelsDB.isEnergyModelOn():
+            #     self._heatTransferContent.validate()
 
             if self._ui.contactAngleGroup.isVisible():
                 if contactAngleModel == ContactAngleModel.CONSTANT:
@@ -206,20 +202,7 @@ class WallDialog(ResizableDialog):
                     db.setValue(xpath + '/velocity/wallRoughness/constant', self._ui.roughnessConstant.text())
 
                 if ModelsDB.isEnergyModelOn():
-                    heatTransferData = self._heatTransferContent.data()
-                    if heatTransferData.temperatureDistribution is not None:
-                        dfName = uuid4()
-                        Project.instance().fileDB().putDataFrame(uuidToNnstr(dfName),
-                                                                 heatTransferData.temperatureDistribution)
-                        db.setValue(xpath + '/heatTransfer/temperatureDistributionName', str(dfName))
-
-                    data, attributes = heatTransferData.toUpdateListForCoreDB(xpath + '/heatTransfer')
-                    for p, value in data:
-                        db.setValue(p, value)
-
-                    for p, name, value in attributes:
-                        db.setAttribute(p, name, value)
-
+                    BoundaryManager.updateWallHeatTransferInDB(db, self._bcid, self._heatTransferContent.data())
 
                 if self._ui.contactAngleGroup.isVisible():
                     contactAngleModel = self._ui.contactAngleModel.currentData()
@@ -247,11 +230,13 @@ class WallDialog(ResizableDialog):
                     db.setValue(xpath + '/radiation/radiativeFluxRelaxation', self._ui.radiativeFluxRelaxation.text())
 
                 if self._patchInteractionWidget is not None:
-                    BoundaryManager.updatePatchInteractionIn(db, self._bcid, self._patchInteractionWidget.updateData())
+                    BoundaryManager.updatePatchInteractionInDB(db, self._bcid, self._patchInteractionWidget.updateData())
 
                 self.accept()
-        except ValueException as ve:
-            await AsyncMessageBox().information(self, self.tr('Input Error'), dbErrorToMessage(ve))
+        except ValueException as e:
+            await AsyncMessageBox().information(self, self.tr('Input Error'), dbErrorToMessage(e))
+        except ValueError as e:
+            await AsyncMessageBox().information(self, self.tr('Input Error'), str(e))
 
     def _connectSignalsSlots(self):
         self._wallMotionRadios.selectionChanged.connect(self._wallMotionChanged)

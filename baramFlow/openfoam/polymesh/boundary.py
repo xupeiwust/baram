@@ -1,10 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from baramFlow.coredb.boundary_db import TYPE_MAP
 from libbaram.openfoam.dictionary.dictionary_file import DictionaryFile
 
-from baramFlow.coredb.boundary_db import BoundaryType, BoundaryDB, InterfaceMode, GeometricalType
+from baramFlow.coredb.boundary_db import BoundaryType, BoundaryDB, InterfaceMode, GeometricalType, TYPE_MAP
 from baramFlow.coredb.coredb_reader import CoreDBReader
 from baramFlow.openfoam.file_system import FileSystem
 from .polymesh_loader import PolyMeshLoader

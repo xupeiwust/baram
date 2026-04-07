@@ -3,7 +3,6 @@
 
 from dataclasses import dataclass
 
-from baramFlow.base.boundary.boundary import BoundaryBase
 from baramFlow.base.xml_helper import Vector
 from baramFlow.coredb.boundary_db import FlowDirectionSpecificationMethod
 from baramFlow.coredb.general_db import GeneralDB
@@ -50,7 +49,7 @@ class AtmosphericBoundaryLayer:
     minimumZCoordinate: str
     pasquillStability: PasquillStability
 
-    def updateIn(self, db):
+    def applyToDB(self, db):
         xpath = GeneralDB.GENERAL_XPATH + '/atmosphericBoundaryLayer'
 
         db.setValue(xpath + '/flowDirection/specMethod', self.flowDirection.specificationMethod.value)
@@ -71,10 +70,3 @@ class AtmosphericBoundaryLayer:
 
         db.increaseConfigCount()
 
-
-@dataclass
-class ABLInletCondition(BoundaryBase):
-    abl: AtmosphericBoundaryLayer = None
-
-    def _updateTypeConditionIn(self, db):
-        self.abl.updateIn(db)
