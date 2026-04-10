@@ -10,9 +10,11 @@ from PySide6.QtWidgets import QDialog, QButtonGroup, QMenu, QListWidgetItem
 
 from baramFlow.base.dynamic_mesh.motion_function import MotionFunction, MotionFunctionType
 from baramFlow.base.dynamic_mesh.moving_boundary import (
-    MovingBoundaryEntry, PointMotionType, RigidBodyMotion,
+    MovingBoundaryEntry, PointMotionType
 )
 from baramFlow.base.event_bus import EventBus
+from baramFlow.coredb import coredb
+from baramFlow.coredb.boundary_db import BoundaryDB, WallMotion, MovingWallMotion
 from baramFlow.view.setup.dynamic_mesh.motion_functions.motion_function_widget import MotionFunctionWidget, FUNCTION_TYPE_NAMES
 from baramFlow.view.setup.dynamic_mesh.motion_functions.motion_function_dialogs import MOTION_FUNCTION_DIALOGS
 from widgets.async_message_box import AsyncMessageBox
@@ -37,7 +39,7 @@ POINT_MOTION_TYPE_NAMES = {
 
 class PointMotionTypeDialog(QDialog):
     """Small dialog for selecting point motion type."""
-    def __init__(self, parent, currentType: PointMotionType):
+    def __init__(self, parent, currentType: PointMotionType, allowedTypes: set[PointMotionType]):
         super().__init__(parent)
 
         self._ui = Ui_PointMotionTypeDialog()
@@ -57,8 +59,10 @@ class PointMotionTypeDialog(QDialog):
             PointMotionType.WEDGE: self._ui.wedgeRadio,
         }
 
-        for radio in self._radioMap.values():
+        for pmt, radio in self._radioMap.items():
             self._buttonGroup.addButton(radio)
+            if pmt not in allowedTypes:
+                radio.setEnabled(False)
 
         self._radioMap[currentType].setChecked(True)
 
@@ -120,7 +124,16 @@ class PointMotionDialog(QDialog):
             self._ui.stack.setCurrentWidget(self._ui.emptyPage)
 
     def _changeType(self):
-        self._dialog = PointMotionTypeDialog(self, self._pointMotionType)
+        allowedTypes = set(PointMotionType)
+
+        db = coredb.CoreDB()
+        xpath = BoundaryDB.getXPath(self._entry.boundary)
+        if not (WallMotion(db.getValue(xpath + '/wall/velocity/wallMotion/type')) == WallMotion.MOVING_WALL
+                and MovingWallMotion(db.getValue(xpath + '/wall/velocity/wallMotion/movingWall/motion')) == MovingWallMotion.MESH_MOTION):
+            allowedTypes.discard(PointMotionType.PRESCRIBED_MOTION)
+            allowedTypes.discard(PointMotionType.RIGID_BODY_MOTION)
+
+        self._dialog = PointMotionTypeDialog(self, self._pointMotionType, allowedTypes)
         self._dialog.accepted.connect(self._typeChanged)
         self._dialog.open()
 

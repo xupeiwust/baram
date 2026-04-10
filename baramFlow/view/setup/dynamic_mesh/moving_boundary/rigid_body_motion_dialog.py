@@ -96,6 +96,9 @@ class RigidBodyMotionDialog(QDialog):
         self._ui.rotationalFixedRadio.toggled.connect(self._rotationalConstraintChanged)
         self._ui.rotationalAxisRadio.toggled.connect(self._rotationalConstraintChanged)
 
+        # Use boundary orientation checkbox
+        self._ui.useBoundaryOrientation.toggled.connect(self._useBoundaryOrientationChanged)
+
         # Ok / Cancel
         self._ui.okButton.clicked.connect(self._accept)
         self._ui.cancelButton.clicked.connect(self.reject)
@@ -159,6 +162,18 @@ class RigidBodyMotionDialog(QDialog):
         self._ui.clockwise.setPFloat(m.clockwise)
         self._ui.counterclockwise.setPFloat(m.counterclockwise)
 
+        # Use boundary orientation / constraint orientation
+        self._ui.useBoundaryOrientation.setChecked(m.useBoundaryOrientation)
+        constraintOriEdits = [
+            [self._ui.cori00, self._ui.cori01, self._ui.cori02],
+            [self._ui.cori10, self._ui.cori11, self._ui.cori12],
+            [self._ui.cori20, self._ui.cori21, self._ui.cori22],
+        ]
+        for i in range(3):
+            for j in range(3):
+                constraintOriEdits[i][j].setPFloat(m.constraintOrientation[i * 3 + j])
+        self._ui.privateOrientation.setEnabled(not m.useBoundaryOrientation)
+
         # Solver
         solver = m.solver
         solverIndex = _SOLVER_TYPES.index(solver.solverType)
@@ -196,6 +211,9 @@ class RigidBodyMotionDialog(QDialog):
         axisSelected = self._ui.rotationalAxisRadio.isChecked()
         self._ui.axis.setEnabled(axisSelected)
         self._ui.limitAngleGroup.setEnabled(axisSelected)
+
+    def _useBoundaryOrientationChanged(self, checked):
+        self._ui.privateOrientation.setEnabled(not checked)
 
     # --------------------------------------------------------- solver
     def _solverTypeChanged(self, index):
@@ -333,6 +351,18 @@ class RigidBodyMotionDialog(QDialog):
             clockwise = self._ui.clockwise.pFloat(self.tr('Clockwise'), low=0, lowInclusive=True)
             counterclockwise = self._ui.counterclockwise.pFloat(self.tr('Counterclockwise'), low=0, lowInclusive=True)
 
+            useBoundaryOrientation = self._ui.useBoundaryOrientation.isChecked()
+
+            constraintOriEdits = [
+                [self._ui.cori00, self._ui.cori01, self._ui.cori02],
+                [self._ui.cori10, self._ui.cori11, self._ui.cori12],
+                [self._ui.cori20, self._ui.cori21, self._ui.cori22],
+            ]
+            constraintOrientation: list[PFloat] = []
+            for i in range(3):
+                for j in range(3):
+                    constraintOrientation.append(constraintOriEdits[i][j].pFloat(self.tr('Constraint Orientation')))
+
             solverIndex = self._ui.solverCombo.currentIndex()
             solverType = _SOLVER_TYPES[solverIndex]
 
@@ -386,6 +416,8 @@ class RigidBodyMotionDialog(QDialog):
         m.limitAngle = limitAngle
         m.clockwise = clockwise
         m.counterclockwise = counterclockwise
+        m.useBoundaryOrientation = useBoundaryOrientation
+        m.constraintOrientation = constraintOrientation
         for i, r in enumerate(self._restraints):
             r.order = i + 1
         m.restraints = self._restraints

@@ -132,8 +132,8 @@ class WallDialog(ResizableDialog):
             if wallMotion == WallMotion.MOVING_WALL:
                 if movingMotion == MovingWallMotion.TRANSLATIONAL_MOTION:
                     self._ui.xVelocity.validate(self.tr('X-Velocity'))
-                    self._ui.xVelocity.validate(self.tr('Y-Velocity'))
-                    self._ui.xVelocity.validate(self.tr('Z-Velocity'))
+                    self._ui.yVelocity.validate(self.tr('Y-Velocity'))
+                    self._ui.zVelocity.validate(self.tr('Z-Velocity'))
                 elif movingMotion == MovingWallMotion.ROTATIONAL_MOTION:
                     self._ui.speed.validate(self.tr('Speed'))
                     self._ui.rotationAxisOriginX.validate(self.tr('Rotation-Axis X'))

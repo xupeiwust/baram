@@ -52,7 +52,7 @@ class Body:
     mass: PFloat = dataClassField(default_factory=lambda: PFloat('0'))
 
     centerOfMass: Vector = dataClassField(default_factory=Vector.zero)
-    centerOfRotation: Vector = dataClassField(default_factory=Vector.zero)
+    localOrigin: Vector = dataClassField(default_factory=Vector.zero)
 
     orientation: list[PFloat] = dataClassField(default_factory=lambda: [PFloat('1'), PFloat('0'), PFloat('0'),
                                                                         PFloat('0'), PFloat('1'), PFloat('0'),
@@ -76,7 +76,7 @@ class Body:
         mass = PFloat.fromElement(e.find('mass', namespaces=nsmap))
 
         centerOfMass = Vector.fromElement(e.find('centerOfMass', namespaces=nsmap))
-        centerOfRotation = Vector.fromElement(e.find('centerOfRotation', namespaces=nsmap))
+        localOrigin = Vector.fromElement(e.find('localOrigin', namespaces=nsmap))
 
         oe = e.find('orientation', namespaces=nsmap)
         orientation =  [PFloat.fromElement(oe.find('r11', namespaces=nsmap)),
@@ -116,7 +116,7 @@ class Body:
         return Body(uuid=uuid, name=name, parent=parent,
                     mass=mass,
                     centerOfMass=centerOfMass,
-                    centerOfRotation=centerOfRotation,
+                    localOrigin=localOrigin,
                     orientation=orientation,
                     momentOfInertia=momentOfInertia,
                     boundaries=boundaries,
@@ -132,7 +132,7 @@ class Body:
                  E('parent', str(self.parent)),
                  self.mass.toElement('mass'),
                  self.centerOfMass.toElement('centerOfMass'),
-                 self.centerOfRotation.toElement('centerOfRotation'),
+                 self.localOrigin.toElement('localOrigin'),
                  E('orientation',
                     self.orientation[0].toElement('r11'),
                     self.orientation[1].toElement('r12'),

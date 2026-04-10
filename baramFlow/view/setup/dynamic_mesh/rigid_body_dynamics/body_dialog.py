@@ -13,7 +13,7 @@ from baramFlow.base.dynamic_mesh.restraint import Restraint, RestraintType
 from baramFlow.base.dynamic_mesh.rigid_body_dynamics import Body, Joint, JointType
 from baramFlow.base.event_bus import EventBus
 from baramFlow.coredb.boundary_db import BoundaryDB
-from baramFlow.view.setup.dynamic_mesh.restraints.restraint_dialogs import RESTRAINT_DIALOGS
+from baramFlow.view.setup.dynamic_mesh.restraints.restraint_dialogs import RESTRAINT_DIALOGS, RotationalSpringDialog
 from baramFlow.view.setup.dynamic_mesh.restraints.restraint_widget import RESTRAINT_TYPE_NAMES, RestraintWidget
 from baramFlow.view.setup.dynamic_mesh.rigid_body_dynamics.joint_widget import JointWidget, JOINT_TYPE_NAMES
 from baramFlow.view.setup.dynamic_mesh.rigid_body_dynamics.joint_dialogs import JOINT_DIALOGS
@@ -57,7 +57,7 @@ class BodyDialog(QDialog):
         # Mass Properties
         self._ui.mass.setPFloat(body.mass)
         self._ui.com.setVector(body.centerOfMass)
-        self._ui.cor.setVector(body.centerOfRotation)
+        self._ui.localOrigin.setVector(body.localOrigin)
 
         # Orientation Tensor
         oriEdits = [
@@ -204,7 +204,10 @@ class BodyDialog(QDialog):
         restraint = Restraint(uuid=uuid4(), order=order, restraintType=restraintType)
         dialogClass = RESTRAINT_DIALOGS.get(restraintType)
         if dialogClass:
-            self._dialog = dialogClass(self, restraint)
+            if dialogClass is RotationalSpringDialog:
+                self._dialog = dialogClass(self, restraint, showOrientation=False)
+            else:
+                self._dialog = dialogClass(self, restraint)
             self._dialog.accepted.connect(lambda: self._rbdRestraintAdded(restraint))
             self._dialog.open()
         else:
@@ -249,7 +252,10 @@ class BodyDialog(QDialog):
         restraint = self._restraints[row]
         dialogClass = RESTRAINT_DIALOGS.get(restraint.restraintType)
         if dialogClass:
-            self._dialog = dialogClass(self, restraint)
+            if dialogClass is RotationalSpringDialog:
+                self._dialog = dialogClass(self, restraint, showOrientation=False)
+            else:
+                self._dialog = dialogClass(self, restraint)
             self._dialog.accepted.connect(lambda: self._rbdRestraintEdited(row))
             self._dialog.open()
 
@@ -281,7 +287,7 @@ class BodyDialog(QDialog):
         try:
             mass = PFloat(self._ui.mass.text(), self.tr('Mass'), low=0, lowInclusive=False)
             centerOfMass = self._ui.com.vector('Center of Mass')
-            centerOfRotation = self._ui.cor.vector('Center of Rotation')
+            localOrigin = self._ui.localOrigin.vector('Local Origin')
 
             oriEdits = [
                 [self._ui.ori00, self._ui.ori01, self._ui.ori02],
@@ -312,7 +318,7 @@ class BodyDialog(QDialog):
         self._body.parent = self._ui.parentCombo.currentData()
         self._body.mass = mass
         self._body.centerOfMass = centerOfMass
-        self._body.centerOfRotation = centerOfRotation
+        self._body.localOrigin = localOrigin
         self._body.orientation = orientation
         self._body.momentOfInertia = momentOfInertia
         self._body.boundaries = self._boundaries

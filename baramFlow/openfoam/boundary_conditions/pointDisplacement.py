@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import math
+import numpy as np
+from numpy.typing import NDArray
 
 from baramFlow.base.dynamic_mesh.dynamic_mesh import MotionType
 from baramFlow.base.dynamic_mesh.moving_boundary import MovingBoundaryEntry, PointMotionType, RotationalConstraintType, TranslationalConstraintType
@@ -15,6 +16,15 @@ from baramFlow.openfoam.constant.dynamic_mesh_dict import getMotionFunctionDict
 from baramFlow.services.dynamic_mesh.dynamic_mesh_service import DynamicMeshService
 from libbaram.natural_name_uuid import uuidToNnstr
 from libbaram.openfoam.dictionary.dictionary_file import DataClass
+from libbaram.pfloat import PFloat
+
+
+# It returns the numbers in string form to keep high precision in resulting OpenFOAM dictionary
+# PyFoam makes numbers in a list single precision numbers string.
+def normalizedOrientationTensor(otensor: list[PFloat]) -> str:
+    orientation: NDArray = np.array([float(i) for i in otensor], dtype=np.float64)
+    orientation = orientation * np.sqrt(3) / np.linalg.norm(orientation)
+    return '('  + ' '.join([str(f) for f in orientation.tolist()]) + ')'
 
 
 class PointDisplacement(BoundaryCondition):
@@ -160,8 +170,8 @@ class PointDisplacement(BoundaryCondition):
             }
         elif rbm.translationalConstraintType == TranslationalConstraintType.LINE:
             constraints['translation'] = {
-                'sixDoFRigidBodyMotionConstraint': 'plane',
-                'normal': rbm.normal.toFloatList(),
+                'sixDoFRigidBodyMotionConstraint': 'line',
+                'direction': rbm.direction.toFloatList(),
                 'centreOfRotation': rbm.centerOfRotation.toFloatList()
             }
         elif rbm.translationalConstraintType == TranslationalConstraintType.FIXED:
@@ -177,11 +187,12 @@ class PointDisplacement(BoundaryCondition):
             }
 
             if rbm.limitAngle:
+                orientation = rbm.orientation if rbm.useBoundaryOrientation else rbm.constraintOrientation
                 constraints['rotation'].update({
                     'thetaUnits': 'degrees',
                     'maxClockwiseTheta': float(rbm.clockwise),
                     'maxCounterclockwiseTheta': float(rbm.counterclockwise),
-                    'referenceOrientation': ([float(i) for i in rbm.orientation]),
+                    'referenceOrientation': normalizedOrientationTensor(orientation),
                 })
 
         elif rbm.rotationalConstraintType == RotationalConstraintType.FIXED:
@@ -206,11 +217,13 @@ class PointDisplacement(BoundaryCondition):
                     'damping': float(r.dampingConstant)
                 }
             elif r.restraintType == RestraintType.ROTATIONAL_SPRING:
+                orientation = rbm.orientation if rbm.useBoundaryOrientation else r.orientation
                 restraints[uuidToNnstr(r.uuid)] = {
                     'sixDoFRigidBodyMotionRestraint': 'linearAxialAngularSpring',
                     'axis': r.axis.toFloatList(),
                     'stiffness': float(r.springConstant),
-                    'damping': float(r.dampingConstant)
+                    'damping': float(r.dampingConstant),
+                    'referenceOrientation': normalizedOrientationTensor(orientation),
                 }
 
         return {

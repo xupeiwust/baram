@@ -2460,6 +2460,22 @@
                             <xs:element name="axis" type="vector"/>
                             <xs:element name="attachmentPoint" type="vector"/>
                             <xs:element name="anchorPoint" type="vector"/>
+                            <xs:element name="useBoundaryOrientation" type="xs:boolean" default="true"/>
+                            <xs:element name="orientation">
+                                <xs:complexType>
+                                    <xs:sequence>
+                                        <xs:element name="r11" type="inputNumberType"/>
+                                        <xs:element name="r12" type="inputNumberType"/>
+                                        <xs:element name="r13" type="inputNumberType"/>
+                                        <xs:element name="r21" type="inputNumberType"/>
+                                        <xs:element name="r22" type="inputNumberType"/>
+                                        <xs:element name="r23" type="inputNumberType"/>
+                                        <xs:element name="r31" type="inputNumberType"/>
+                                        <xs:element name="r32" type="inputNumberType"/>
+                                        <xs:element name="r33" type="inputNumberType"/>
+                                    </xs:sequence>
+                                </xs:complexType>
+                            </xs:element>
                         </xs:sequence>
                     </xs:complexType>
                 </xs:element>
@@ -3270,6 +3286,22 @@
                                                                 <xs:element name="limitAngle" type="xs:boolean" default="false"/>
                                                                 <xs:element name="clockwise" type="inputNumberType"/>
                                                                 <xs:element name="counterclockwise" type="inputNumberType"/>
+                                                                <xs:element name="useBoundaryOrientation" type="xs:boolean" default="true"/>
+                                                                <xs:element name="constraintOrientation">
+                                                                    <xs:complexType>
+                                                                        <xs:sequence>
+                                                                            <xs:element name="r11" type="inputNumberType"/>
+                                                                            <xs:element name="r12" type="inputNumberType"/>
+                                                                            <xs:element name="r13" type="inputNumberType"/>
+                                                                            <xs:element name="r21" type="inputNumberType"/>
+                                                                            <xs:element name="r22" type="inputNumberType"/>
+                                                                            <xs:element name="r23" type="inputNumberType"/>
+                                                                            <xs:element name="r31" type="inputNumberType"/>
+                                                                            <xs:element name="r32" type="inputNumberType"/>
+                                                                            <xs:element name="r33" type="inputNumberType"/>
+                                                                        </xs:sequence>
+                                                                    </xs:complexType>
+                                                                </xs:element>
                                                                 <xs:element ref="rigidBodyRestraints"/>
                                                                 <xs:element ref="rigidBodySolverType"/>
                                                                 <xs:element name="accelerationRelaxationFactor" type="inputNumberType"/>
@@ -3300,7 +3332,7 @@
                                                                 <xs:element name="parent" type="uuidType"/>
                                                                 <xs:element name="mass" type="inputNumberType"/>
                                                                 <xs:element name="centerOfMass" type="vector"/>
-                                                                <xs:element name="centerOfRotation" type="vector"/>
+                                                                <xs:element name="localOrigin" type="vector"/>
                                                                 <xs:element name="orientation">
                                                                     <xs:complexType>
                                                                         <xs:sequence>

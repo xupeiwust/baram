@@ -65,6 +65,11 @@ class RigidBodyMotion:
     clockwise: PFloat = dataClassField(default_factory=lambda: PFloat('0'))
     counterclockwise: PFloat = dataClassField(default_factory=lambda: PFloat('0'))
 
+    useBoundaryOrientation: bool = True
+    constraintOrientation: list[PFloat] = dataClassField(default_factory=lambda: [PFloat('1'), PFloat('0'), PFloat('0'),
+                                                                                   PFloat('0'), PFloat('1'), PFloat('0'),
+                                                                                   PFloat('0'), PFloat('0'), PFloat('1')])
+
     restraints: list[Restraint] = dataClassField(default_factory=list)
     solver: RigidBodySolver = dataClassField(default_factory=RigidBodySolver)
 
@@ -106,6 +111,19 @@ class RigidBodyMotion:
         clockwise = PFloat.fromElement(e.find('clockwise', namespaces=nsmap))
         counterclockwise = PFloat.fromElement(e.find('counterclockwise', namespaces=nsmap))
 
+        useBoundaryOrientation = e.find('useBoundaryOrientation', namespaces=nsmap).text == 'true'
+
+        coe = e.find('constraintOrientation', namespaces=nsmap)
+        constraintOrientation = [PFloat.fromElement(coe.find('r11', namespaces=nsmap)),
+                                 PFloat.fromElement(coe.find('r12', namespaces=nsmap)),
+                                 PFloat.fromElement(coe.find('r13', namespaces=nsmap)),
+                                 PFloat.fromElement(coe.find('r21', namespaces=nsmap)),
+                                 PFloat.fromElement(coe.find('r22', namespaces=nsmap)),
+                                 PFloat.fromElement(coe.find('r23', namespaces=nsmap)),
+                                 PFloat.fromElement(coe.find('r31', namespaces=nsmap)),
+                                 PFloat.fromElement(coe.find('r32', namespaces=nsmap)),
+                                 PFloat.fromElement(coe.find('r33', namespaces=nsmap))]
+
         restraints = []
         for re_ in e.find('rigidBodyRestraints', namespaces=nsmap).findall('restraint', namespaces=nsmap):
             restraints.append(Restraint.fromElement(re_))
@@ -129,6 +147,8 @@ class RigidBodyMotion:
             axis=axis,
             limitAngle=limitAngle,
             clockwise=clockwise, counterclockwise=counterclockwise,
+            useBoundaryOrientation=useBoundaryOrientation,
+            constraintOrientation=constraintOrientation,
             restraints=restraints, solver=solver,
             accelerationRelaxationFactor=accelerationRelaxationFactor,
             accelerationDampingFactor=accelerationDampingFactor)
@@ -160,6 +180,17 @@ class RigidBodyMotion:
                  E('limitAngle', self.limitAngle),
                  self.clockwise.toElement('clockwise'),
                  self.counterclockwise.toElement('counterclockwise'),
+                 E('useBoundaryOrientation', self.useBoundaryOrientation),
+                 E('constraintOrientation',
+                    self.constraintOrientation[0].toElement('r11'),
+                    self.constraintOrientation[1].toElement('r12'),
+                    self.constraintOrientation[2].toElement('r13'),
+                    self.constraintOrientation[3].toElement('r21'),
+                    self.constraintOrientation[4].toElement('r22'),
+                    self.constraintOrientation[5].toElement('r23'),
+                    self.constraintOrientation[6].toElement('r31'),
+                    self.constraintOrientation[7].toElement('r32'),
+                    self.constraintOrientation[8].toElement('r33')),
                  E('rigidBodyRestraints', *[r.toElement('restraint') for r in self.restraints]),
                  self.solver.toElement(),
                  self.accelerationRelaxationFactor.toElement('accelerationRelaxationFactor'),

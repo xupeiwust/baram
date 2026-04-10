@@ -170,7 +170,7 @@ class DynamicMeshDict(DictionaryFile):
                 'mass': float(body.mass),
                 'centreOfMass': body.centerOfMass.toFloatList(),
                 'inertia': [float(i) for i in body.momentOfInertia],
-                'transform': ([float(i) for i in body.orientation], body.centerOfRotation.toFloatList()),
+                'transform': ([float(i) for i in body.orientation], body.localOrigin.toFloatList()),
                 'patches': [BoundaryDB.getBoundaryName(bcid) for bcid in body.boundaries],
                 'innerDistance': float(body.deformationOffset),
                 'outerDistance': float(body.deformationDistance)

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>300</width>
-    <height>350</height>
+    <width>376</width>
+    <height>413</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -15,79 +15,98 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
-    <widget class="QRadioButton" name="fixedRadio">
-     <property name="text">
-      <string>Fixed</string>
+    <widget class="QGroupBox" name="groupBox">
+     <property name="title">
+      <string>Point Motion Type</string>
      </property>
+     <layout class="QVBoxLayout" name="verticalLayout_2">
+      <item>
+       <widget class="QRadioButton" name="fixedRadio">
+        <property name="text">
+         <string>Fixed</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="slipRadio">
+        <property name="text">
+         <string>Slip</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="normalRadio">
+        <property name="text">
+         <string>Normal</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="prescribedMotionRadio">
+        <property name="text">
+         <string>Prescribed Motion</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="rigidBodyMotionRadio">
+        <property name="text">
+         <string>Rigid Body Motion</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="cyclicRadio">
+        <property name="text">
+         <string>Cyclic</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="cyclicAMIRadio">
+        <property name="text">
+         <string>CyclicAMI</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="symmetryRadio">
+        <property name="text">
+         <string>Symmetry</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="emptyRadio">
+        <property name="text">
+         <string>Empty</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="wedgeRadio">
+        <property name="text">
+         <string>Wedge</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
     </widget>
    </item>
    <item>
-    <widget class="QRadioButton" name="slipRadio">
+    <widget class="QLabel" name="label">
      <property name="text">
-      <string>Slip</string>
+      <string>&quot;Prescribed Motion&quot; and &quot;Rigid Body Motion&quot; are available only for walls defined as 'Moving Wall' &gt; 'Mesh Motion' in the Wall Boundary Condition.</string>
      </property>
-    </widget>
-   </item>
-   <item>
-    <widget class="QRadioButton" name="normalRadio">
-     <property name="text">
-      <string>Normal</string>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <widget class="QRadioButton" name="prescribedMotionRadio">
-     <property name="text">
-      <string>Prescribed Motion</string>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <widget class="QRadioButton" name="rigidBodyMotionRadio">
-     <property name="text">
-      <string>Rigid Body Motion</string>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <widget class="QRadioButton" name="cyclicRadio">
-     <property name="text">
-      <string>Cyclic</string>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <widget class="QRadioButton" name="cyclicAMIRadio">
-     <property name="text">
-      <string>CyclicAMI</string>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <widget class="QRadioButton" name="symmetryRadio">
-     <property name="text">
-      <string>Symmetry</string>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <widget class="QRadioButton" name="emptyRadio">
-     <property name="text">
-      <string>Empty</string>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <widget class="QRadioButton" name="wedgeRadio">
-     <property name="text">
-      <string>Wedge</string>
+     <property name="wordWrap">
+      <bool>true</bool>
      </property>
     </widget>
    </item>
    <item>
     <widget class="QDialogButtonBox" name="buttonBox">
      <property name="standardButtons">
-      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+      <set>QDialogButtonBox::StandardButton::Cancel|QDialogButtonBox::StandardButton::Ok</set>
      </property>
     </widget>
    </item>

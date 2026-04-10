@@ -44,7 +44,7 @@
       <item>
        <spacer name="typeSpacer">
         <property name="orientation">
-         <enum>Qt::Horizontal</enum>
+         <enum>Qt::Orientation::Horizontal</enum>
         </property>
         <property name="sizeHint" stdset="0">
          <size>
@@ -91,7 +91,7 @@
            </widget>
           </item>
           <item row="0" column="1">
-           <widget class="VectorWidget" name="normal"/>
+           <widget class="VectorWidget" name="normal" native="true"/>
           </item>
          </layout>
         </widget>
@@ -121,7 +121,7 @@
           <item>
            <widget class="QListWidget" name="mfList">
             <property name="contextMenuPolicy">
-             <enum>Qt::CustomContextMenu</enum>
+             <enum>Qt::ContextMenuPolicy::CustomContextMenu</enum>
             </property>
            </widget>
           </item>
@@ -134,14 +134,14 @@
                 <string>Add Motion Function</string>
                </property>
                <property name="popupMode">
-                <enum>QToolButton::InstantPopup</enum>
+                <enum>QToolButton::ToolButtonPopupMode::InstantPopup</enum>
                </property>
               </widget>
              </item>
              <item>
               <spacer name="addMfSpacer">
                <property name="orientation">
-                <enum>Qt::Horizontal</enum>
+                <enum>Qt::Orientation::Horizontal</enum>
                </property>
                <property name="sizeHint" stdset="0">
                 <size>
@@ -174,16 +174,61 @@
         <number>0</number>
        </property>
        <item>
-        <widget class="QPushButton" name="editRigidBodyButton">
-         <property name="text">
-          <string>Edit Rigid Body Motion...</string>
+        <spacer name="verticalSpacer">
+         <property name="orientation">
+          <enum>Qt::Orientation::Vertical</enum>
          </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>40</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item>
+        <widget class="QWidget" name="widget" native="true">
+         <layout class="QHBoxLayout" name="horizontalLayout">
+          <item>
+           <spacer name="horizontalSpacer">
+            <property name="orientation">
+             <enum>Qt::Orientation::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>0</width>
+              <height>0</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <widget class="QPushButton" name="editRigidBodyButton">
+            <property name="text">
+             <string>Edit Rigid Body Motion</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="horizontalSpacer_2">
+            <property name="orientation">
+             <enum>Qt::Orientation::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>0</width>
+              <height>0</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
         </widget>
        </item>
        <item>
         <spacer name="rigidBodySpacer">
          <property name="orientation">
-          <enum>Qt::Vertical</enum>
+          <enum>Qt::Orientation::Vertical</enum>
          </property>
          <property name="sizeHint" stdset="0">
           <size>
@@ -200,7 +245,7 @@
    <item>
     <widget class="QDialogButtonBox" name="buttonBox">
      <property name="standardButtons">
-      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+      <set>QDialogButtonBox::StandardButton::Cancel|QDialogButtonBox::StandardButton::Ok</set>
      </property>
     </widget>
    </item>
