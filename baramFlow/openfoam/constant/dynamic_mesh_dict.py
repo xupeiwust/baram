@@ -11,6 +11,7 @@ from baramFlow.base.dynamic_mesh.restraint import RestraintType
 from baramFlow.base.dynamic_mesh.rigid_body_dynamics import Joint, JointType
 from baramFlow.base.dynamic_mesh.rigid_body_solver import RigidBodyDynamicsSolverType
 from baramFlow.coredb.boundary_db import BoundaryDB
+from baramFlow.coredb.cell_zone_db import CellZoneDB
 from baramFlow.services.dynamic_mesh.dynamic_mesh_service import DynamicMeshService
 from libbaram.natural_name_uuid import uuidToNnstr
 from libbaram.openfoam.dictionary.dictionary_file import DictionaryFile
@@ -22,32 +23,42 @@ def getMotionFunctionDict(f: MotionFunction):
     if f.functionType == MotionFunctionType.ROTATION:
         return {
             'solidBodyMotionFunction': 'rotatingMotion',
-            'origin': f.origin.toFloatList(),
-            'axis': f.axis.toFloatList(),
-            'omega': float(f.rpm) * 2 * math.pi / 60.0
+            'rotatingMotionCoeffs': {
+                'origin': f.origin.toFloatList(),
+                'axis': f.axis.toFloatList(),
+                'omega': float(f.rpm) * 2 * math.pi / 60.0
+            }
         }
     elif f.functionType == MotionFunctionType.ROTATING_OSCILLATION:
         return {
             'solidBodyMotionFunction': 'oscillatingRotatingMotion',
-            'origin': f.origin.toFloatList(),
-            'amplitude': f.angularAmplitude.toFloatList(),
-            'omega': float(f.rpm) * 2 * math.pi / 60.0
+            'oscillatingRotatingMotionCoeffs': {
+                'origin': f.origin.toFloatList(),
+                'amplitude': f.angularAmplitude.toFloatList(),
+                'omega': float(f.rpm) * 2 * math.pi / 60.0
+            }
         }
     elif f.functionType == MotionFunctionType.LINEAR_TRANSLATION:
         return {
             'solidBodyMotionFunction': 'linearMotion',
-            'velocity': f.velocity.toFloatList()
+            'linearMotionCoeffs': {
+                'velocity': f.velocity.toFloatList()
+            }
         }
     elif f.functionType == MotionFunctionType.LINEAR_OSCILLATION:
         return {
             'solidBodyMotionFunction': 'oscillatingLinearMotion',
-            'amplitude': f.linearAmplitude.toFloatList(),
-            'omega': float(f.frequency) * 2 * math.pi
+            'oscillatingLinearMotionCoeffs': {
+                'amplitude': f.linearAmplitude.toFloatList(),
+                'omega': float(f.frequency) * 2 * math.pi
+            }
         }
     elif f.functionType == MotionFunctionType.MANUAL_POSITION:
         return {
             'solidBodyMotionFunction': 'tabulated6DoFMotion',
-            'CofG': f.origin.toFloatList()
+            'tabulated6DoFMotionCoeffs': {
+                'CofG': f.origin.toFloatList()
+            }
         }
         # ToDo: save data to file and add the name into the dictionary
 
@@ -116,7 +127,8 @@ class DynamicMeshDict(DictionaryFile):
             }
 
             if motionDefinition.cellZones:
-                mdData['cellZone'] = '(' + '|'.join(motionDefinition.cellZones) + ')'
+                cellZoneNames = [CellZoneDB.getCellZoneName(czid) for czid in motionDefinition.cellZones]
+                mdData['solidBodyCoeffs']['cellZone'] = '"(' + '|'.join(cellZoneNames) + ')"'
 
             solvers[uuidToNnstr(motionDefinition.uuid)] = mdData
 

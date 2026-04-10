@@ -842,14 +842,6 @@
         </xs:sequence>
     </xs:complexType>
 
-    <xs:complexType name="slidingMeshZoneType">
-        <xs:sequence>
-            <xs:element name="rotatingSpeed" type="inputNumberType" default="1000"/>
-            <xs:element name="rotationAxisOrigin" type="vector"/>
-            <xs:element name="rotationAxisDirection" type="vector"/>
-        </xs:sequence>
-    </xs:complexType>
-
     <xs:complexType name="actuatorDiskZoneType">
         <xs:sequence>
             <xs:element name="diskDirection" type="vector"/>
@@ -886,13 +878,11 @@
                             <xs:enumeration value="mrf"/>
                             <xs:enumeration value="porous"/>
                             <xs:enumeration value="actuatorDisk"/>
-                            <xs:enumeration value="slidingMesh"/>
                         </xs:restriction>
                     </xs:simpleType>
                 </xs:element>
                 <xs:element name="mrf" type="mrfZoneType"/>
                 <xs:element name="porous" type="porousZoneType"/>
-                <xs:element name="slidingMesh" type="slidingMeshZoneType"/>
                 <xs:element name="actuatorDisk" type="actuatorDiskZoneType"/>
                 <xs:element name="sourceTerms">
                     <xs:complexType>

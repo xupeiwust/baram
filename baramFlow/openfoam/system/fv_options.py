@@ -151,7 +151,7 @@ class FvOptions(DictionaryFile):
         elif zoneType == 'actuatorDisk':
             self._generateActuatorDisk(czname, xpath + '/actuatorDisk')
 
-        else:   # 'none', 'mrf', 'slidingMesh'
+        else:   # 'none', 'mrf'
             pass
 
     def _generatePorous(self, czname, xpath):

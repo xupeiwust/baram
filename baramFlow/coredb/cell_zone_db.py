@@ -18,7 +18,6 @@ class ZoneType(Enum):
     NONE = 'none'
     MRF = 'mrf'
     POROUS = 'porous'
-    SLIDING_MESH = 'slidingMesh'
     ACTUATOR_DISK = 'actuatorDisk'
 
 

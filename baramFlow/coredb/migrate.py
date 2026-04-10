@@ -1401,10 +1401,66 @@ def _version_12(root: etree.Element, path):
             p.append(E('functionName',
                        p.find('name', namespaces=_nsmap).text))
 
+
+
+    motionDefinitions = []
+    order: int = 1
+    for p in root.findall(f'regions/region[name=""]/cellZones/cellZone', namespaces=_nsmap):
+        zoneType = p.find('zoneType', namespaces=_nsmap)
+        if zoneType.text == 'slidingMesh':
+            zoneType.text = 'none'
+            czid   = p.attrib['czid']
+            czname = p.find('name', namespaces=_nsmap).text
+            ox = p.find('slidingMesh/rotationAxisOrigin/x', namespaces=_nsmap).text
+            oy = p.find('slidingMesh/rotationAxisOrigin/y', namespaces=_nsmap).text
+            oz = p.find('slidingMesh/rotationAxisOrigin/z', namespaces=_nsmap).text
+            dx = p.find('slidingMesh/rotationAxisDirection/x', namespaces=_nsmap).text
+            dy = p.find('slidingMesh/rotationAxisDirection/y', namespaces=_nsmap).text
+            dz = p.find('slidingMesh/rotationAxisDirection/z', namespaces=_nsmap).text
+            rpm = p.find('slidingMesh/rotatingSpeed', namespaces=_nsmap).text
+
+            md = E('motionDefinition',
+                E('uuid', str(uuid4())),
+                E('name', f'moving_{czname}'),
+                E('order', str(order)),
+                E('motionFunctions',
+                    E('motionFunction',
+                        E('uuid', str(uuid4())),
+                        E('order', '1'),
+                        E('functionType', 'rotation'),
+                        E('origin',
+                            E('x', ox),
+                            E('y', oy),
+                            E('z', oz)),
+                        E('axis',
+                            E('x', dx),
+                            E('y', dy),
+                            E('z', dz)),
+                        E('rpm', rpm),
+                        E('velocity',         E('x', '0'), E('y', '0'), E('z', '0')),
+                        E('angularAmplitude', E('x', '0'), E('y', '0'), E('z', '0')),
+                        E('linearAmplitude',  E('x', '0'), E('y', '0'), E('z', '0')),
+                        E('frequency', '0'),
+                        E('positions',
+                            E('t', ''),
+                            E('surge', ''),
+                            E('sway', ''),
+                            E('heave', ''),
+                            E('roll', ''),
+                            E('pitch', ''),
+                            E('yaw', '')))),
+                E('cellZones', czid))
+
+            motionDefinitions.append(md)
+            order += 1
+
+        p.remove(p.find('slidingMesh', namespaces=_nsmap))
+
+
     if (p := root.find('dynamicMesh', namespaces=_nsmap)) is None:
         p = E('dynamicMesh',
-                 E('motionType', 'none'),
-                 E('movingCellZone'),
+                 E('motionType', 'movingCellZone' if motionDefinitions else 'none'),
+                 E('movingCellZone', *motionDefinitions),
                  E('movingBoundary'),  # each boundary will be added later in dynamic mesh service
                  E('rigidBodyDynamics',
                     E('rigidBodySolverType',
