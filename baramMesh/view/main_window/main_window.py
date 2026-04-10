@@ -77,9 +77,6 @@ class MainWindow(QMainWindow):
 
         self.setWindowIcon(app.properties.icon())
 
-        self._contentLayout = QVBoxLayout(self._ui.content)
-        self._contentLayout.setContentsMargins(0, 0, 0, 0)
-
         self._setupShortcuts()
 
         self._connectSignalsSlots()
