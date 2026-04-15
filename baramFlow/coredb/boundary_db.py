@@ -46,6 +46,7 @@ class BoundaryType(Enum):
     INTERFACE	        = 'interface'
     EMPTY	            = 'empty'
     CYCLIC	            = 'cyclic'
+    CYCLIC_ACMI         = 'cyclicACMI'
     WEDGE	            = 'wedge'
 
 
@@ -55,6 +56,7 @@ class GeometricalType(Enum):
     MAPPED_WALL = 'mappedWall'
     CYCLIC      = 'cyclic'
     CYCLIC_AMI  = 'cyclicAMI'
+    CYCLIC_ACMI  = 'cyclicACMI'
     SYMMETRY    = 'symmetry'
     EMPTY       = 'empty'
     WEDGE       = 'wedge'
@@ -86,6 +88,7 @@ TYPE_MAP = {
     BoundaryType.INTERFACE            : GeometricalType.CYCLIC_AMI,
     BoundaryType.EMPTY                : GeometricalType.EMPTY,
     BoundaryType.CYCLIC               : GeometricalType.CYCLIC,
+    BoundaryType.CYCLIC_ACMI          : GeometricalType.CYCLIC_ACMI,
     BoundaryType.WEDGE                : GeometricalType.WEDGE,
 }
 
@@ -169,6 +172,7 @@ class BoundaryDB:
         BoundaryType.FAN,
         BoundaryType.INTERFACE,
         BoundaryType.CYCLIC,
+        BoundaryType.CYCLIC_ACMI,
     }
 
     @classmethod
@@ -222,7 +226,7 @@ class BoundaryDB:
             if str(bcid) in boundaries:
                 continue
 
-            if BoundaryType(ptype) in [BoundaryType.POROUS_JUMP, BoundaryType.FAN, BoundaryType.INTERFACE, BoundaryType.CYCLIC]:
+            if BoundaryType(ptype) in [BoundaryType.POROUS_JUMP, BoundaryType.FAN, BoundaryType.INTERFACE, BoundaryType.CYCLIC, BoundaryType.CYCLIC_ACMI]:
                 cpid = cls.getCoupledBoundary(str(bcid))
                 if cpid == '0':
                     continue
@@ -263,8 +267,9 @@ class BoundaryDB:
             BoundaryType.SYMMETRY:  QCoreApplication.translate('BoundaryDB', 'Symmetry'),
             BoundaryType.INTERFACE: QCoreApplication.translate('BoundaryDB', 'Interface'),
             BoundaryType.EMPTY:     QCoreApplication.translate('BoundaryDB', 'Empty'),
-            BoundaryType.CYCLIC:    QCoreApplication.translate('BoundaryDB', 'Cyclic'),
-            BoundaryType.WEDGE:     QCoreApplication.translate('BoundaryDB', 'Wedge'),
+            BoundaryType.CYCLIC:      QCoreApplication.translate('BoundaryDB', 'Cyclic'),
+            BoundaryType.CYCLIC_ACMI: QCoreApplication.translate('BoundaryDB', 'CyclicACMI'),
+            BoundaryType.WEDGE:       QCoreApplication.translate('BoundaryDB', 'Wedge'),
         }.get(bctype, 'Unknown Type')
 
     @classmethod

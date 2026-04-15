@@ -22,6 +22,7 @@ from .boundary_type_picker import BoundaryTypePicker
 from .boundary_widget import BoundaryWidget
 from .copy_dialog import CopyDialog
 from .cyclic_dialog import CyclicDialog
+from .cyclicACMI_dialog import CyclicACMIDialog
 from .exhaust_fan_dialog import ExhaustFanDialog
 from .fan_dialog import FanDialog
 from .farfield_riemann_dialog import FarfieldRiemannDialog
@@ -69,6 +70,7 @@ DIALOGS = {
     BoundaryType.INTERFACE: InterfaceDialog,
     BoundaryType.EMPTY: None,
     BoundaryType.CYCLIC: CyclicDialog,
+    BoundaryType.CYCLIC_ACMI: CyclicACMIDialog,
     BoundaryType.WEDGE: None,
 }
 

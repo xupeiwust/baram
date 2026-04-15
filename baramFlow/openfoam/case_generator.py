@@ -145,10 +145,17 @@ class CaseGenerator(QObject):
             boundaries = self._db.getBoundaryConditions(rname)
             for bcid, bcname, bctype in boundaries:
                 xpath = BoundaryDB.getXPath(bcid)
+
                 if BoundaryDB.needsCoupledBoundary(BoundaryType(bctype)) and self._db.getValue(xpath + '/coupledBoundary') == '0':
                     errors += QCoreApplication.translate(
                         'CaseGenerator',
                         f'{BoundaryDB.dbBoundaryTypeToText(BoundaryType(bctype))} boundary "{bcname}" needs a coupled boundary.\n')
+
+                if BoundaryType(bctype) == BoundaryType.CYCLIC_ACMI:
+                    if self._db.getValue(xpath + '/fallbackBoundary') == '0':
+                        errors += QCoreApplication.translate(
+                            'CaseGenerator',
+                            f'{BoundaryDB.dbBoundaryTypeToText(BoundaryType(bctype))} boundary "{bcname}" needs a fallback boundary.\n')
 
         return errors
 

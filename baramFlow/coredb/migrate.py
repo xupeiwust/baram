@@ -1288,7 +1288,7 @@ def _version_12(root: etree.Element, path):
 
     # root.set('version', '13')
     #
-    for b in root.findall(f'regions/region/boundaryConditions/boundaryCondition', namespaces=_nsmap):
+    for b in root.findall('regions/region/boundaryConditions/boundaryCondition', namespaces=_nsmap):
         if b.find('fan', namespaces=_nsmap) is None:
             logger.debug(f'    Adding "fan" to  {b}')
             b.insert(21,
@@ -1393,6 +1393,14 @@ def _version_12(root: etree.Element, path):
             ''')
         p.replace(old, e)
 
+        if b.find('fallbackBoundary', namespaces=_nsmap) is None:
+            logger.debug(f'    Adding "fallbackBoundary" to {b}')
+            coupled = b.find('coupledBoundary', namespaces=_nsmap)
+            e = etree.Element(f'{{{_ns}}}fallbackBoundary')
+            e.text = '0'
+            b.insert(list(p).index(coupled) + 1, e)
+
+            
     for p in root.findall('monitors/*/*', namespaces=_nsmap):
         if p.find('uuid', namespaces=_nsmap) is None:
             logger.debug(f'    Adding "uuid", "functionName" to {p}')
@@ -1454,8 +1462,9 @@ def _version_12(root: etree.Element, path):
             motionDefinitions.append(md)
             order += 1
 
-        p.remove(p.find('slidingMesh', namespaces=_nsmap))
-
+        slidingMesh = p.find('slidingMesh', namespaces=_nsmap)
+        if slidingMesh:
+            p.remove(slidingMesh)
 
     if (p := root.find('dynamicMesh', namespaces=_nsmap)) is None:
         p = E('dynamicMesh',

@@ -44,6 +44,7 @@ TYPE_MAP = {
     BoundaryType.INTERFACE:             'cyclicAMI',
     BoundaryType.EMPTY:                 'empty',
     BoundaryType.CYCLIC:                'cyclic',
+    BoundaryType.CYCLIC_ACMI:           'cyclicACMI',
     BoundaryType.WEDGE:                 'wedge',
 }
 
@@ -116,9 +117,10 @@ class P(BoundaryCondition):
                     'cyclic':     (lambda: self._constructCyclic()),
                     'symmetry':   (lambda: self._constructSymmetry()),
                     'cyclicAMI':  (lambda: self._constructCyclicAMI()),
+                    'cyclicACMI': (lambda: self._constructCyclicACMI()),
                     'empty':      (lambda: self._constructEmpty()),
                     'wedge':      (lambda: self._constructWedge())
-                }.get(t)()
+                }.get(t, lambda: None)()
             else:
                 xpath = BoundaryDB.getXPath(bcid)
 
@@ -148,8 +150,9 @@ class P(BoundaryCondition):
                     BoundaryType.FAN:                   (lambda: self._constructFan(xpath, bcid)),
                     BoundaryType.EMPTY:                 (lambda: self._constructEmpty()),
                     BoundaryType.CYCLIC:                (lambda: self._constructCyclic()),
+                    BoundaryType.CYCLIC_ACMI:           (lambda: self._constructCyclicACMI()),
                     BoundaryType.WEDGE:                 (lambda: self._constructWedge())
-                }.get(type_)()
+                }.get(type_, lambda: None)()
 
         return field
 

@@ -54,6 +54,7 @@ class BoundaryTypePicker(QWidget):
             self._ui.interface_:        BoundaryType.INTERFACE,
             self._ui.empty:             BoundaryType.EMPTY,
             self._ui.cyclic:            BoundaryType.CYCLIC,
+            self._ui.cyclicACMI:        BoundaryType.CYCLIC_ACMI,
             self._ui.wedge:             BoundaryType.WEDGE,
             self._ui.porousJump:        BoundaryType.POROUS_JUMP,
             self._ui.FAN:               BoundaryType.FAN,

@@ -96,7 +96,9 @@ class DynamicMeshService:
                                 oldMesh: dict[str, RegionComponents],
                                 newMesh: dict[str, RegionComponents]):
 
-        if len(newMesh) > 1:  # dynamic mesh does not support multi-region
+        # 1. dynamic mesh does not support multi-region
+        # 2. no update if it is the first time to load mesh
+        if len(newMesh) > 1 or len(oldMesh) == 0:
             self._dynamicMesh = DynamicMesh()
             return
 

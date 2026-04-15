@@ -145,6 +145,12 @@ class BoundaryCondition(DictionaryFile):
             'type': 'cyclic'
         }
 
+    def _constructCyclicACMI(self):
+        return {
+            'type': 'cyclicACMI',
+            'value': self._initialValueByTime()
+        }
+
     def _constructWedge(self):
         return {
             'type': 'wedge'

@@ -309,6 +309,7 @@
         </temporalDistribution>
     </temperature>
     <coupledBoundary>0</coupledBoundary>
+    <fallbackBoundary>0</fallbackBoundary>
     <volumeFractions/>
     <userDefinedScalars/>
     <species/>

@@ -4,7 +4,7 @@
 import asyncio
 import types
 import weakref
-from typing import Callable, Optional
+from typing import Callable, Optional, get_origin
 
 
 class AsyncSignal():
@@ -39,7 +39,7 @@ class AsyncSignal():
             raise AssertionError('Wrong number of Parameters')
 
         for arg, type_ in zip(args, self._types):
-            if not isinstance(arg, type_):
+            if not isinstance(arg, get_origin(type_) or type_):
                 raise AssertionError('Wrong parameter type')
 
         dead = []

@@ -3,6 +3,7 @@
 
 import logging
 import re
+from typing import Optional
 
 from PyFoam.RunDictionary.ParsedParameterFile import ParsedBoundaryDict
 from PySide6.QtCore import QObject, Signal
@@ -91,6 +92,9 @@ def defaultBoundaryType(name, geometricalType: GeometricalType)->BoundaryType:
 
     if geometricalType == GeometricalType.CYCLIC_AMI:
         return BoundaryType.INTERFACE
+
+    if geometricalType == GeometricalType.CYCLIC_ACMI:
+        return BoundaryType.CYCLIC_ACMI
 
     if geometricalType == GeometricalType.MAPPED_WALL:
         return BoundaryType.THERMO_COUPLED_WALL
@@ -288,7 +292,7 @@ class PolyMeshLoader(QObject):
                 boundary = boundaries[rname][bcname]
                 geometricalType = GeometricalType(boundary['type'])
 
-                coupledBoundary = None
+                coupledBoundary: Optional[dict] = None
                 if BoundaryDB.needsCoupledBoundary(boundary['bctype']):
                     if geometricalType == GeometricalType.MAPPED_WALL and 'samplePatch' in boundary:
                         sampleRegion, samplePatch = getSamplePatch(rname, bcname)
@@ -307,7 +311,7 @@ class PolyMeshLoader(QObject):
                         else:
                             boundary['bctype'] = BoundaryType.THERMO_COUPLED_WALL
 
-                if coupledBoundary and 'bctype' in coupledBoundary and coupledBoundary['bctype'] == boundary['bctype']:
+                if coupledBoundary and ('bctype' in coupledBoundary) and (coupledBoundary['bctype'] == boundary['bctype']):
                     boundary['couple'] = coupledBoundary
                     coupledBoundary['couple'] = boundary
 
