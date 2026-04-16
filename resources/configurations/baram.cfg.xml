@@ -399,7 +399,7 @@
             <retainOnlyTheMostRecentFiles>false</retainOnlyTheMostRecentFiles>
             <maximumNumberOfDataFiles>1</maximumNumberOfDataFiles>
             <dataWriteFormat>binary</dataWriteFormat>
-            <dataWritePrecision>6</dataWritePrecision>
+            <dataWritePrecision>12</dataWritePrecision>
             <timePrecision>6</timePrecision>
         </runConditions>
         <parallel>

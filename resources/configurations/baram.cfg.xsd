@@ -3696,7 +3696,7 @@
                                                 </xs:restriction>
                                             </xs:simpleType>
                                         </xs:element>
-                                        <xs:element name="dataWritePrecision" type="xs:positiveInteger" default="6"/>
+                                        <xs:element name="dataWritePrecision" type="xs:positiveInteger" default="12"/>
                                         <xs:element name="timePrecision" type="xs:positiveInteger" default="6"/>
                                     </xs:sequence>
                                 </xs:complexType>
