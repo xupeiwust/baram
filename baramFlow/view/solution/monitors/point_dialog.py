@@ -98,9 +98,9 @@ class PointDialog(QDialog):
 
         self._ui.field.setCurrentIndex(self._ui.field.findData(data.field.field))
         self._ui.fieldComponent.setCurrentIndex(self._ui.fieldComponent.findData(data.field.component))
-        self._ui.coordinateX.setText(data.coordinate.x)
-        self._ui.coordinateY.setText(data.coordinate.y)
-        self._ui.coordinateZ.setText(data.coordinate.z)
+        self._ui.coordinateX.setPFloat(data.coordinate.x)
+        self._ui.coordinateY.setPFloat(data.coordinate.y)
+        self._ui.coordinateZ.setPFloat(data.coordinate.z)
 
         self._setSnapOntoBoundary(data.snapOntoBoundary)
 
@@ -165,9 +165,9 @@ class PointDialog(QDialog):
                 field=MonitorField(field=getFieldInstance(field.category, field.codeName),
                                    component=self._ui.fieldComponent.currentData()),
                 coordinate=Vector(
-                    str(PFloat(self._ui.coordinateX.text(), self.tr('Coordinate X'))),
-                    str(PFloat(self._ui.coordinateY.text(), self.tr('Coordinate Y'))),
-                    str(PFloat(self._ui.coordinateZ.text(), self.tr('Coordinate Z')))),
+                    self._ui.coordinateX.pFloat(self.tr('Coordinate X')),
+                    self._ui.coordinateY.pFloat(self.tr('Coordinate Y')),
+                    self._ui.coordinateZ.pFloat(self.tr('Coordinate Z'))),
                 snapOntoBoundary=self._snapOntoBoundary,
                 region=region)
 

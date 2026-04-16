@@ -56,7 +56,7 @@ class ForceDialog(QDialog):
         super().reject()
 
     def _connectSignalsSlots(self):
-        self._ui.specificationMethod.currentDataChanged.connect(self._onSpecificationMethodChanged)
+        self._ui.specificationMethod.currentIndexChanged.connect(self._onSpecificationMethodChanged)
         self._ui.select.clicked.connect(self._selectBoundaries)
         self._ui.ok.clicked.connect(self._accept)
 
@@ -75,18 +75,18 @@ class ForceDialog(QDialog):
 
         self._ui.specificationMethod.setCurrentIndex(
             self._ui.specificationMethod.findData(data.forceDirection.specificationMethod))
-        self._ui.dragDirectionX.setText(data.forceDirection.dragDirection.x)
-        self._ui.dragDirectionY.setText(data.forceDirection.dragDirection.y)
-        self._ui.dragDirectionZ.setText(data.forceDirection.dragDirection.z)
-        self._ui.liftDirectionX.setText(data.forceDirection.liftDirection.x)
-        self._ui.liftDirectionY.setText(data.forceDirection.liftDirection.y)
-        self._ui.liftDirectionZ.setText(data.forceDirection.liftDirection.z)
+        self._ui.dragDirectionX.setPFloat(data.forceDirection.dragDirection.x)
+        self._ui.dragDirectionY.setPFloat(data.forceDirection.dragDirection.y)
+        self._ui.dragDirectionZ.setPFloat(data.forceDirection.dragDirection.z)
+        self._ui.liftDirectionX.setPFloat(data.forceDirection.liftDirection.x)
+        self._ui.liftDirectionY.setPFloat(data.forceDirection.liftDirection.y)
+        self._ui.liftDirectionZ.setPFloat(data.forceDirection.liftDirection.z)
         self._ui.AoA.setText(data.forceDirection.angleOfAttack)
         self._ui.AoS.setText(data.forceDirection.angleOfSideslip)
 
-        self._ui.centerOfRotationX.setText(data.centerOfRotation.x)
-        self._ui.centerOfRotationY.setText(data.centerOfRotation.y)
-        self._ui.centerOfRotationZ.setText(data.centerOfRotation.z)
+        self._ui.centerOfRotationX.setPFloat(data.centerOfRotation.x)
+        self._ui.centerOfRotationY.setPFloat(data.centerOfRotation.y)
+        self._ui.centerOfRotationZ.setPFloat(data.centerOfRotation.z)
         self._region = data.region
         self._setBoundaries(data.boundaries)
 
@@ -117,12 +117,12 @@ class ForceDialog(QDialog):
 
             forceDirection = ForceDirection(
                 specificationMethod=self._ui.specificationMethod.currentData(),
-                dragDirection=Vector(str(PFloat(self._ui.dragDirectionX.text(), self.tr('Drag Direction'))),
-                                     str(PFloat(self._ui.dragDirectionY.text(), self.tr('Drag Direction'))),
-                                     str(PFloat(self._ui.dragDirectionZ.text(), self.tr('Drag Direction')))),
-                liftDirection=Vector(str(PFloat(self._ui.liftDirectionX.text(), self.tr('Lift Direction'))),
-                                     str(PFloat(self._ui.liftDirectionY.text(), self.tr('Lift Direction'))),
-                                     str(PFloat(self._ui.liftDirectionZ.text(), self.tr('Lift Direction')))))
+                dragDirection=Vector(self._ui.dragDirectionX.pFloat(self.tr('Drag Direction')),
+                                     self._ui.dragDirectionY.pFloat(self.tr('Drag Direction')),
+                                     self._ui.dragDirectionZ.pFloat(self.tr('Drag Direction'))),
+                liftDirection=Vector(self._ui.liftDirectionX.pFloat(self.tr('Lift Direction')),
+                                     self._ui.liftDirectionY.pFloat(self.tr('Lift Direction')),
+                                     self._ui.liftDirectionZ.pFloat(self.tr('Lift Direction'))))
             if forceDirection.specificationMethod == DirectionSpecificationMethod.AOA_AOS:
                 forceDirection.angleOfAttack = str(PFloat(self._ui.AoA.text(), self.tr('Angle of Attack')))
                 forceDirection.angleOfSideslip = str(PFloat(self._ui.AoS.text(), self.tr('Angle of Sideslip')))
@@ -131,9 +131,9 @@ class ForceDialog(QDialog):
                 monitorBase=base,
                 forceDirection=forceDirection,
                 centerOfRotation=Vector(
-                    str(PFloat(self._ui.centerOfRotationX.text(), self.tr('Center of Rotation X'))),
-                    str(PFloat(self._ui.centerOfRotationY.text(), self.tr('Center of Rotation Y'))),
-                    str(PFloat(self._ui.centerOfRotationZ.text(), self.tr('Center of Rotation Z')))),
+                    self._ui.centerOfRotationX.pFloat(self.tr('Center of Rotation X')),
+                    self._ui.centerOfRotationY.pFloat(self.tr('Center of Rotation Y')),
+                    self._ui.centerOfRotationZ.pFloat(self.tr('Center of Rotation Z'))),
                 region=self._region,
                 boundaries=self._boundaries)
 
