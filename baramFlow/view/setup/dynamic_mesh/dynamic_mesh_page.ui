@@ -427,6 +427,9 @@
              <layout class="QVBoxLayout" name="bodiesGroupLayout">
               <item>
                <widget class="ContentSizedListWidget" name="bodyList">
+                <property name="contextMenuPolicy">
+                 <enum>Qt::ContextMenuPolicy::CustomContextMenu</enum>
+                </property>
                 <property name="verticalScrollBarPolicy">
                  <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
                 </property>
@@ -451,26 +454,6 @@
                   <widget class="QPushButton" name="addBodyButton">
                    <property name="text">
                     <string>Add</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QPushButton" name="editBodyButton">
-                   <property name="enabled">
-                    <bool>false</bool>
-                   </property>
-                   <property name="text">
-                    <string>Edit</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QPushButton" name="removeBodyButton">
-                   <property name="enabled">
-                    <bool>false</bool>
-                   </property>
-                   <property name="text">
-                    <string>Remove</string>
                    </property>
                   </widget>
                  </item>

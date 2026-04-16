@@ -87,6 +87,7 @@ class RotationalSpringDialog(QDialog):
         self._ui = Ui_RotationalSpringDialog()
         self._ui.setupUi(self)
         self._restraint = restraint
+        self._showOrientation = showOrientation
 
         self._ui.axis.setVector(restraint.axis)
         self._ui.springConstant.setPFloat(restraint.springConstant)
@@ -119,17 +120,19 @@ class RotationalSpringDialog(QDialog):
             springConstant = self._ui.springConstant.pFloat(self.tr('Spring Constant'), low=0)
             dampingConstant = self._ui.dampingConstant.pFloat(self.tr('Damping Constant'), low=0)
 
-            useBoundaryOrientation = self._ui.useBoundaryOrientation.isChecked()
+            if self._showOrientation:
+                useBoundaryOrientation = self._ui.useBoundaryOrientation.isChecked()
 
-            oriEdits = [
-                [self._ui.ori00, self._ui.ori01, self._ui.ori02],
-                [self._ui.ori10, self._ui.ori11, self._ui.ori12],
-                [self._ui.ori20, self._ui.ori21, self._ui.ori22],
-            ]
-            orientation: list[PFloat] = []
-            for i in range(3):
-                for j in range(3):
-                    orientation.append(oriEdits[i][j].pFloat(self.tr('Orientation')))
+                oriEdits = [
+                    [self._ui.ori00, self._ui.ori01, self._ui.ori02],
+                    [self._ui.ori10, self._ui.ori11, self._ui.ori12],
+                    [self._ui.ori20, self._ui.ori21, self._ui.ori22],
+                ]
+                orientation: list[PFloat] = []
+                for i in range(3):
+                    for j in range(3):
+                        orientation.append(oriEdits[i][j].pFloat(self.tr('Orientation')))
+
         except ValueError as e:
             await AsyncMessageBox().warning(self, self.tr('Warning'), str(e))
             return
@@ -137,8 +140,9 @@ class RotationalSpringDialog(QDialog):
         self._restraint.axis = axis
         self._restraint.springConstant = springConstant
         self._restraint.dampingConstant = dampingConstant
-        self._restraint.useBoundaryOrientation = useBoundaryOrientation
-        self._restraint.orientation = orientation
+        if self._showOrientation:
+            self._restraint.useBoundaryOrientation = useBoundaryOrientation
+            self._restraint.orientation = orientation
 
         EventBus().onConfigChanged.emit()
 

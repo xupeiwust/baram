@@ -104,7 +104,9 @@ class BodyDialog(QDialog):
     def _connectSignalsSlots(self):
         self._ui.selectBoundariesButton.clicked.connect(self._selectBoundariesClicked)
         self._ui.jointList.customContextMenuRequested.connect(self._showJointContextMenu)
+        self._ui.jointList.itemDoubleClicked.connect(self._editJoint)
         self._ui.rbdRestraintList.customContextMenuRequested.connect(self._showRbdRestraintMenu)
+        self._ui.rbdRestraintList.itemDoubleClicked.connect(self._editRbdRestraint)
         self._ui.buttonBox.accepted.connect(self._accept)
         self._ui.buttonBox.rejected.connect(self.reject)
 

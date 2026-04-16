@@ -79,11 +79,9 @@ class DynamicMeshPage(ContentPage):
 
         # Rigid Body Dynamics
         self._ui.rbdSolverCombo.currentIndexChanged.connect(self._rbdSolverChanged)
+        self._ui.bodyList.customContextMenuRequested.connect(self._showBodyContextMenu)
         self._ui.bodyList.itemDoubleClicked.connect(self._editBody)
         self._ui.addBodyButton.clicked.connect(self._addBody)
-        self._ui.editBodyButton.clicked.connect(self._editBody)
-        self._ui.removeBodyButton.clicked.connect(self._removeBody)
-        self._ui.bodyList.currentItemChanged.connect(self._bodySelected)
 
     def showEvent(self, ev):
         if not ev.spontaneous():
@@ -209,7 +207,7 @@ class DynamicMeshPage(ContentPage):
         row = self._ui.mdList.currentRow()
         if row < 0:
             return
-        menu = QMenu(self)
+        menu = QMenu(self.window())
         if row > 0:
             menu.addAction(self.tr('Move Up')).triggered.connect(lambda: self._moveMd(row, row - 1))
         if row < self._ui.mdList.count() - 1:
@@ -328,10 +326,14 @@ class DynamicMeshPage(ContentPage):
         self._ui.bodyList.setItemWidget(item, widget)
         self._ui.bodyList.updateGeometry()
 
-    def _bodySelected(self):
-        enabled = self._ui.bodyList.currentRow() >= 0
-        self._ui.editBodyButton.setEnabled(enabled)
-        self._ui.removeBodyButton.setEnabled(enabled)
+    def _showBodyContextMenu(self, pos):
+        row = self._ui.bodyList.currentRow()
+        if row < 0:
+            return
+        menu = QMenu(self.window())
+        menu.addAction(self.tr('Edit')).triggered.connect(self._editBody)
+        menu.addAction(self.tr('Remove')).triggered.connect(self._removeBody)
+        menu.exec(self._ui.bodyList.mapToGlobal(pos))
 
     def _addBody(self):
         existingBodies = [(b.uuid, b.name) for b in self._dynamicMesh.rigidBodyDynamics.bodies]

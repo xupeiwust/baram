@@ -61,6 +61,7 @@ class RigidBodyMotionDialog(QDialog):
         self._restraintList = QListWidget()
         self._restraintList.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self._restraintList.customContextMenuRequested.connect(self._showRestraintContextMenu)
+        self._restraintList.itemDoubleClicked.connect(self._editRestraint)
 
         layout = QVBoxLayout(self._ui.scrollAreaWidgetContents)
         layout.setContentsMargins(0, 0, 0, 0)

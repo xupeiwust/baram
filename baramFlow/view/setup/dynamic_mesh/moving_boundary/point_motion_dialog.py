@@ -108,6 +108,7 @@ class PointMotionDialog(QDialog):
     def _connectSignalsSlots(self):
         self._ui.changeButton.clicked.connect(self._changeType)
         self._ui.mfList.customContextMenuRequested.connect(self._showMfContextMenu)
+        self._ui.mfList.itemDoubleClicked.connect(self._editMf)
         self._ui.editRigidBodyButton.clicked.connect(self._editRigidBodyMotion)
         self._ui.buttonBox.accepted.connect(self._accept)
         self._ui.buttonBox.rejected.connect(self.reject)
