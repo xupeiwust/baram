@@ -102,7 +102,7 @@ class FvSolution(DictionaryFile):
                     'minIter': 1,
                     'maxIter': 10,
                 },
-                'cellDisplacement': {
+                '"(cellDisplacement|cellDisplacementFinal)"': {
                     'solver': 'GAMG',
                     'tolerance': '1e-5',
                     'relTol': '0',
@@ -197,6 +197,7 @@ class FvSolution(DictionaryFile):
                 # only in single region case
                 'nOuterCorrectors':
                     self._db.getValue(NumericalDB.NUMERICAL_CONDITIONS_XPATH + '/maxIterationsPerTimeStep'),
+                'moveMeshOuterCorrectors': 'yes',
                 'nAlphaSpreadIter': 0,
                 'nAlphaSweepIter': 0,
                 'maxCo': self._db.getValue('/runCalculation/runConditions/maxCourantNumber'),
