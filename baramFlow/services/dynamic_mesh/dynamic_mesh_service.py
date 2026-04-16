@@ -62,25 +62,8 @@ class DynamicMeshService:
             rnames = db.getRegions()
 
             if len(rnames) == 1:  # Dynamic Mesh does not support multi-region
-                movingBoundaries: list[MovingBoundaryEntry] = []
-
-                for bcid, bcname, typeStr in db.getBoundaryConditions(rnames[0]):
-                    mb = MovingBoundaryEntry(boundary=str(bcid))
-
-                    bctype = BoundaryType(typeStr)
-                    if bctype == BoundaryType.SYMMETRY:
-                        mb.pointMotionType = PointMotionType.SYMMETRY
-                    elif bctype == BoundaryType.EMPTY:
-                        mb.pointMotionType = PointMotionType.EMPTY
-                    elif bctype == BoundaryType.WEDGE:
-                        mb.pointMotionType = PointMotionType.WEDGE
-                    elif bctype == BoundaryType.CYCLIC:
-                        mb.pointMotionType = PointMotionType.CYCLIC
-
-                    movingBoundaries.append(mb)
-
-                self._dynamicMesh.movingBoundaries = movingBoundaries
-
+                boundaries = [str(bcid) for bcid, bcname, typeStr in db.getBoundaryConditions(rnames[0])]
+                self._dynamicMesh.movingBoundaries = self._generateMovingBoundaries(boundaries)
         # End
 
     def saveToCoreDB(self):
@@ -96,20 +79,27 @@ class DynamicMeshService:
                                 oldMesh: dict[str, RegionComponents],
                                 newMesh: dict[str, RegionComponents]):
 
-        # 1. dynamic mesh does not support multi-region
-        # 2. no update if it is the first time to load mesh
-        if len(newMesh) > 1 or len(oldMesh) == 0:
+        if len(newMesh) == 0:
+            return
+        
+        # dynamic mesh does not support multi-region
+        if len(newMesh) > 1:
             self._dynamicMesh = DynamicMesh()
             return
 
-        oldDefaultRegion = list(oldMesh.values())[0]
         newDefaultRegion = list(newMesh.values())[0]
-
-        oldBoundaries = bidict(oldDefaultRegion['boundaries'])
         newBoundaries = bidict(newDefaultRegion['boundaries'])
-
-        oldCellZones  = bidict(oldDefaultRegion['cellZones'])
         newCellZones  = bidict(newDefaultRegion['cellZones'])
+
+        if len(oldMesh) == 0:
+            self._dynamicMesh = DynamicMesh()
+            boundaries = [bcid for bcname, bcid in newBoundaries.items()]
+            self._dynamicMesh.movingBoundaries = self._generateMovingBoundaries(boundaries)
+            return
+
+        oldDefaultRegion = list(oldMesh.values())[0]
+        oldBoundaries = bidict(oldDefaultRegion['boundaries'])
+        oldCellZones  = bidict(oldDefaultRegion['cellZones'])
 
         for md in self._dynamicMesh.motionDefinitions:
             md.processMeshUpdate(oldCellZones, newCellZones)
@@ -120,13 +110,9 @@ class DynamicMeshService:
                 mb = next(mb for mb in self._dynamicMesh.movingBoundaries if mb.boundary == oldBoundaries[bcname])
             else:
                 mb = MovingBoundaryEntry(boundary=bcid)
+                self._constraintBoundaryUpdate(mb)
 
             newMovingBoundaries.append(mb)
-
-        for mb in newMovingBoundaries:
-            bctype = BoundaryDB.getBoundaryType(mb.boundary)
-            if bctype in _CONSTRAINT_BOUNDARY_TYPE_MAP:
-                mb.pointMotionType = _CONSTRAINT_BOUNDARY_TYPE_MAP[bctype]
 
         self._dynamicMesh.movingBoundaries = newMovingBoundaries
 
@@ -144,6 +130,19 @@ class DynamicMeshService:
     def _handleSave(self):
         self.saveToCoreDB()
 
+    def _constraintBoundaryUpdate(self, mb: MovingBoundaryEntry):
+        bctype = BoundaryDB.getBoundaryType(mb.boundary)
+        if bctype in _CONSTRAINT_BOUNDARY_TYPE_MAP:
+            mb.pointMotionType = _CONSTRAINT_BOUNDARY_TYPE_MAP[bctype]
+
+    def _generateMovingBoundaries(self, boundaries: list[str]):
+        movingBoundaries = []
+        for bcid in boundaries:
+            mb = MovingBoundaryEntry(boundary=str(bcid))
+            self._constraintBoundaryUpdate(mb)
+            movingBoundaries.append(mb)
+
+        return movingBoundaries
 
 # Auto-instantiate the singleton so that event bus connections are established at import time
 _instance = DynamicMeshService()
