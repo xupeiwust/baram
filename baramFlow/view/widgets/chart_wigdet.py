@@ -177,13 +177,10 @@ class ChartWidget(QWidget):
         right = maxX + margin
 
         d = data[(data.index >= minX) & (data.index <= maxX)]
-        minY = d[d>0].min().min()
-        maxY = d.max().max()
 
         if self._logScale:
-            # value cannot be "0" or close to "0" in log scale chart
-            minY = max(minY, sys.float_info.min)
-            maxY = max(maxY, sys.float_info.min)
+            minY = d[d>0].min().min()
+            maxY = d[d>0].max().max()
 
             # 10x margin in log scale
             bottom = minY / 10
@@ -192,6 +189,8 @@ class ChartWidget(QWidget):
             bottom = math.log10(bottom)
             top    = math.log10(top)
         else:
+            minY = d.min().min()
+            maxY = d.max().max()
             margin = (maxY - minY) * SIDE_MARGIN
             if margin < sys.float_info.epsilon:  # minY and maxY are almost same
                 if minY == 0:
