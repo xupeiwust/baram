@@ -142,7 +142,8 @@ class GeometryPage(StepPage):
             gIds = self._dialog.gIds()
             for gId, surface in app.db.getElements('geometry', lambda i, e: i in gIds).items():
                 self._list.update(gId, surface)
-                self._geometryManager.updateIndependentSurface(gId, surface)
+                if surface.value('volume') is not None:
+                    self._geometryManager.updateIndependentSurface(gId, surface)
 
         items = self._list.selectedItems()
 

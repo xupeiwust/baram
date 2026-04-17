@@ -45,8 +45,10 @@ class SnapPage(StepPage):
 
         self._connectSignalsSlots()
 
+    def open(self):
+        self._loadSurfaces()
+
     async def show(self, isCurrentStep, batchRunning):
-        self.load()
         self.updateWorkingStatus()
 
         self._ui.snap.setEnabled(isCurrentStep and not batchRunning)
@@ -106,25 +108,8 @@ class SnapPage(StepPage):
         if self._loaded:
             return
 
-        dbElement = app.db.checkout()
-
-        self._setConfigurations(dbElement.getElement('snap'))
-
-        self._availableSurfaces = []
-        self._surfaces = []
-        self._ui.bufferLayerSurfaces.clear()
-        for gid, geometry in app.db.getElements('geometry').items():
-            if geometry.enum('gType') == GeometryType.SURFACE:
-                name = geometry.value('name')
-                isInterface = geometry.enum('cfdType') == CFDType.INTERFACE
-
-                self._availableSurfaces.append(SelectorItem(name, name, gid, not isInterface))
-
-                if geometry.value('addBufferLayers') or isInterface:
-                    self._ui.bufferLayerSurfaces.addItem(name)
-                    self._surfaces.append(gid)
-
-        self._oldSurfaces = self._surfaces
+        self._setConfigurations(app.db.getElement('snap'))
+        self._loadSurfaces()
 
         self._loaded = True
 
@@ -169,6 +154,23 @@ class SnapPage(StepPage):
         self._smoothingMethod.setCheckedData(bufferLayer.enum('pointSmoothingMethod'))
         self._ui.bufferLayerNumberOfPointSmootherIteration.setText(bufferLayer.value('numberOfPointSmoothingIteration'))
         self._ui.bufferLayerGETMeTransformationParameter.setText(bufferLayer.value('GETMeTransformationParameter'))
+
+    def _loadSurfaces(self):
+        self._availableSurfaces = []
+        self._surfaces = []
+        self._ui.bufferLayerSurfaces.clear()
+        for gid, geometry in app.db.getElements('geometry').items():
+            if geometry.enum('gType') == GeometryType.SURFACE:
+                name = geometry.value('name')
+                isInterface = geometry.enum('cfdType') == CFDType.INTERFACE
+
+                self._availableSurfaces.append(SelectorItem(name, name, gid, not isInterface))
+
+                if geometry.value('addBufferLayers') or isInterface:
+                    self._ui.bufferLayerSurfaces.addItem(name)
+                    self._surfaces.append(gid)
+
+        self._oldSurfaces = self._surfaces
 
     @qasync.asyncSlot()
     async def _snap(self):

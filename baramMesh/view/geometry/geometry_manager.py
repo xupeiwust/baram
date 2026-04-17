@@ -3,6 +3,8 @@
 
 from PySide6.QtCore import Signal
 
+from libbaram.simple_db.simple_db import Element
+
 from baramMesh.app import app
 from baramMesh.db.configurations_schema import GeometryType, Shape
 from baramMesh.rendering.actor_info import GeometryActor
@@ -69,9 +71,10 @@ class GeometryManager(ActorManager):
 
         self.applyToDisplay()
 
-    def updateIndependentSurface(self, gId, surface):
+    def updateIndependentSurface(self, gId, surface: Element):
         self._updateActorName(gId, surface.value('name'))
-        self.update(gId, self._surfaceToPolyData(surface))
+        if surface.enum('shape') == Shape.TRI_SURFACE_MESH:
+            self.update(gId, self._surfaceToPolyData(surface))
 
         self.applyToDisplay()
 
