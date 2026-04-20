@@ -1398,9 +1398,8 @@ def _version_12(root: etree.Element, path):
             coupled = b.find('coupledBoundary', namespaces=_nsmap)
             e = etree.Element(f'{{{_ns}}}fallbackBoundary')
             e.text = '0'
-            b.insert(list(p).index(coupled) + 1, e)
+            b.insert(list(b).index(coupled) + 1, e)
 
-            
     for p in root.findall('monitors/*/*', namespaces=_nsmap):
         if p.find('uuid', namespaces=_nsmap) is None:
             logger.debug(f'    Adding "uuid", "functionName" to {p}')
@@ -1463,7 +1462,7 @@ def _version_12(root: etree.Element, path):
             order += 1
 
         slidingMesh = p.find('slidingMesh', namespaces=_nsmap)
-        if slidingMesh:
+        if slidingMesh is not None:
             p.remove(slidingMesh)
 
     if (p := root.find('dynamicMesh', namespaces=_nsmap)) is None:
