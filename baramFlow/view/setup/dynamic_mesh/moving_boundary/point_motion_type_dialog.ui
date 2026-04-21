@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>376</width>
-    <height>413</height>
+    <height>374</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -59,13 +59,6 @@
        <widget class="QRadioButton" name="cyclicRadio">
         <property name="text">
          <string>Cyclic</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QRadioButton" name="cyclicAMIRadio">
-        <property name="text">
-         <string>CyclicAMI</string>
         </property>
        </widget>
       </item>

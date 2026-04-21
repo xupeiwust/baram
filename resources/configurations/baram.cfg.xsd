@@ -3215,7 +3215,6 @@
                                                                 <xs:enumeration value="prescribedMotion"/>
                                                                 <xs:enumeration value="rigidBodyMotion"/>
                                                                 <xs:enumeration value="cyclic"/>
-                                                                <xs:enumeration value="cyclicAMI"/>
                                                                 <xs:enumeration value="symmetry"/>
                                                                 <xs:enumeration value="empty"/>
                                                                 <xs:enumeration value="wedge"/>
