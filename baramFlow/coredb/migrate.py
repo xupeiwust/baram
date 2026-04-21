@@ -1461,6 +1461,7 @@ def _version_12(root: etree.Element, path):
             motionDefinitions.append(md)
             order += 1
 
+    for p in root.findall(f'regions/region/cellZones/cellZone', namespaces=_nsmap):
         slidingMesh = p.find('slidingMesh', namespaces=_nsmap)
         if slidingMesh is not None:
             p.remove(slidingMesh)
