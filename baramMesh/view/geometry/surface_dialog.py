@@ -91,14 +91,14 @@ class SurfaceDialog(QDialog):
                 element = db.checkout(f'geometry/{gId}')
 
                 cfdType = self._typeRadios.checkedData()
-                element.setValue('cfdType', cfdType)
+                if element.setValue('cfdType', cfdType):
+                    if cfdType != CFDType.INTERFACE:
+                        element.setValue('slaveLayerGroup', None)
+                        if cfdType != CFDType.BOUNDARY:
+                            element.setValue('layerGroup', None)
+
                 element.setValue('nonConformal', self._ui.nonConformal.isChecked())
                 element.setValue('interRegion', self._ui.interRegion.isChecked())
-
-                if cfdType != CFDType.INTERFACE.value:
-                    element.setValue('slaveLayerGroup', None)
-                    if cfdType != CFDType.BOUNDARY.value:
-                        element.setValue('layerGroup', None)
 
                 db.commit(element)
 
