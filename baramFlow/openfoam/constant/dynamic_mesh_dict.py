@@ -57,10 +57,30 @@ def getMotionFunctionDict(f: MotionFunction):
         return {
             'solidBodyMotionFunction': 'tabulated6DoFMotion',
             'tabulated6DoFMotionCoeffs': {
-                'CofG': f.origin.toFloatList()
+                'CofG': f.origin.toFloatList(),
+                'timeDataFileName': f'"<constant>/{uuidToNnstr(f.uuid)}"'
             }
         }
-        # ToDo: save data to file and add the name into the dictionary
+
+
+def writeManualPositionsDataFile(f: MotionFunction):
+    # Write the table consumed by tabulated6DoFMotion. Format:
+    #     N
+    #     (
+    #         (t ((surge sway heave) (roll pitch yaw)))
+    #         ...
+    #     )
+    p = f.positions
+    assert len(p.t) == len(p.surge) == len(p.sway) == len(p.heave) \
+            == len(p.roll) == len(p.pitch) == len(p.yaw)
+
+    path = FileSystem.constantPath() / uuidToNnstr(f.uuid)
+    with open(path, 'w') as file:
+        file.write(f'{len(p.t)} (\n')
+        for i in range(len(p.t)):
+            file.write(f'({p.t[i]} (({p.surge[i]} {p.sway[i]} {p.heave[i]}) ({p.roll[i]} {p.pitch[i]} {p.yaw[i]})))\n')
+        file.write(')\n')
+
 
 class DynamicMeshDict(DictionaryFile):
     def __init__(self, rname: str):
@@ -117,6 +137,8 @@ class DynamicMeshDict(DictionaryFile):
 
             for mFunction in motionDefinition.motionFunctions:
                 multiMotionCoeffs[uuidToNnstr(mFunction.uuid)] = getMotionFunctionDict(mFunction)
+                if mFunction.functionType == MotionFunctionType.MANUAL_POSITION:
+                    writeManualPositionsDataFile(mFunction)
 
             mdData = {
                 'motionSolver': 'solidBody',

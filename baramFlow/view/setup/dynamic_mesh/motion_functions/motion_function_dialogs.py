@@ -1,13 +1,16 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import asyncio
+
 import qasync
 
 from PySide6.QtWidgets import QDialog
 
-from baramFlow.base.dynamic_mesh.motion_function import MotionFunctionType, MotionFunction
+from baramFlow.base.dynamic_mesh.motion_function import MotionFunctionType, MotionFunction, Positions
 from baramFlow.base.event_bus import EventBus
 from widgets.async_message_box import AsyncMessageBox
+from widgets.simple_sheet_dialog import SimpleSheetDialog
 
 from .rotation_dialog_ui import Ui_RotationDialog
 from .rotating_oscillation_dialog_ui import Ui_RotatingOscillationDialog
@@ -145,11 +148,23 @@ class ManualPositionDialog(QDialog):
         self._ui = Ui_ManualPositionDialog()
         self._ui.setupUi(self)
         self._mf = motionFunction
+        self._positions = self._mf.positions.toRows()
 
         self._ui.cog.setVector(motionFunction.origin)
 
+        self._ui.positionsButton.clicked.connect(self._handlePositionsButtonClick)
         self._ui.buttonBox.accepted.connect(self._accept)
         self._ui.buttonBox.rejected.connect(self.reject)
+
+    @qasync.asyncSlot()
+    async def _handlePositionsButtonClick(self):
+        dialog = SimpleSheetDialog(self, self.tr('Manual Positions'),
+                                   [self.tr('t'), self.tr('surge'), self.tr('sway'), self.tr('heave'), self.tr('roll'), self.tr('pitch'), self.tr('yaw')],
+                                   self._positions)
+        try:
+            self._positions = await dialog.show()
+        except asyncio.CancelledError:
+            return
 
     @qasync.asyncSlot()
     async def _accept(self):
@@ -160,6 +175,7 @@ class ManualPositionDialog(QDialog):
             return
 
         self._mf.origin = origin
+        self._mf.positions = Positions.fromRows(self._positions)
 
         EventBus().onConfigChanged.emit()
 

@@ -21,36 +21,46 @@ class MotionFunctionType(Enum):
 
 @dataclass
 class Positions:
-    t: str = ''
-    surge: str = ''
-    sway: str = ''
-    heave: str = ''
-    roll: str = ''
-    pitch: str = ''
-    yaw: str = ''
+    t:     list[float] = dataClassField(default_factory=list)
+    surge: list[float] = dataClassField(default_factory=list)
+    sway:  list[float] = dataClassField(default_factory=list)
+    heave: list[float] = dataClassField(default_factory=list)
+    roll:  list[float] = dataClassField(default_factory=list)
+    pitch: list[float] = dataClassField(default_factory=list)
+    yaw:   list[float] = dataClassField(default_factory=list)
 
     @classmethod
     def fromElement(cls, e):
-        t = e.find('t', namespaces=nsmap).text or ''
-        surge = e.find('surge', namespaces=nsmap).text or ''
-        sway = e.find('sway', namespaces=nsmap).text or ''
-        heave = e.find('heave', namespaces=nsmap).text or ''
-        roll = e.find('roll', namespaces=nsmap).text or ''
-        pitch = e.find('pitch', namespaces=nsmap).text or ''
-        yaw = e.find('yaw', namespaces=nsmap).text or ''
+        def parse(name):
+            text = e.find(name, namespaces=nsmap).text or ''
+            return [float(v) for v in text.split()]
 
-        return Positions(t=t, surge=surge, sway=sway, heave=heave,
-                         roll=roll, pitch=pitch, yaw=yaw)
+        return Positions(t=parse('t'), surge=parse('surge'), sway=parse('sway'),
+                         heave=parse('heave'), roll=parse('roll'),
+                         pitch=parse('pitch'), yaw=parse('yaw'))
 
     def toElement(self):
+        def joinFloats(values):
+            return ' '.join(str(v) for v in values)
+
         return E('positions',
-                 E('t', self.t),
-                 E('surge', self.surge),
-                 E('sway', self.sway),
-                 E('heave', self.heave),
-                 E('roll', self.roll),
-                 E('pitch', self.pitch),
-                 E('yaw', self.yaw))
+                 E('t', joinFloats(self.t)),
+                 E('surge', joinFloats(self.surge)),
+                 E('sway', joinFloats(self.sway)),
+                 E('heave', joinFloats(self.heave)),
+                 E('roll', joinFloats(self.roll)),
+                 E('pitch', joinFloats(self.pitch)),
+                 E('yaw', joinFloats(self.yaw)))
+
+    @classmethod
+    def fromRows(cls, rows: list[list[float]]):
+        columns = [list(c) for c in zip(*rows)] if rows else [[]] * 7
+        return Positions(t=columns[0], surge=columns[1], sway=columns[2], heave=columns[3],
+                         roll=columns[4], pitch=columns[5], yaw=columns[6])
+
+    def toRows(self) -> list[list[float]]:
+        return [list(r) for r in zip(self.t, self.surge, self.sway, self.heave,
+                                     self.roll, self.pitch, self.yaw)]
 
 
 @dataclass(kw_only=True)
