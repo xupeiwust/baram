@@ -3,8 +3,6 @@
 
 from dataclasses import dataclass, field
 
-from lxml import etree
-
 from baramFlow.base.boundary.boundary_data import BoundaryData
 from baramFlow.base.cell_zone.cell_zone import CellZoneData
 from baramFlow.base.xml_helper import Vector
@@ -59,9 +57,16 @@ class CellZoneModel:
     def name(self):
         return self.cellZone.name
 
+    @property
+    def scopedName(self):
+        return self.cellZone.name if self.rname == '' else f'{self.rname}:{self.cellZone.name}'
+
     def setID(self, czid: str):
         assert self.cellZone.czid is None
         self.cellZone.czid = czid
+
+    def isRegion(self):
+        return self.cellZone.name == CELL_ZONE_NAME_FOR_REGION
 
     def toElement(self):
         return self.cellZone.toElement()

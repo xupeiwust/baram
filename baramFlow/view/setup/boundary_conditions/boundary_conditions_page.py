@@ -125,7 +125,7 @@ class BoundaryConditionsPage(ContentPage):
         self._ui.filter.textChanged.connect(self._filterChanged)
         self._ui.boundaries.itemDoubleClicked.connect(self._doubleClicked)
         self._ui.boundaries.itemChanged.connect(self._itemChanged)
-        self._ui.boundaries.currentItemChanged.connect(self._currentBoundaryChanged)
+        self._ui.boundaries.currentItemChanged.connect(self._onSelectedBoundaryChanged)
         self._ui.copy.clicked.connect(self._copy)
         self._ui.edit.clicked.connect(self._edit)
 
@@ -155,13 +155,13 @@ class BoundaryConditionsPage(ContentPage):
             self._meshUpdated()
 
     def _updateCopyEnabled(self):
-        self._ui.copy.setEnabled(not CaseManager().isActive())
+        self._ui.copy.setEnabled(not CaseManager().isActive() and self._ui.boundaries.currentItem() is not None)
 
     def _updateEditEnabled(self):
         item = self._ui.boundaries.currentItem()
         index = self._ui.boundaries.indexOfTopLevelItem(item)
 
-        if index == -1:  # Not Top level item
+        if index == -1 and item is not None:  # Not Top level item
             bctype = item.bctype()
             if bctype and DIALOGS[bctype]:
                 self._ui.edit.setEnabled(True)
@@ -268,15 +268,18 @@ class BoundaryConditionsPage(ContentPage):
         self._typePicker.picked.connect(self._changeBoundaryType)
         self._typePicker.open(str(bcid), point)
 
-    def _currentBoundaryChanged(self, current):
+    def _onSelectedBoundaryChanged(self, current):
         self._updateEditEnabled()
-        app.meshModel().setCurrentId(current.type())
+        self._updateCopyEnabled()
+
+        if self._ui.boundaries.currentItem() is not None:
+            app.meshModel().setCurrentId(current.type())
 
     def _selectPickedBoundary(self):
         if app.meshModel().currentId():
             self._ui.boundaries.setCurrentItem(self._boundaries[str(app.meshModel().currentId())])
         else:
-            self._ui.boundaries.clearSelection()
+            self._ui.boundaries.setCurrentItem(None)
 
     def _refresh(self, boundaries):
         for bcid in boundaries:

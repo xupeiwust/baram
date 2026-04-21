@@ -11,6 +11,7 @@ from baramFlow.base.model.DPM_model import DPMModelManager
 from baramFlow.base.region.poly_mesh import PolyMeshRegion
 from baramFlow.base.region.region_data import RegionModel, BoundaryModel, CellZoneModel
 from baramFlow.coredb.boundary_db import GeometricalType, BoundaryType, BoundaryDB
+from baramFlow.coredb.cell_zone_db import CellZoneDB
 from baramFlow.coredb.coredb import CoreDB
 from baramFlow.coredb.general_db import GeneralDB
 from baramFlow.coredb.libdb import E
@@ -137,7 +138,7 @@ class _RegionsCache:
         self._regions[model.rname].addCellZone(model)
 
 
-class RegionsCache:
+class RegionManager:
     _cache: _RegionsCache = _RegionsCache()
 
     @classmethod
@@ -158,9 +159,27 @@ class RegionsCache:
         return cls._cache.regions[rname].boundaries
 
     @classmethod
+    def getCellZone(cls, czid: str):
+        cls.reloadCellZone(czid)    # ToDo: Delete if database synchronization is guaranteed.
+        return cls._cache.cellZones[czid]
+
+    @classmethod
+    def getCellZones(cls):
+        return cls._cache.cellZones.values()
+
+    @classmethod
+    def isMultiRegion(cls):
+        return len(cls._cache.regions) > 1
+
+    @classmethod
     def reloadBoundary(cls, bcid):
         new = BoundaryData.fromElement(CoreDB().getElement(BoundaryDB.getXPath(bcid)))
         cls._cache.boundaries[bcid].boundary = new
+
+    @classmethod
+    def reloadCellZone(cls, czid: str):
+        new = CellZoneData.fromElement(CoreDB().getElement(CellZoneDB.getXPath(czid)))
+        cls._cache.cellZones[czid].cellZone = new
 
     @classmethod
     def matches(cls, vtkMesh: dict):

@@ -5,6 +5,7 @@ from uuid import UUID, uuid4
 import qasync
 
 from PySide6.QtCore import Qt
+import pandas as pd
 
 from libbaram.natural_name_uuid import uuidToNnstr
 from widgets.async_message_box import AsyncMessageBox
@@ -50,7 +51,7 @@ class IntakeFanDialog(ResizableDialog):
         event.ignore()
 
     def keyPressEvent(self, event):
-        if event.key() == Qt.Key_Escape:
+        if event.key() == Qt.Key.Key_Escape:
             event.ignore()
         else:
             super().keyPressEvent(event)
@@ -76,7 +77,7 @@ class IntakeFanDialog(ResizableDialog):
 
         if self._fanCurve.isModified():
             self._fanCurveName = uuid4()
-            writer.append(self._xpath + '/fanCurveName', str(self._fanCurveName), self.tr("Fan Curve Name"))
+            writer.append(self._xpath + '/fanCurveName', str(self._fanCurveName), self.tr("Fan Curve"))
 
         if not self._turbulenceWidget.appendToWriter(writer):
             return
@@ -97,6 +98,9 @@ class IntakeFanDialog(ResizableDialog):
         if errorCount > 0:
             await AsyncMessageBox().information(self, self.tr("Input Error"), writer.firstError().toMessage())
         else:
+            Project.instance().fileDB().putDataFrame(uuidToNnstr(self._fanCurveName),
+                                                     pd.DataFrame(self._fanCurve.data()))
+
             self.accept()
 
     @qasync.asyncSlot()

@@ -8,7 +8,7 @@ from baramFlow.base.boundary.boundary import PatchInteraction
 from baramFlow.base.boundary.boundary_data import BoundaryData
 from baramFlow.base.boundary.wall import WallHeatTransfer
 from baramFlow.base.model.DPM_model import DPMModelManager
-from baramFlow.base.region.region_namager import RegionsCache
+from baramFlow.base.region.region_namager import RegionManager
 from baramFlow.coredb.boundary_db import BoundaryDB, BoundaryType
 from baramFlow.coredb.coredb import CoreDB
 from baramFlow.coredb.coredb_writer import CoreDBWriter
@@ -56,10 +56,10 @@ class BoundaryManager:
             raise ValueError(dbErrorToMessage(e))
         finally:
             if couplingAffected is None:
-                RegionsCache.reloadBoundary(bcid)
+                RegionManager.reloadBoundary(bcid)
             else:
                 for a in couplingAffected:
-                    RegionsCache.reloadBoundary(a.bcid)
+                    RegionManager.reloadBoundary(a.bcid)
 
     @staticmethod
     def updateTypeAndCoupleWithPatch(db, patch: BoundaryTypeAndCouplePatch):
@@ -117,9 +117,9 @@ class BoundaryManager:
             if couplePatch.bcid != '0':
                 BoundaryManager.updateTypeAndCoupleWithPatch(db, couplePatch)
 
-            RegionsCache.reloadBoundary(bcid)
+            RegionManager.reloadBoundary(bcid)
             if couplePatch.bcid != '0':
-                RegionsCache.reloadBoundary(couplePatch.bcid)
+                RegionManager.reloadBoundary(couplePatch.bcid)
 
     @staticmethod
     def patchInteraction(bcid: str):
@@ -132,7 +132,7 @@ class BoundaryManager:
 
     @staticmethod
     def updateWallHeatTransferInDB(db, bcid, new: WallHeatTransfer):
-        boundary = RegionsCache.getBoundary(bcid).boundary
+        boundary = RegionManager.getBoundary(bcid).boundary
         boundary.wall.heatTransfer.update(new)
 
         try:
@@ -145,20 +145,20 @@ class BoundaryManager:
 
     @staticmethod
     def getBoundary(bcid):
-        return RegionsCache.getBoundary(bcid)
+        return RegionManager.getBoundary(bcid)
 
     @staticmethod
     def getBoundaries():
-        return RegionsCache.getBoundaries()
+        return RegionManager.getBoundaries()
 
     @staticmethod
     def getBoundariesIn(rname):
-        return RegionsCache.getBoundariesIn(rname)
+        return RegionManager.getBoundariesIn(rname)
 
     @staticmethod
     def getZoneAverageDirectionForFan(bcid, bcidOfCouple):
-        boundary = RegionsCache.getBoundary(bcid)
-        couple = RegionsCache.getBoundary(bcidOfCouple)
+        boundary = RegionManager.getBoundary(bcid)
+        couple = RegionManager.getBoundary(bcidOfCouple)
 
         master = boundary if boundary.startFace < couple.startFace else couple
         if master.zoneAverageDirection is None:

@@ -18,7 +18,7 @@ from baramFlow.base.graphic.graphics_db import GraphicsDB
 from baramFlow.base.model.DPM_model import DPMModelManager
 from baramFlow.base.monitor.monitor import MonitorManager
 from baramFlow.base.region.poly_mesh import PolyMeshRegion
-from baramFlow.base.region.region_namager import RegionsCache
+from baramFlow.base.region.region_namager import RegionManager
 from baramFlow.base.scaffold.scaffolds_db import ScaffoldsDB
 from baramFlow.coredb import coredb
 from baramFlow.coredb.boundary_db import BoundaryType, GeometricalType, BoundaryDB
@@ -277,12 +277,12 @@ class PolyMeshLoader(QObject):
             return None
 
         db = coredb.CoreDB()
-        if RegionsCache.matches(vtkMesh):
-            RegionsCache.updatePolyMeshData(boundaries)
+        if RegionManager.matches(vtkMesh):
+            RegionManager.updatePolyMeshData(boundaries)
             return False
 
         UserDefinedScalarsDB.clearUserDefinedScalars(db)
-        RegionsCache.clear()
+        RegionManager.clear()
         MonitorManager.clearMonitors()
         DPMModelManager.turnOff(meshUpdated=True)
 
@@ -322,7 +322,7 @@ class PolyMeshLoader(QObject):
                                           if 'zones' in vtkMesh[rname] and 'cellZones' in vtkMesh[rname]['zones']
                                           else [])))
 
-        RegionsCache.replace(regions)
+        RegionManager.replace(regions)
 
         return True
 
