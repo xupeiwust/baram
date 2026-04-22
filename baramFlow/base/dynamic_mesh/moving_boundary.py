@@ -23,7 +23,6 @@ class PointMotionType(Enum):
     PRESCRIBED_MOTION = 'prescribedMotion'
     RIGID_BODY_MOTION = 'rigidBodyMotion'
     CYCLIC            = 'cyclic'
-    CYCLIC_AMI        = 'cyclicAMI'
     SYMMETRY          = 'symmetry'
     EMPTY             = 'empty'
     WEDGE             = 'wedge'
