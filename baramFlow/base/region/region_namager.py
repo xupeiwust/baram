@@ -194,12 +194,12 @@ class RegionManager:
             if set(region.getBoundaryNames()) != set(vtkMesh[rname]['boundary'].keys()):
                 return False
 
-            cellZones = set(region.getCellZoneNames(includeEntireZone=False))
-
             if 'zones' in vtkMesh[rname] and 'cellZones' in vtkMesh[rname]['zones']:
-                if cellZones != set(vtkMesh[rname]['zones']['cellZones'].keys()):
-                    return False
-            elif len(cellZones) > 0:
+                newCellZones = set(vtkMesh[rname]['zones']['cellZones'].keys())
+            else:
+                newCellZones = {}
+
+            if set(region.getCellZoneNames(includeEntireZone=False)) != newCellZones:
                 return False
 
         return True
