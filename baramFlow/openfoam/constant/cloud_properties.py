@@ -7,7 +7,6 @@ from baramFlow.coredb.region_db import RegionDB
 from libbaram.openfoam.dictionary.dictionary_file import DictionaryFile, DataClass
 
 from baramFlow.base.boundary.boundary import PatchInteractionType
-from baramFlow.base.boundary.boundary_manager import BoundaryManager
 from baramFlow.base.model.DPM_model import DPMModelManager, KinematicModel, FlowRate, DiameterDistribution, Injection
 from baramFlow.base.model.DPM_model import ConeInjection, PointInjection, SurfaceInjection
 from baramFlow.base.model.model import DPMEvaporationModel, DPMTrackingScheme, DPMParticleType, DPMTurbulentDispersion, DPMFlowRateSpec
@@ -20,6 +19,7 @@ from baramFlow.coredb.material_db import MaterialDB
 from baramFlow.coredb.turbulence_model_db import TurbulenceModelsDB, TurbulenceModel
 from baramFlow.openfoam.dictionary_helper import DictionaryHelper
 from baramFlow.openfoam.file_system import FileSystem
+from baramFlow.services.boundary.boundary_service import BoundaryService
 
 
 def _getGasName(liquidMid: str, rname: str):
@@ -339,7 +339,7 @@ class CloudProperties(DictionaryFile):
         recycles = {}
 
         for bcid, name, ptype in self._db.getBoundaryConditions(''):
-            interaction = BoundaryManager.patchInteraction(str(bcid))
+            interaction = BoundaryService.patchInteraction(str(bcid))
             type_ = interaction.type
 
             if type_ == PatchInteractionType.RECYCLE:

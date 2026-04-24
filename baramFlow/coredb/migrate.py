@@ -1370,6 +1370,14 @@ def _version_12(root: etree.Element, path):
             ''')
             p.append(e)
 
+        p = b.find('turbulence', namespaces=_nsmap)
+        if p.find('transitionSST', namespaces=_nsmap) is None:
+            logger.debug(f'    Adding "transitionSST" to {p}')
+            e = E('transitionSST',
+                    E('intermittency',          '1'),
+                    E('momentumThicknessRe',    '200'))
+            p.insert(2, e)
+
         p = b.find('temperature', namespaces=_nsmap)
         old = p.find('spatialDistribution', namespaces=_nsmap)
         table = getFileData(path, old.text)
@@ -1399,6 +1407,12 @@ def _version_12(root: etree.Element, path):
             e = etree.Element(f'{{{_ns}}}fallbackBoundary')
             e.text = '0'
             b.insert(list(b).index(coupled) + 1, e)
+
+    for p in root.findall('regions/region/initialization/initialValues', namespaces=_nsmap):
+        if p.find('intermittency', namespaces=_nsmap) is None:
+            logger.debug(f'    Adding "intermittency", "momentumThicknessRe" to {p}')
+            p.insert(6, E('intermittency',          '1'))
+            p.insert(7, E('momentumThicknessRe',    '200'))
 
     for p in root.findall('monitors/*/*', namespaces=_nsmap):
         if p.find('uuid', namespaces=_nsmap) is None:

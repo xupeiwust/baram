@@ -10,8 +10,7 @@ from baramFlow.base.cell_zone.cell_zone import CellZoneData
 from baramFlow.base.model.DPM_model import DPMModelManager
 from baramFlow.base.region.poly_mesh import PolyMeshRegion
 from baramFlow.base.region.region_data import RegionModel, BoundaryModel, CellZoneModel
-from baramFlow.coredb.boundary_db import GeometricalType, BoundaryType, BoundaryDB
-from baramFlow.coredb.cell_zone_db import CellZoneDB
+from baramFlow.coredb.boundary_db import GeometricalType, BoundaryType
 from baramFlow.coredb.coredb import CoreDB
 from baramFlow.coredb.general_db import GeneralDB
 from baramFlow.coredb.libdb import E
@@ -138,84 +137,4 @@ class _RegionsCache:
         self._regions[model.rname].addCellZone(model)
 
 
-class RegionManager:
-    _cache: _RegionsCache = _RegionsCache()
-
-    @classmethod
-    def load(cls):
-        cls._cache.load()
-
-    @classmethod
-    def getBoundary(cls, bcid):
-        cls.reloadBoundary(bcid)    # ToDo: Delete if database synchronization is guaranteed.
-        return cls._cache.boundaries[bcid]
-
-    @classmethod
-    def getBoundaries(cls):
-        return cls._cache.boundaries.values()
-
-    @classmethod
-    def getBoundariesIn(cls, rname):
-        return cls._cache.regions[rname].boundaries
-
-    @classmethod
-    def getCellZone(cls, czid: str):
-        cls.reloadCellZone(czid)    # ToDo: Delete if database synchronization is guaranteed.
-        return cls._cache.cellZones[czid]
-
-    @classmethod
-    def getCellZones(cls):
-        return cls._cache.cellZones.values()
-
-    @classmethod
-    def isMultiRegion(cls):
-        return len(cls._cache.regions) > 1
-
-    @classmethod
-    def reloadBoundary(cls, bcid):
-        new = BoundaryData.fromElement(CoreDB().getElement(BoundaryDB.getXPath(bcid)))
-        cls._cache.boundaries[bcid].boundary = new
-
-    @classmethod
-    def reloadCellZone(cls, czid: str):
-        new = CellZoneData.fromElement(CoreDB().getElement(CellZoneDB.getXPath(czid)))
-        cls._cache.cellZones[czid].cellZone = new
-
-    @classmethod
-    def matches(cls, vtkMesh: dict):
-        if cls._cache is None:
-            return False
-
-        regions = cls._cache.regions
-        if set(regions) != set(rname for rname in vtkMesh if 'boundary' in vtkMesh[rname]):
-            return False
-
-        for rname, region in regions.items():
-            if set(region.getBoundaryNames()) != set(vtkMesh[rname]['boundary'].keys()):
-                return False
-
-            if 'zones' in vtkMesh[rname] and 'cellZones' in vtkMesh[rname]['zones']:
-                newCellZones = set(vtkMesh[rname]['zones']['cellZones'].keys())
-            else:
-                newCellZones = {}
-
-            if set(region.getCellZoneNames(includeEntireZone=False)) != newCellZones:
-                return False
-
-        return True
-
-    @classmethod
-    def clear(cls):
-        cls._cache.clear()
-
-    @classmethod
-    def replace(cls, data: list[PolyMeshRegion]):
-        cls._cache.replace(data)
-
-        with CoreDB() as db:
-            db.replaceElement(REGIONS_XPATH, cls._cache.toElement())
-            db.increaseConfigCount()
-
-    @classmethod
-    def updatePolyMeshData(cls, polyMeshBoundaries: dict):
-        cls._cache.updatePolyMeshData(polyMeshBoundaries)
+regionCache = _RegionsCache()

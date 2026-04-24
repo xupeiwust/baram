@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from enum import Enum
 import tempfile
+from enum import Enum
 from pathlib import Path
+from typing import Any
 
 from PyFoam.Basics.FoamFileGenerator import FoamFileGenerator
 
 from libbaram.openfoam.constants import Directory
-
 from resources import resource
 
 
@@ -28,7 +28,7 @@ class DataClass(Enum):
 
 
 class DictionaryFile:
-    def __init__(self, casePath, location, objectName,
+    def __init__(self, casePath: Path, location:Path, objectName: str,
                  class_=DataClass.CLASS_DICTIONARY, format_=Format.FORMAT_ASCII, data=None):
         self._header = {
             'version': VERSION,
@@ -37,8 +37,8 @@ class DictionaryFile:
             'location': str(location),
             'object': objectName
         }
-        self._data = data
-        self._casePath = casePath
+        self._data: dict[str, Any] = data
+        self._casePath: Path = casePath
 
     def isBuilt(self):
         return self._data is not None

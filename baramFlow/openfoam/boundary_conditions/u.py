@@ -3,15 +3,16 @@
 
 from math import sqrt
 
+from libbaram.openfoam.dictionary.dictionary_file import DataClass
+
 from baramFlow.base.base import SpatialVectorList
+from baramFlow.base.boundary.flow_rate_port import FlowRateSpecification
 from baramFlow.base.boundary.velocity_inlet import VelocitySpecification, VelocityProfile, CoordinateSystem
 from baramFlow.base.material.material import UNIVERSAL_GAS_CONSTANT
-from baramFlow.coredb.boundary_db import BoundaryDB, BoundaryType
-from baramFlow.coredb.boundary_db import FlowRateInletSpecification, InterfaceMode
+from baramFlow.coredb.boundary_db import BoundaryDB, BoundaryType, InterfaceMode
 from baramFlow.coredb.boundary_db import WallMotion, ShearCondition, MovingWallMotion
 from baramFlow.coredb.material_db import MaterialDB
 from baramFlow.openfoam.boundary_conditions.boundary_condition import BoundaryCondition
-from libbaram.openfoam.dictionary.dictionary_file import DataClass
 
 
 class U(BoundaryCondition):
@@ -73,13 +74,13 @@ class U(BoundaryCondition):
 
     def _constructFlowRateInletVelocity(self, xpath, outlet=False):
         spec = self._db.getValue(xpath + '/flowRate/specification')
-        if spec == FlowRateInletSpecification.VOLUME_FLOW_RATE.value:
+        if spec == FlowRateSpecification.VOLUME_FLOW_RATE.value:
             return {
                 'type': 'flowRateInletVelocity',
                 'volumetricFlowRate': (-float(self._db.getValue(xpath + '/flowRate/volumeFlowRate')) if outlet
                                        else self._db.getValue(xpath + '/flowRate/volumeFlowRate'))
             }
-        elif spec == FlowRateInletSpecification.MASS_FLOW_RATE.value:
+        elif spec == FlowRateSpecification.MASS_FLOW_RATE.value:
             return {
                 'type': 'flowRateInletVelocity',
                 'massFlowRate': (-float(self._db.getValue(xpath + '/flowRate/massFlowRate')) if outlet

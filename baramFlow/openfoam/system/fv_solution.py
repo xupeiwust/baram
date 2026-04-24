@@ -139,7 +139,7 @@ class FvSolution(DictionaryFile):
                     'maxIter': '5',
                 }),
                 'rhoFinal': rho,
-                f'"(U|k|epsilon|omega|nuTilda|scalar|Yi{scalarFieldNames})"': (others := {
+                f'"(U|k|epsilon|omega|nuTilda|scalar|Yi|gammaInt|ReThetat{scalarFieldNames})"': (others := {
                     'solver': 'PBiCGStab',
                     'preconditioner': 'DILU',
                     'tolerance': '1e-16',
@@ -147,7 +147,7 @@ class FvSolution(DictionaryFile):
                     'minIter': '1',
                     'maxIter': '5',
                 }),
-                f'"(U|k|epsilon|omega|nuTilda|scalar|Yi{scalarFieldNames})Final"': others,
+                f'"(U|k|epsilon|omega|nuTilda|scalar|Yi|gammaInt|ReThetat{scalarFieldNames})Final"': others,
                 'age': {  # no "ageFinal" because "age" supports only steady case
                     'solver': 'PBiCGStab',
                     'preconditioner': 'DILU',

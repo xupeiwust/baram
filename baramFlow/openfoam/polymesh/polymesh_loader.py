@@ -18,7 +18,6 @@ from baramFlow.base.graphic.graphics_db import GraphicsDB
 from baramFlow.base.model.DPM_model import DPMModelManager
 from baramFlow.base.monitor.monitor import MonitorManager
 from baramFlow.base.region.poly_mesh import PolyMeshRegion
-from baramFlow.base.region.region_namager import RegionManager
 from baramFlow.base.scaffold.scaffolds_db import ScaffoldsDB
 from baramFlow.coredb import coredb
 from baramFlow.coredb.boundary_db import BoundaryType, GeometricalType, BoundaryDB
@@ -29,6 +28,7 @@ from baramFlow.openfoam.file_system import FileSystem
 from baramFlow.openfoam.constant.region_properties import RegionProperties
 from baramFlow.openfoam.openfoam_reader import OpenFOAMReader
 from baramFlow.mesh.mesh_model import ActorInfo, MeshModel
+from baramFlow.services.region.region_service import RegionService
 
 
 logger = logging.getLogger(__name__)
@@ -277,12 +277,12 @@ class PolyMeshLoader(QObject):
             return None
 
         db = coredb.CoreDB()
-        if RegionManager.matches(vtkMesh):
-            RegionManager.updatePolyMeshData(boundaries)
+        if RegionService.matches(vtkMesh):
+            RegionService.updatePolyMeshData(boundaries)
             return False
 
         UserDefinedScalarsDB.clearUserDefinedScalars(db)
-        RegionManager.clear()
+        RegionService.clear()
         MonitorManager.clearMonitors()
         DPMModelManager.turnOff(meshUpdated=True)
 
@@ -322,7 +322,7 @@ class PolyMeshLoader(QObject):
                                           if 'zones' in vtkMesh[rname] and 'cellZones' in vtkMesh[rname]['zones']
                                           else [])))
 
-        RegionManager.replace(regions)
+        RegionService.replace(regions)
 
         return True
 

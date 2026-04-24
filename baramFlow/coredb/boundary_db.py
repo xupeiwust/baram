@@ -93,11 +93,6 @@ TYPE_MAP = {
 }
 
 
-class FlowRateInletSpecification(Enum):
-    VOLUME_FLOW_RATE = 'volumeFlowRate'
-    MASS_FLOW_RATE = 'massFlowRate'
-
-
 class WallMotion(Enum):
     STATIONARY_WALL = 'stationaryWall'
     MOVING_WALL = 'movingWall'
@@ -132,16 +127,6 @@ class InterfaceMode(Enum):
 class SpalartAllmarasSpecification(Enum):
     MODIFIED_TURBULENT_VISCOSITY = 'modifiedTurbulentViscosity'
     TURBULENT_VISCOSITY_RATIO = 'turbulentViscosityRatio'
-
-
-class KEpsilonSpecification(Enum):
-    K_AND_EPSILON = 'kAndEpsilon'
-    INTENSITY_AND_VISCOSITY_RATIO = 'intensityAndViscosityRatio'
-
-
-class KOmegaSpecification(Enum):
-    K_AND_OMEGA = 'kAndOmega'
-    INTENSITY_AND_VISCOSITY_RATIO = 'intensityAndViscosityRatio'
 
 
 class ContactAngleModel(Enum):

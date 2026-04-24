@@ -8,13 +8,14 @@ from baramFlow.coredb.turbulence_model_db import TurbulenceModel, TurbulenceFiel
 
 
 _modelFields = {
-    TurbulenceModel.INVISCID: [],
-    TurbulenceModel.LAMINAR: [],
-    TurbulenceModel.SPALART_ALLMARAS: [TurbulenceFields.NU_TILDA],
-    TurbulenceModel.K_EPSILON: [TurbulenceFields.K, TurbulenceFields.EPSILON],
-    TurbulenceModel.K_OMEGA: [TurbulenceFields.K, TurbulenceFields.OMEGA],
-    TurbulenceModel.DES: [],
-    TurbulenceModel.LES: [],
+    TurbulenceModel.INVISCID:           [],
+    TurbulenceModel.LAMINAR:            [],
+    TurbulenceModel.SPALART_ALLMARAS:   [TurbulenceFields.NU_TILDA],
+    TurbulenceModel.K_EPSILON:          [TurbulenceFields.K, TurbulenceFields.EPSILON],
+    TurbulenceModel.K_OMEGA:            [TurbulenceFields.K, TurbulenceFields.OMEGA],
+    TurbulenceModel.TRANSITION_SST:     [TurbulenceFields.K, TurbulenceFields.OMEGA],
+    TurbulenceModel.DES:                [],
+    TurbulenceModel.LES:                [],
 }
 
 

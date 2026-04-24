@@ -5,9 +5,9 @@ from PySide6.QtCore import Signal
 
 from widgets.selector_dialog import SelectorDialog, SelectorItem
 
-from baramFlow.base.boundary.boundary_manager import BoundaryManager
 from baramFlow.base.model.DPM_model import DPMModelManager
 from baramFlow.coredb.boundary_db import BoundaryDB, BoundaryType
+from baramFlow.services.boundary.boundary_service import BoundaryService
 from baramFlow.view.widgets.resizable_dialog import ResizableDialog
 
 
@@ -42,8 +42,8 @@ class CoupledBoundaryConditionDialog(ResizableDialog):
             self._coupleNameDisplay.clear()
         else:
             self._coupleNameDisplay.setText(
-                BoundaryManager.getBoundary(self._coupledBoundary).name if self._pairWithinGroup
-                else BoundaryManager.getBoundary(self._coupledBoundary).name.scoppedNmae)
+                BoundaryService.getBoundary(self._coupledBoundary).name if self._pairWithinGroup
+                else BoundaryService.getBoundary(self._coupledBoundary).name.scoppedNmae)
 
     def _changeCoupledBoundary(self, db, cpid, bctype: BoundaryType):
         changeBoundaryCouple(db, self._bcid, cpid)
@@ -64,11 +64,11 @@ class CoupledBoundaryConditionDialog(ResizableDialog):
         if not self._boundarySelector:
             if self._pairWithinGroup:
                 items = [SelectorItem(b.name, b.name, b.bcid)
-                         for b in BoundaryManager.getBoundariesIn(BoundaryManager.getBoundary(self._bcid).rname)
+                         for b in BoundaryService.getBoundariesIn(BoundaryService.getBoundary(self._bcid).rname)
                          if b.bcid != self._bcid]
             else:
                 items = [SelectorItem(b.scoppedName, b.name, b.bcid)
-                         for b in BoundaryManager.getBoundaries() if b.bcid != self._bcid]
+                         for b in BoundaryService.getBoundaries() if b.bcid != self._bcid]
 
             self._boundarySelector = SelectorDialog(
                 self, self.tr("Select Boundary"), self.tr("Select Boundary"), items)

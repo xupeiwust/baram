@@ -74,15 +74,28 @@ class CellZoneModel:
 
 @dataclass
 class RegionInitialValues:
-    velocity: Vector =          field(default_factory=Vector.zero)
-    pressure: str =             '0'
-    temperature: str =          '300'
-    scaleOfVelocity: str =      '1'
-    turbulentIntensity: str =   '1'
-    turbulentViscosity: str =   '10'
+    velocity: Vector
+    pressure: str
+    temperature: str | None
+    scaleOfVelocity: str
+    turbulentIntensity: str | None
+    turbulentViscosity: str
+    intermittency: str | None
+    momentumThicknessRe: str | None
     # volumeFractions: list = None
     # userDefinedScalars: list = None
     # species: list = None
+
+    @classmethod
+    def default(cls):
+        return RegionInitialValues(velocity=Vector.zero(),
+                                   pressure='0',
+                                   temperature='300',
+                                   scaleOfVelocity='1',
+                                   turbulentIntensity='1',
+                                   turbulentViscosity='10',
+                                   intermittency='1',
+                                   momentumThicknessRe='200')
 
     def toElement(self):
         return E('initialValues',
@@ -92,6 +105,8 @@ class RegionInitialValues:
                   E('scaleOfVelocity', self.scaleOfVelocity),
                   E('turbulentIntensity', self.turbulentIntensity),
                   E('turbulentViscosity', self.turbulentViscosity),
+                  E('intermittency', self.intermittency),
+                  E('momentumThicknessRe', self.momentumThicknessRe),
                   E('volumeFractions'),
                   E('userDefinedScalars'),
                   E('species'))
@@ -102,12 +117,15 @@ class RegionInitialValues:
                                    pressure=e.find('pressure', namespaces=nsmap).text,
                                    temperature=e.find('temperature', namespaces=nsmap).text,
                                    scaleOfVelocity=e.find('scaleOfVelocity', namespaces=nsmap).text,
-                                   turbulentIntensity=e.find('turbulentIntensity', namespaces=nsmap).text,)
+                                   turbulentIntensity=e.find('turbulentIntensity', namespaces=nsmap).text,
+                                   turbulentViscosity=e.find('turbulentViscosity', namespaces=nsmap).text,
+                                   intermittency=e.find('intermittency', namespaces=nsmap).text,
+                                   momentumThicknessRe=e.find('momentumThicknessRe', namespaces=nsmap).text)
 
 
 @dataclass
 class RegionInitialization:
-    initialValues: RegionInitialValues = field(default_factory=RegionInitialValues)
+    initialValues: RegionInitialValues = field(default_factory=RegionInitialValues.default)
 
     def toElement(self):
         return E('initialization',

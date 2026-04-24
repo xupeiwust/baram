@@ -8,11 +8,11 @@ from baramFlow.base.boundary.boundary import PatchInteraction
 from baramFlow.base.boundary.boundary_data import BoundaryData
 from baramFlow.base.boundary.wall import WallHeatTransfer
 from baramFlow.base.model.DPM_model import DPMModelManager
-from baramFlow.base.region.region_namager import RegionManager
 from baramFlow.coredb.boundary_db import BoundaryDB, BoundaryType
 from baramFlow.coredb.coredb import CoreDB
 from baramFlow.coredb.coredb_writer import CoreDBWriter
-from baramFlow.coredb.libdb import ValueException, dbErrorToMessage, nsmap
+from baramFlow.coredb.libdb import ValueException, nsmap
+from baramFlow.services.region.region_service import RegionService
 
 
 @dataclass
@@ -31,7 +31,7 @@ class BoundaryTypeAndCouplePatch:
             db.setValue(xpath + '/coupledBoundary', self.coupledBoundary)
 
 
-class BoundaryManager:
+class BoundaryService:
     @classmethod
     def updateBoundaryCondition(cls, bcid, condition, writer: CoreDBWriter = None):
         boundary = cls.getBoundary(bcid).boundary
@@ -52,14 +52,14 @@ class BoundaryManager:
                         cls.updateTypeAndCoupleWithPatch(db, a)
 
                 db.increaseConfigCount()
-        except ValueException as e:
-            raise ValueError(dbErrorToMessage(e))
+        except ValueError as e:
+            raise e
         finally:
             if couplingAffected is None:
-                RegionManager.reloadBoundary(bcid)
+                RegionService.reloadBoundary(bcid)
             else:
                 for a in couplingAffected:
-                    RegionManager.reloadBoundary(a.bcid)
+                    RegionService.reloadBoundary(a.bcid)
 
     @staticmethod
     def updateTypeAndCoupleWithPatch(db, patch: BoundaryTypeAndCouplePatch):
@@ -90,13 +90,13 @@ class BoundaryManager:
 
     @staticmethod
     def updateBoundaryType(bcid: str, newType: BoundaryType):
-        boundaryModel = BoundaryManager.getBoundary(bcid)
+        boundaryModel = BoundaryService.getBoundary(bcid)
         if boundaryModel.bctype == newType:
             return
 
         keepCouple= True
         if boundaryModel.boundary.coupledBoundary != '0':
-            coupleModel = BoundaryManager.getBoundary(boundaryModel.boundary.coupledBoundary)
+            coupleModel = BoundaryService.getBoundary(boundaryModel.boundary.coupledBoundary)
             if (not BoundaryDB.needsCoupledBoundary(newType)
                     or (newType != BoundaryType.THERMO_COUPLED_WALL and boundaryModel.rname != coupleModel.rname)
                     or bcid != coupleModel.boundary.coupledBoundary):
@@ -113,13 +113,13 @@ class BoundaryManager:
             couplePatch.coupledBoundary = '0'
 
         with CoreDB() as db:
-            BoundaryManager.updateTypeAndCoupleWithPatch(db, boundaryPatch)
+            BoundaryService.updateTypeAndCoupleWithPatch(db, boundaryPatch)
             if couplePatch.bcid != '0':
-                BoundaryManager.updateTypeAndCoupleWithPatch(db, couplePatch)
+                BoundaryService.updateTypeAndCoupleWithPatch(db, couplePatch)
 
-            RegionManager.reloadBoundary(bcid)
+            RegionService.reloadBoundary(bcid)
             if couplePatch.bcid != '0':
-                RegionManager.reloadBoundary(couplePatch.bcid)
+                RegionService.reloadBoundary(couplePatch.bcid)
 
     @staticmethod
     def patchInteraction(bcid: str):
@@ -132,7 +132,7 @@ class BoundaryManager:
 
     @staticmethod
     def updateWallHeatTransferInDB(db, bcid, new: WallHeatTransfer):
-        boundary = RegionManager.getBoundary(bcid).boundary
+        boundary = RegionService.getBoundary(bcid).boundary
         boundary.wall.heatTransfer.update(new)
 
         try:
@@ -145,20 +145,20 @@ class BoundaryManager:
 
     @staticmethod
     def getBoundary(bcid):
-        return RegionManager.getBoundary(bcid)
+        return RegionService.getBoundary(bcid)
 
     @staticmethod
     def getBoundaries():
-        return RegionManager.getBoundaries()
+        return RegionService.getBoundaries()
 
     @staticmethod
     def getBoundariesIn(rname):
-        return RegionManager.getBoundariesIn(rname)
+        return RegionService.getBoundariesIn(rname)
 
     @staticmethod
     def getZoneAverageDirectionForFan(bcid, bcidOfCouple):
-        boundary = RegionManager.getBoundary(bcid)
-        couple = RegionManager.getBoundary(bcidOfCouple)
+        boundary = RegionService.getBoundary(bcid)
+        couple = RegionService.getBoundary(bcidOfCouple)
 
         master = boundary if boundary.startFace < couple.startFace else couple
         if master.zoneAverageDirection is None:

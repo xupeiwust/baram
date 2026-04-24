@@ -5,8 +5,6 @@ import qasync
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QTreeWidgetItem
 
-from baramFlow.base.boundary.boundary_manager import BoundaryManager
-from baramFlow.openfoam import parallel
 from widgets.async_message_box import AsyncMessageBox
 
 from baramFlow.app import app
@@ -15,6 +13,8 @@ from baramFlow.coredb import coredb
 from baramFlow.coredb.boundary_db import BoundaryType, BoundaryDB, GeometricalType
 from baramFlow.coredb.project import Project
 from baramFlow.coredb.region_db import DEFAULT_REGION_NAME
+from baramFlow.openfoam import parallel
+from baramFlow.services.boundary.boundary_service import BoundaryService
 from baramFlow.view.widgets.content_page import ContentPage
 from .ABL_inlet_dialog import ABLInletDialog
 from .boundary_conditions_page_ui import Ui_BoundaryConditionsPage
@@ -207,11 +207,11 @@ class BoundaryConditionsPage(ContentPage):
 
     @qasync.asyncSlot()
     async def _changeBoundaryType(self, bcid, bctype: BoundaryType):
-        oldType = BoundaryManager.getBoundary(bcid).bctype
+        oldType = BoundaryService.getBoundary(bcid).bctype
         if oldType != bctype:
-            BoundaryManager.updateBoundaryType(bcid, bctype)
+            BoundaryService.updateBoundaryType(bcid, bctype)
 
-            boundary = BoundaryManager.getBoundary(bcid).boundary
+            boundary = BoundaryService.getBoundary(bcid).boundary
             self._boundaries[bcid].reloadType()
             self._updateEditEnabled()
 

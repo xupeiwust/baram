@@ -9,12 +9,12 @@ from widgets.async_message_box import AsyncMessageBox
 
 from baramFlow.base.boundary.ABL_inlet import ABLFlowDirection, Vector, AtmosphericBoundaryLayer
 from baramFlow.base.boundary.ABL_inlet import PasquillStability
-from baramFlow.base.boundary.boundary_condition import ABLInletCondition
-from baramFlow.base.boundary.boundary_manager import BoundaryManager
+from baramFlow.base.boundary.boundary_patch import ABLInletPatch
 from baramFlow.coredb.libdb import xmlToBool
 from baramFlow.coredb import coredb
 from baramFlow.coredb.boundary_db import BoundaryDB, FlowDirectionSpecificationMethod
 from baramFlow.coredb.region_db import RegionDB
+from baramFlow.services.boundary.boundary_service import BoundaryService
 from .ABL_inlet_dialog_ui import Ui_ABLInletDialog
 from .conditional_widget_helper import ConditionalWidgetHelper
 
@@ -81,7 +81,7 @@ class ABLInletDialog(QDialog):
             else:
                 pasquillStability = PasquillStability(disabled=True)
 
-            data = ABLInletCondition(
+            data = ABLInletPatch(
                 abl= AtmosphericBoundaryLayer(
                     flowDirection=flowDirection,
                     groundNormalDirection=Vector(
@@ -100,7 +100,7 @@ class ABLInletDialog(QDialog):
                 userDefinedScalars=self._scalarsWidget.data(),
                 species=self._speciesWidget.data())
 
-            BoundaryManager.updateBoundaryCondition(self._bcid, data)
+            BoundaryService.updateBoundaryCondition(self._bcid, data)
         except ValueError as e:
             await AsyncMessageBox().information(self, self.tr('Input Error'), str(e))
             return

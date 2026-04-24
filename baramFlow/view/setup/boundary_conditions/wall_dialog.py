@@ -7,7 +7,6 @@ from PySide6.QtWidgets import QWidget, QGridLayout, QLabel, QVBoxLayout
 from widgets.async_message_box import AsyncMessageBox
 from widgets.enum_button_group import EnumButtonGroup
 
-from baramFlow.base.boundary.boundary_manager import BoundaryManager
 from baramFlow.base.model.DPM_model import DPMModelManager
 from baramFlow.coredb import coredb
 from baramFlow.coredb.coredb_writer import boolToDBText
@@ -18,6 +17,7 @@ from baramFlow.coredb.general_db import GeneralDB
 from baramFlow.coredb.material_db import MaterialDB
 from baramFlow.coredb.models_db import ModelsDB
 from baramFlow.coredb.region_db import RegionDB
+from baramFlow.services.boundary.boundary_service import BoundaryService
 from baramFlow.view.widgets.batchable_float_edit import BatchableFloatEdit
 from baramFlow.view.widgets.resizable_dialog import ResizableDialog
 from .wall_dialog_ui import Ui_WallDialog
@@ -202,7 +202,7 @@ class WallDialog(ResizableDialog):
                     db.setValue(xpath + '/velocity/wallRoughness/constant', self._ui.roughnessConstant.text())
 
                 if ModelsDB.isEnergyModelOn():
-                    BoundaryManager.updateWallHeatTransferInDB(db, self._bcid, self._heatTransferContent.data())
+                    BoundaryService.updateWallHeatTransferInDB(db, self._bcid, self._heatTransferContent.data())
 
                 if self._ui.contactAngleGroup.isVisible():
                     contactAngleModel = self._ui.contactAngleModel.currentData()
@@ -230,7 +230,7 @@ class WallDialog(ResizableDialog):
                     db.setValue(xpath + '/radiation/radiativeFluxRelaxation', self._ui.radiativeFluxRelaxation.text())
 
                 if self._patchInteractionWidget is not None:
-                    BoundaryManager.updatePatchInteractionInDB(db, self._bcid, self._patchInteractionWidget.updateData())
+                    BoundaryService.updatePatchInteractionInDB(db, self._bcid, self._patchInteractionWidget.updateData())
 
                 self.accept()
         except ValueException as e:
@@ -299,7 +299,7 @@ class WallDialog(ResizableDialog):
             self._ui.radiation.hide()
 
         if self._patchInteractionWidget is not None:
-            self._patchInteractionWidget.setData(BoundaryManager.patchInteraction(self._bcid))
+            self._patchInteractionWidget.setData(BoundaryService.patchInteraction(self._bcid))
 
     def _loadContactAngles(self, rname, secondaryMaterials):
         def addAdhesionRows(mid1, mid2):

@@ -119,6 +119,14 @@ class Region:
     def initialVelocity(self):
         return self._U
 
+    @property
+    def initialIntermittency(self):
+        return float(self._db.getValue(f'{self._initialValuesXpath}/intermittency'))
+
+    @property
+    def initialMomentumThicknessRe(self):
+        return float(self._db.getValue(f'{self._initialValuesXpath}/momentumThicknessRe'))
+
     def initialScalar(self, scalarID):
         return self._db.getValue(f'{self._initialValuesXpath}/userDefinedScalars/scalar[scalarID="{scalarID}"]/value')
 

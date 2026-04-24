@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from baramFlow.base.region.region_namager import RegionManager
+from baramFlow.services.region.region_service import RegionService
 
 
 class CellZoneManager:
     @staticmethod
     def getCellZone(czid: str):
-        return RegionManager.getCellZone(czid)
+        return RegionService.getCellZone(czid)
 
     @staticmethod
     def getCellZones():
-        return RegionManager.getCellZones()
+        return RegionService.getCellZones()

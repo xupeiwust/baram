@@ -6,7 +6,7 @@ from uuid import UUID
 
 from PyFoam.Basics.FoamFileGenerator import FoamFileGenerator
 
-from baramFlow.base.boundary.boundary_manager import BoundaryManager
+from baramFlow.services.boundary.boundary_service import BoundaryService
 from baramFlow.coredb.project import Project
 from baramFlow.coredb.boundary_db import BoundaryDB, BoundaryType, InterfaceMode
 from baramFlow.coredb.coredb_reader import Region
@@ -100,7 +100,7 @@ class P(BoundaryCondition):
     def _constructBoundaryField(self, forceCalculatedType):
         field = {}
 
-        for boundaryModel in BoundaryManager.getBoundariesIn(self._region.rname):
+        for boundaryModel in BoundaryService.getBoundariesIn(self._region.rname):
             bcid = boundaryModel.boundary.bcid
             name = boundaryModel.boundary.name
             type_ = BoundaryDB.getBoundaryType(bcid)

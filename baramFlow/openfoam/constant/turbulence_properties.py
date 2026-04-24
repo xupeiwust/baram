@@ -48,6 +48,8 @@ class TurbulenceProperties(DictionaryFile):
             subModel = self._db.getValue(TurbulenceModelsDB.TURBULENCE_MODELS_XPATH + '/k-omega/model')
             if subModel == KOmegaModel.SST.value:
                 self._constructRASproperties('kOmegaSST')
+        elif self._model == TurbulenceModel.TRANSITION_SST:
+            self._constructRASproperties('kOmegaSSTLM')
         elif self._model == TurbulenceModel.DES:
             self._constructDESProperties()
         elif self._model == TurbulenceModel.LES:

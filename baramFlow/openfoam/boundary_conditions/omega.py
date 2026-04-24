@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from baramFlow.coredb.boundary_db import BoundaryDB, BoundaryType, KOmegaSpecification, InterfaceMode, ShearCondition
+from baramFlow.base.boundary.turbulence import KOmegaSpecification
+from baramFlow.coredb.boundary_db import BoundaryDB, BoundaryType, InterfaceMode, ShearCondition
 from baramFlow.coredb.turbulence_model_db import TurbulenceModel, TurbulenceModelsDB
 from baramFlow.openfoam.boundary_conditions.boundary_condition import BoundaryCondition
 
@@ -17,7 +18,8 @@ class Omega(BoundaryCondition):
     def build0(self):
         self._data = None
 
-        if TurbulenceModelsDB.getRASModel() == TurbulenceModel.K_OMEGA and self._region.isFluid():
+        if (TurbulenceModelsDB.getRASModel() in [TurbulenceModel.K_OMEGA, TurbulenceModel.TRANSITION_SST]
+                and self._region.isFluid()):
             self._data = {
                 'dimensions': self.DIMENSIONS,
                 'internalField': ('uniform', self._initialValue),

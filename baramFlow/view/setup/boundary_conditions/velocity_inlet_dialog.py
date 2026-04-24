@@ -11,8 +11,7 @@ from widgets.async_message_box import AsyncMessageBox
 from widgets.simple_sheet_dialog import SimpleSheetDialog
 
 from baramFlow.base.base import SpatialVectorList, TemporalVectorList, TemporalScalarList
-from baramFlow.base.boundary.boundary_condition import VelocityInletCondition
-from baramFlow.base.boundary.boundary_manager import BoundaryManager
+from baramFlow.base.boundary.boundary_patch import VelocityInletPatch
 from baramFlow.base.xml_helper import Vector
 from baramFlow.base.boundary.velocity_inlet import VelocitySpecification, VelocityProfile, CoordinateSystem
 from baramFlow.base.boundary.velocity_inlet import VelocityInlet
@@ -23,6 +22,7 @@ from baramFlow.coredb import coredb
 from baramFlow.coredb.coredb_writer import CoreDBWriter
 from baramFlow.coredb.boundary_db import BoundaryDB
 from baramFlow.coredb.region_db import RegionDB
+from baramFlow.services.boundary.boundary_service import BoundaryService
 from baramFlow.view.widgets.resizable_dialog import ResizableDialog
 from .velocity_inlet_dialog_ui import Ui_VelocityInletDialog
 from .conditional_widget_helper import ConditionalWidgetHelper
@@ -150,10 +150,11 @@ class VelocityInletDialog(ResizableDialog):
                 elif profile == VelocityProfile.TEMPORAL_DISTRIBUTION:
                     velocityInlet.velocity.localCylindrical.temporalDistribution = self._velocityComponents
 
-            data = VelocityInletCondition(
+            data = VelocityInletPatch(
                 velocityInet=velocityInlet,
                 userDefinedScalars=self._scalarsWidget.data(),
                 species=self._speciesWidget.data(),
+                turbulence=self._turbulenceWidget.data(),
                 temperature=self._temperatureWidget.data())
 
             writer = CoreDBWriter()
@@ -163,7 +164,7 @@ class VelocityInletDialog(ResizableDialog):
             if not await self._volumeFractionWidget.appendToWriter(writer, self._xpath + '/volumeFractions'):
                 return
 
-            BoundaryManager.updateBoundaryCondition(self._bcid, data, writer)
+            BoundaryService.updateBoundaryCondition(self._bcid, data, writer)
         except ValueError as e:
             await AsyncMessageBox().information(self, self.tr('Input Error'), str(e))
             return

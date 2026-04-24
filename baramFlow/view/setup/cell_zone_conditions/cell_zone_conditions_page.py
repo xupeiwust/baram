@@ -6,7 +6,6 @@ from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QTreeWidgetItem
 from vtkmodules.vtkCommonColor import vtkNamedColors
 
-from baramFlow.base.region.region_namager import RegionManager
 from widgets.async_message_box import AsyncMessageBox
 
 from baramFlow.case_manager import CaseManager
@@ -14,6 +13,7 @@ from baramFlow.app import app
 from baramFlow.coredb import coredb
 from baramFlow.coredb.cell_zone_db import CellZoneDB
 from baramFlow.coredb.project import Project
+from baramFlow.services.region.region_service import RegionService
 from baramFlow.view.widgets.content_page import ContentPage
 from .cell_zone_conditions_page_ui import Ui_CellZoneConditionsPage
 from .cell_zone_condition_dialog import CellZoneConditionDialog
@@ -131,7 +131,7 @@ class CellZoneConditionsPage(ContentPage):
         item = self._ui.cellZones.currentItem()
         self._ui.copy.setEnabled(not CaseManager().isActive()
                                  and item is not None
-                                 and (not item.isRegion() or RegionManager.isMultiRegion()))
+                                 and (not item.isRegion() or RegionService.isMultiRegion()))
 
     def _edit(self):
         if item := self._ui.cellZones.currentItem():

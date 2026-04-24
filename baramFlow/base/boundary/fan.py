@@ -2,11 +2,8 @@
 # -*- coding: utf-8 -*-
 
 from dataclasses import dataclass
-from typing import Optional
 
-from pandas import DataFrame
-
-from baramFlow.base.file_data_manager import FileDataManager
+from baramFlow.base.file_data_manager import TableDataForFileDB
 from baramFlow.coredb.boundary_db import BoundaryDB
 from baramFlow.coredb.libdb import boolToXml
 
@@ -14,19 +11,17 @@ from baramFlow.coredb.libdb import boolToXml
 @dataclass
 class Fan:
     reverseDirection: bool          = False
-    fanCurveName: str               = None
-
-    fanCurve: Optional[DataFrame]   = None
+    fanCurve: TableDataForFileDB    = None
 
     def applyToDB(self, db, bcid):
-        if self.fanCurve is not None:
-            self.fanCurveName = FileDataManager.putDataFrame(self.fanCurve)
-
         self.applyCoupleConditionToDB(db, bcid)
+
+        if self.fanCurve is not None:
+            self.fanCurve.applyToDB(db, bcid)
 
     def applyCoupleConditionToDB(self, db, bcid):
         xpath = BoundaryDB.getXPath(bcid)
 
         db.setValue(xpath + '/fan/reverseDirection', boolToXml(self.reverseDirection))
-        if self.fanCurveName:
-            db.setValue(xpath + '/fanCurveName', str(self.fanCurveName))
+        if self.fanCurve.name is not None:
+            db.setValue(xpath + '/fanCurveName', str(self.fanCurve.name))

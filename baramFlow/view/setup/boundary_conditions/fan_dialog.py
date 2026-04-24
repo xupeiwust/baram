@@ -5,14 +5,14 @@ import qasync
 from uuid import UUID
 
 from PySide6.QtCore import Qt
-from pandas import DataFrame
 
+from baramFlow.base.file_data_manager import TableDataForFileDB
 from libbaram.natural_name_uuid import uuidToNnstr
 from widgets.async_message_box import AsyncMessageBox
 
 from baramFlow.base.base import TrackedData
-from baramFlow.base.boundary.boundary_condition import FanCondition
-from baramFlow.base.boundary.boundary_manager import BoundaryManager
+from baramFlow.base.boundary.boundary_patch import FanPatch
+from baramFlow.services.boundary.boundary_service import BoundaryService
 from baramFlow.base.boundary.fan import Fan
 from baramFlow.coredb import coredb
 from baramFlow.coredb.boundary_db import BoundaryDB, BoundaryType
@@ -70,7 +70,7 @@ class FanDialog(CoupledBoundaryConditionDialog):
 
     @qasync.asyncSlot()
     async def _accept(self):
-        if not self._coupledBoundary:
+        if self._coupledBoundary == '0':
             await AsyncMessageBox().information(self, self.tr('Input Error'), self.tr('Select Coupled Boundary'))
             return
 
@@ -78,13 +78,13 @@ class FanDialog(CoupledBoundaryConditionDialog):
             await AsyncMessageBox().information(self, self.tr('Input Error'), self.tr('Edit Fan Curve'))
             return
 
-        data = FanCondition(
+        data = FanPatch(
             fan=Fan(reverseDirection=self._ui.reverseFanDirection.isChecked(),
-                    fanCurve=DataFrame(self._fanCurve.data()) if self._fanCurve.isModified() else None),
+                    fanCurve=TableDataForFileDB(data=self._fanCurve.data()) if self._fanCurve.isModified() else None),
             coupledBoundary=self._coupledBoundary)
 
         try:
-            BoundaryManager.updateBoundaryCondition(self._bcid, data)
+            BoundaryService.updateBoundaryCondition(self._bcid, data)
         except ValueError as e:
             await AsyncMessageBox().information(self, self.tr('Input Error'), str(e))
 
@@ -118,7 +118,7 @@ class FanDialog(CoupledBoundaryConditionDialog):
             self._ui.zoneAverageDirectionY.clear()
             self._ui.zoneAverageDirectionZ.clear()
         else:
-            zoneAverageDirection = BoundaryManager.getZoneAverageDirectionForFan(self._bcid, self._coupledBoundary)
+            zoneAverageDirection = BoundaryService.getZoneAverageDirectionForFan(self._bcid, self._coupledBoundary)
             self._ui.zoneAverageDirectionX.setText(str(zoneAverageDirection[0]))
             self._ui.zoneAverageDirectionY.setText(str(zoneAverageDirection[1]))
             self._ui.zoneAverageDirectionZ.setText(str(zoneAverageDirection[2]))

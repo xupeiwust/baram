@@ -104,10 +104,13 @@ PRESSURE   = BasicField('pressure')
 VELOCITY = BasicField('Velocity', FieldType.VECTOR)
 
 
-TURBULENT_KINETIC_ENERGY     = BasicField('turbulentKineticEnergy')
-TURBULENT_DISSIPATION_RATE   = BasicField('turbulentDissipationRate')
-SPECIFIC_DISSIPATION_RATE    = BasicField('specificDissipationRate')
-MODIFIED_TURBULENT_VISCOSITY = BasicField('modifiedTurbulentViscosity')
+TURBULENT_KINETIC_ENERGY                = BasicField('turbulentKineticEnergy')
+TURBULENT_DISSIPATION_RATE              = BasicField('turbulentDissipationRate')
+SPECIFIC_DISSIPATION_RATE               = BasicField('specificDissipationRate')
+MODIFIED_TURBULENT_VISCOSITY            = BasicField('modifiedTurbulentViscosity')
+INTERMITTENCY                           = BasicField('intermittency')
+TRANSITION_ONSET_MOMENTUM_THICKNESS_RE  = BasicField('transitionOnsetMomentumThicknessRe')
+
 TEMPERATURE = BasicField('temperature')
 DENSITY =     BasicField('density')
 

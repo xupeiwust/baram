@@ -8,10 +8,9 @@ from PySide6.QtWidgets import QDialog, QListWidgetItem, QWidget, QListWidget
 
 from widgets.async_message_box import AsyncMessageBox
 
-from baramFlow.base.boundary.boundary_manager import BoundaryManager
 from baramFlow.base.region.region_data import BoundaryModel
-
 from baramFlow.coredb import coredb
+from baramFlow.services.boundary.boundary_service import BoundaryService
 from .copy_dialog_ui import Ui_CopyDialog
 
 
@@ -66,9 +65,9 @@ class CopyDialog(QDialog):
         self._ui.close.clicked.connect(self._close)
 
     def _load(self):
-        self._ui.source.setText(BoundaryManager.getBoundary(self._sourceId).scopedName)
+        self._ui.source.setText(BoundaryService.getBoundary(self._sourceId).scopedName)
 
-        for boundary in BoundaryManager.getBoundaries():
+        for boundary in BoundaryService.getBoundaries():
             if boundary.bcid != self._sourceId:
                 self._items[boundary.bcid] = BoundaryListItem(self._ui.targets, boundary)
     #

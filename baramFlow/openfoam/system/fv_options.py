@@ -265,7 +265,7 @@ class FvOptions(DictionaryFile):
         elif modelsType == TurbulenceModel.K_EPSILON:
             self._generateSourceFields(czname, xpath + '/turbulentKineticEnergy', 'k')
             self._generateSourceFields(czname, xpath + '/turbulentDissipationRate', 'epsilon')
-        elif modelsType == TurbulenceModel.K_OMEGA:
+        elif modelsType == TurbulenceModel.K_OMEGA or modelsType == TurbulenceModel.TRANSITION_SST:
             self._generateSourceFields(czname, xpath + '/turbulentKineticEnergy', 'k')
             self._generateSourceFields(czname, xpath + '/specificDissipationRate', 'omega')
 
@@ -289,7 +289,7 @@ class FvOptions(DictionaryFile):
         elif modelsType == TurbulenceModel.K_EPSILON:
             self._generateFixedFields(czname, xpath + '/turbulentKineticEnergy', 'k')
             self._generateFixedFields(czname, xpath + '/turbulentDissipationRate', 'epsilon')
-        elif modelsType == TurbulenceModel.K_OMEGA:
+        elif modelsType == TurbulenceModel.K_OMEGA or modelsType == TurbulenceModel.TRANSITION_SST:
             self._generateFixedFields(czname, xpath + '/turbulentKineticEnergy', 'k')
             self._generateFixedFields(czname, xpath + '/specificDissipationRate', 'omega')
 

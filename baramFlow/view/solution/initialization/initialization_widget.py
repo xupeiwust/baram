@@ -5,30 +5,34 @@ from typing import Optional
 from enum import Enum, auto
 from math import sqrt
 
-from PySide6.QtWidgets import QWidget, QMessageBox, QPushButton, QHBoxLayout
-from PySide6.QtWidgets import QSizePolicy
-from PySide6.QtGui import QIcon
 from PySide6.QtCore import Signal
+from PySide6.QtGui import QIcon
+from PySide6.QtWidgets import QWidget, QMessageBox, QPushButton, QHBoxLayout, QSizePolicy
 
-from baramFlow.case_manager import CaseManager
 from libbaram.math import calucateDirectionsByRotation
+from libbaram.pfloat import PFloat
 from resources import resource
 from widgets.flat_push_button import FlatPushButton
 
 from baramFlow.app import app
 from baramFlow.base.base import DirectionSpecificationMethod
 from baramFlow.base.boundary.temperature import TemperatureProfile
+from baramFlow.base.boundary.turbulence import KEpsilonSpecification, KOmegaSpecification
 from baramFlow.base.boundary.velocity_inlet import VelocitySpecification, VelocityProfile
 from baramFlow.base.material.material import UNIVERSAL_GAS_CONSTANT
+from baramFlow.base.region.region_data import RegionInitialization, RegionInitialValues
+from baramFlow.base.region.region_patch import RegionInitializationPatch
+from baramFlow.base.xml_helper import Vector
+from baramFlow.case_manager import CaseManager
 from baramFlow.coredb import coredb
 from baramFlow.coredb.boundary_db import BoundaryDB, BoundaryType
-from baramFlow.coredb.boundary_db import KEpsilonSpecification, KOmegaSpecification, SpalartAllmarasSpecification
+from baramFlow.coredb.boundary_db import SpalartAllmarasSpecification
 from baramFlow.coredb.coredb_reader import CoreDBReader
 from baramFlow.coredb.coredb_writer import CoreDBWriter
 from baramFlow.coredb.material_db import MaterialDB
 from baramFlow.coredb.models_db import ModelsDB
 from baramFlow.coredb.project import Project
-from baramFlow.coredb.region_db import RegionDB
+from baramFlow.coredb.region_db import RegionDB, DEFAULT_REGION_NAME
 from baramFlow.coredb.turbulence_model_db import TurbulenceModel, TurbulenceModelsDB, RANSModel
 from baramFlow.mesh.vtk_loader import hexActor, cylinderActor, sphereActor
 from baramFlow.view.widgets.species_widget import SpeciesWidget
@@ -205,6 +209,8 @@ class InitializationWidget(QWidget):
         self._ui.scaleOfVelocity.setText(db.getValue(self._initialValuesPath + '/scaleOfVelocity'))
         self._ui.turbulentIntensity.setText(db.getValue(self._initialValuesPath + '/turbulentIntensity'))
         self._ui.turbulentViscosityRatio.setText(db.getValue(self._initialValuesPath + '/turbulentViscosity'))
+        self._ui.intermittency.setText(db.getValue(self._initialValuesPath + '/intermittency'))
+        self._ui.momentumThicknessRe.setText(db.getValue(self._initialValuesPath + '/momentumThicknessRe'))
 
         turbulenceModel = TurbulenceModelsDB.getModel()
         self._ui.temperature.setEnabled(ModelsDB.isEnergyModelOn())
@@ -214,6 +220,8 @@ class InitializationWidget(QWidget):
             or TurbulenceModelsDB.getDESRansModel() == RANSModel.SPALART_ALLMARAS
             or TurbulenceModelsDB.isLESSpalartAllmarasModel()
         )
+        self._ui.intermittency.setEnabled(turbulenceModel == TurbulenceModel.TRANSITION_SST)
+        self._ui.momentumThicknessRe.setEnabled(turbulenceModel == TurbulenceModel.TRANSITION_SST)
 
         if self._volumeFractionWidget:
             self._volumeFractionWidget.load(self._initialValuesPath + '/volumeFractions')
@@ -241,23 +249,6 @@ class InitializationWidget(QWidget):
         return True, ''
 
     async def appendToWriter(self, writer):
-        writer.append(self._initialValuesPath + '/velocity/x', self._ui.xVelocity.text(),
-                      self.tr('X-Velocity of region [{}]').format(self._rname))
-        writer.append(self._initialValuesPath + '/velocity/y', self._ui.yVelocity.text(),
-                      self.tr('Y-Velocity of region [{}]').format(self._rname))
-        writer.append(self._initialValuesPath + '/velocity/z', self._ui.zVelocity.text(),
-                      self.tr('Z-Velocity of region [{}]').format(self._rname))
-        writer.append(self._initialValuesPath + '/pressure', self._ui.pressure.text(),
-                      self.tr('Pressure of region [{}]').format(self._rname))
-        writer.append(self._initialValuesPath + '/temperature', self._ui.temperature.text(),
-                      self.tr('Temperature of region [{}]').format(self._rname))
-        writer.append(self._initialValuesPath + '/scaleOfVelocity', self._ui.scaleOfVelocity.text(),
-                      self.tr('Scale of Velocity of region [{}]').format(self._rname))
-        writer.append(self._initialValuesPath + '/turbulentIntensity', self._ui.turbulentIntensity.text(),
-                      self.tr('Turbulent Intensity of region [{}]').format(self._rname))
-        writer.append(self._initialValuesPath + '/turbulentViscosity', self._ui.turbulentViscosityRatio.text(),
-                      self.tr('Turbulent Viscosity of region [{}]').format(self._rname))
-
         if (self._volumeFractionWidget
                 and not await self._volumeFractionWidget.appendToWriter(
                     writer, self._initialValuesPath + '/volumeFractions')):
@@ -273,10 +264,63 @@ class InitializationWidget(QWidget):
 
         return True
 
+    def data(self):
+        rname = DEFAULT_REGION_NAME if self._rname == '' else self._rname
+
+        if self._ui.turbulence.isVisible() and self._ui.turbulence.isEnabled():
+            temperature = None
+            turbulentIntensity = None
+            intermittency = None
+            momentumThicknessRe = None
+
+            if self._ui.temperature.isEnabled():
+                temperature=str(PFloat(self._ui.temperature.text(),
+                                       self.tr('Temperature of region [{}]').format(rname)))
+
+            if self._ui.turbulentIntensity.isEnabled():
+                turbulentIntensity=str(PFloat(self._ui.turbulentIntensity.text(),
+                                              self.tr('Turbulent Intensity of region [{}]').format(rname),
+                                              low=0, high=100))
+
+            if self._ui.intermittency.isEnabled():
+                intermittency=str(PFloat(self._ui.intermittency.text(),
+                                         self.tr('Intermittency of region [{}]').format(rname),
+                                         low=0, high=1))
+
+            if self._ui.momentumThicknessRe.isEnabled():
+                momentumThicknessRe=str(PFloat(
+                    self._ui.momentumThicknessRe.text(),
+                    self.tr('Transition onset momentum-thickness Re of region [{}]').format(rname),
+                    low=0))
+
+            patch = RegionInitialization(
+                initialValues=RegionInitialValues(
+                    velocity=Vector(x=PFloat(self._ui.xVelocity.text(),
+                                             self.tr('X-Velocity of region [{}]').format(rname)),
+                                    y=PFloat(self._ui.yVelocity.text(),
+                                             self.tr('Y-Velocity of region [{}]').format(rname)),
+                                    z=PFloat(self._ui.zVelocity.text(),
+                                             self.tr('Z-Velocity of region [{}]').format(rname))),
+                    pressure=str(PFloat(self._ui.pressure.text(),
+                                        self.tr('Pressure of region [{}]').format(rname))),
+                    temperature=temperature,
+                    scaleOfVelocity=str(PFloat(self._ui.scaleOfVelocity.text(),
+                                               self.tr('Scale of Velocity of region [{}]').format(rname))),
+                    turbulentIntensity=turbulentIntensity,
+                    turbulentViscosity=str(PFloat(self._ui.turbulentViscosityRatio.text(),
+                                                  self.tr('Turbulent Viscosity of region [{}]').format(rname))),
+                    intermittency=intermittency,
+                    momentumThicknessRe=momentumThicknessRe))
+
+            return RegionInitializationPatch(rname=self._rname,
+                                             patch=patch)
+        else:
+            return None
+
     def _connectSignalsSlots(self):
         Project.instance().solverStatusChanged.connect(self._updateEnabled)
 
-        self._ui.computeFrom.currentIndexChanged.connect(self._computeFromChanged)
+        self._ui.computeFrom.currentIndexChanged.connect(self._onComputeFromChanged)
         self._ui.create.clicked.connect(self._createOption)
         self._ui.delete_.clicked.connect(self._deleteOption)
         self._ui.edit.clicked.connect(self._editOption)
@@ -285,7 +329,7 @@ class InitializationWidget(QWidget):
         self._ui.initialValues.setEnabled(not CaseManager().isActive())
         self._ui.advanced.setEnabled(not CaseManager().isActive())
 
-    def _computeFromChanged(self):
+    def _onComputeFromChanged(self):
         bcid = self._ui.computeFrom.currentData()
         self._computeFromBoundary(bcid)
 
@@ -472,10 +516,15 @@ class InitializationWidget(QWidget):
                 i, b = self._getTurbulenceFromKEpsilonBoundary(db, xpath, v, nu)
                 self._ui.turbulentIntensity.setText(i)
                 self._ui.turbulentViscosityRatio.setText(b)
-            elif turbulenceModel == TurbulenceModel.K_OMEGA:
+            elif turbulenceModel == TurbulenceModel.K_OMEGA or turbulenceModel == TurbulenceModel.TRANSITION_SST:
                 i, b = self._getTurbulenceFromKOmegaBoundary(db, xpath, v, nu)
                 self._ui.turbulentIntensity.setText(i)
                 self._ui.turbulentViscosityRatio.setText(b)
+
+                if turbulenceModel == TurbulenceModel.TRANSITION_SST:
+                    self._ui.intermittency.setText(db.getValue(xpath + '/turbulence/transitionSST/intermittency'))
+                    self._ui.momentumThicknessRe.setText(
+                        db.getValue(xpath + '/turbulence/transitionSST/momentumThicknessRe'))
             elif turbulenceModel == TurbulenceModel.SPALART_ALLMARAS:
                 b = self._getTurbulenceFromSpalartAllmarasBoundary(db, xpath, v, nu)
                 self._ui.turbulentViscosityRatio.setText(b)

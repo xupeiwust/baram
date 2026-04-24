@@ -2,15 +2,17 @@
 # -*- coding: utf-8 -*-
 from uuid import UUID
 
+from libbaram.natural_name_uuid import uuidToNnstr
+
 from baramFlow.base.base import SpatialScalarList
+from baramFlow.base.boundary.flow_rate_port import FlowRateSpecification
 from baramFlow.base.boundary.temperature import TemperatureProfile, TemperatureTemporalDistributionSpecification
-from baramFlow.coredb.boundary_db import BoundaryDB, BoundaryType, FlowRateInletSpecification, WallHeatTransferMode
+from baramFlow.coredb.boundary_db import BoundaryDB, BoundaryType, WallHeatTransferMode
 from baramFlow.coredb.boundary_db import InterfaceMode
 from baramFlow.coredb.material_db import MaterialDB
 from baramFlow.coredb.models_db import ModelsDB
 from baramFlow.coredb.project import Project
 from baramFlow.openfoam.boundary_conditions.boundary_condition import BoundaryCondition
-from libbaram.natural_name_uuid import uuidToNnstr
 
 
 class T(BoundaryCondition):
@@ -124,9 +126,9 @@ class T(BoundaryCondition):
 
     def _constructFlowRateInletT(self, xpath, constant):
         spec = self._db.getValue(xpath + '/flowRateInlet/flowRate/specification')
-        if spec == FlowRateInletSpecification.VOLUME_FLOW_RATE.value:
+        if spec == FlowRateSpecification.VOLUME_FLOW_RATE.value:
             return self._constructFixedValue(constant)
-        elif spec == FlowRateInletSpecification.MASS_FLOW_RATE.value:
+        elif spec == FlowRateSpecification.MASS_FLOW_RATE.value:
             return self._constructInletOutletTotalTemperature(xpath, constant)
 
     def _constructPressureOutletT(self, xpath):
