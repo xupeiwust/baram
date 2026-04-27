@@ -15,6 +15,8 @@ from PySide6.QtWidgets import QMainWindow, QFileDialog, QMessageBox, QVBoxLayout
 from PySide6.QtCore import Signal, QEvent, QMargins, Qt
 from PySide6QtAds import CDockManager, DockWidgetArea
 
+from analytics import Analytics
+
 from libbaram.simple_db.simple_schema import ValidationError
 from libbaram.utils import getFit
 from widgets.async_message_box import AsyncMessageBox
@@ -76,6 +78,9 @@ class MainWindow(QMainWindow):
         self._readyToQuit = False
 
         self.setWindowIcon(app.properties.icon())
+
+        # OEM variants with analytics disabled don't need this entry.
+        self._ui.actionPrivacySettings.setVisible(Analytics().configured)
 
         self._setupShortcuts()
 
@@ -161,6 +166,7 @@ class MainWindow(QMainWindow):
         self._ui.actionLanguage.triggered.connect(self._actionLanguage)
         self._ui.actionAbout.triggered.connect(self._actionAbout)
         self._ui.actionTutorials.triggered.connect(self._openTutorials)
+        self._ui.actionPrivacySettings.triggered.connect(self._openPrivacySettings)
 
         self._recentFilesMenu.projectSelected.connect(self._openRecent)
 
@@ -246,6 +252,9 @@ class MainWindow(QMainWindow):
 
     def _openTutorials(self):
         webbrowser.open('https://baramcfd.org/en/tutorials-en/tutorial-barammesh-en/tutorial-barammesh-en/')
+
+    def _openPrivacySettings(self):
+        Analytics().editConsent(parent=self)
 
     @qasync.asyncSlot()
     async def _createProject(self):
