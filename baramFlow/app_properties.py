@@ -14,6 +14,7 @@ class AppProperties:
     iconResource: str
     logoResource: str
     projectSuffix: str = None
+    analyticsEnabled: bool = True  # OEM variants can disable analytics entirely
 
     def icon(self):
         return QIcon(str(resource.file(self.iconResource)))

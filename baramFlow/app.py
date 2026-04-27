@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from pathlib import Path
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 
 from PySide6.QtCore import QObject, Signal, QTranslator, QCoreApplication, QLocale
 from PySide6.QtWidgets import QApplication
@@ -11,6 +11,9 @@ from resources import resource
 from baramFlow.coredb.app_settings import AppSettings
 from baramFlow.coredb.project import ProjectOpenType
 from baramFlow.coredb import relation
+
+if TYPE_CHECKING:
+    from baramFlow.app_properties import AppProperties
 
 
 class App(QObject):
@@ -26,7 +29,7 @@ class App(QObject):
         self._internalMeshActors = None
         self._translator = None
 
-        self._properties = None
+        self._properties: Optional['AppProperties'] = None
         self._plug = None
 
         self._qApplication: Optional[QApplication] = None
@@ -37,7 +40,8 @@ class App(QObject):
         relation.registerObservers()
 
     @property
-    def properties(self):
+    def properties(self) -> 'AppProperties':
+        assert self._properties is not None
         return self._properties
 
     @property

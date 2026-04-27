@@ -24,6 +24,9 @@ import resource_rc
 from libbaram.mpi import checkMPI, MPIStatus, MPI_PREFIX
 from libbaram.process import getAvailablePhysicalCores
 
+from analytics import Analytics
+from analytics.events import EVENT_LOOP_ERROR
+
 from baramFlow.app import app
 from baramFlow.app_properties import AppProperties
 from baramFlow.app_plug_in import AppPlugIn
@@ -45,13 +48,19 @@ def handle_exception(eType, eValue, eTraceback):
         return
 
     logger.critical("Uncaught exception", exc_info=(eType, eValue, eTraceback))
+    Analytics().captureException(eValue)
 
 
 sys.excepthook = handle_exception
 
 
 def loop_exception(loop, context):
-    print("exception handling: ", context["exception"])
+    exception = context.get('exception')
+    print("exception handling: ", exception if exception is not None else context.get('message', ''))
+    if exception is not None:
+        Analytics().captureException(exception, {'source': 'event_loop'})
+    else:
+        Analytics().capture(EVENT_LOOP_ERROR, {'message': context.get('message', '')})
     loop.stop()
 
 
@@ -71,14 +80,18 @@ def main():
         QMessageBox.information(None, QApplication.translate('main', 'Check MPI'), message)
         return
 
-    app.setupApplication(AppProperties(
+    properties = AppProperties(
         name='BaramFlow',
         fullName=QApplication.translate('Main', 'BaramFlow'),
         iconResource='baramFlow.ico',
         logoResource='baramFlow.ico',
         projectSuffix='.bf'
-    ))
+    )
+    app.setupApplication(properties)
     app.setPlug(AppPlugIn())
+
+    if properties.analyticsEnabled:
+        Analytics().configure(app_name=properties.name, config_dir=AppSettings.settingsPath())
 
     os.environ['LC_NUMERIC'] = 'C'
     os.environ["QT_SCALE_FACTOR"] = AppSettings.getUiScaling()
@@ -115,6 +128,10 @@ def main():
     initializeBaramPresetColorSchemes()
 
     app.setLanguage(AppSettings.getLanguage())
+
+    if Analytics().ensureConsent():
+        Analytics().init()
+
     background_tasks = set()
 
     baram = Baram()
@@ -126,6 +143,7 @@ def main():
         loop.run_forever()
 
     loop.close()
+    Analytics().shutdown(final=True)
 
 
 if __name__ == '__main__':

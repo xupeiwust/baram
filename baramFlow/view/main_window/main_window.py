@@ -18,6 +18,8 @@ import asyncio
 from PySide6.QtWidgets import QMainWindow, QFileDialog, QMessageBox
 from PySide6.QtCore import QCoreApplication, Qt, QEvent, QTimer
 
+from analytics import Analytics
+
 from baramFlow.base import expert_mode
 from baramFlow.base.graphic.graphics_db import GraphicsDB
 from baramFlow.base.scaffold.scaffolds_db import ScaffoldsDB
@@ -184,6 +186,9 @@ class MainWindow(QMainWindow, expert_mode.IExpertModeObserver):
 
         self._backgroundTasks = set()
 
+        # OEM variants with analytics disabled don't need this entry.
+        self._ui.actionPrivacySettings.setVisible(Analytics().configured)
+
         self._setupShortcuts()
 
         self._connectSignalsSlots()
@@ -282,6 +287,7 @@ class MainWindow(QMainWindow, expert_mode.IExpertModeObserver):
 
         self._ui.actionAbout.triggered.connect(self._showAboutDialog)
         self._ui.actionTutorials.triggered.connect(self._openTutorials)
+        self._ui.actionPrivacySettings.triggered.connect(self._openPrivacySettings)
 
         self._navigatorView.currentMenuChanged.connect(self._changeForm)
 
@@ -987,3 +993,6 @@ class MainWindow(QMainWindow, expert_mode.IExpertModeObserver):
     def _retranslateUi(self):
         if self._actionTerminal is not None:
             self._actionTerminal.setText(QCoreApplication.translate("MainWindow", u"&Terminal", None))
+
+    def _openPrivacySettings(self):
+        Analytics().editConsent(parent=self)

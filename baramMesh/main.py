@@ -21,6 +21,9 @@ import resource_rc
 from libbaram.mpi import checkMPI, MPIStatus, MPI_PREFIX
 from libbaram.process import getAvailablePhysicalCores
 
+from analytics import Analytics
+from analytics.events import EVENT_LOOP_ERROR
+
 from baramMesh.app import app
 from baramMesh.settings.app_properties import AppProperties
 from baramMesh.view.main_window.main_window import MainWindow
@@ -39,13 +42,19 @@ def handle_exception(eType, eValue, eTraceback):
         return
 
     logger.critical("Uncaught exception", exc_info=(eType, eValue, eTraceback))
+    Analytics().captureException(eValue)
 
 
 sys.excepthook = handle_exception
 
 
 def loop_exception(loop, context):
-    print("exception handling: ", context["exception"])
+    exception = context.get('exception')
+    print("exception handling: ", exception if exception is not None else context.get('message', ''))
+    if exception is not None:
+        Analytics().captureException(exception, {'source': 'event_loop'})
+    else:
+        Analytics().capture(EVENT_LOOP_ERROR, {'message': context.get('message', '')})
     loop.stop()
 
 
@@ -65,14 +74,18 @@ def main():
         QMessageBox.information(None, QApplication.translate('main', 'Check MPI'), message)
         return
 
-    app.setupApplication(AppProperties(
+    properties = AppProperties(
         name='BaramMesh',
         fullName=QApplication.translate('Main', 'BaramMesh'),
         iconResource='baramMesh.ico',
         logoResource='baramMesh.ico',
         projectSuffix='.bm',
         exportSuffix='.bf'
-    ))
+    )
+    app.setupApplication(properties)
+
+    if properties.analyticsEnabled:
+        Analytics().configure(app_name=properties.name, config_dir=app.settings.settingsPath())
 
     os.environ['LC_NUMERIC'] = 'C'
     os.environ["QT_SCALE_FACTOR"] = app.settings.getScale()
@@ -93,6 +106,9 @@ def main():
 
     app.applyLanguage()
 
+    if Analytics().ensureConsent():
+        Analytics().init()
+
     app.window = MainWindow()
 
     background_tasks = set()
@@ -104,6 +120,7 @@ def main():
         loop.run_forever()
 
     loop.close()
+    Analytics().shutdown(final=True)
 
 
 if __name__ == '__main__':
