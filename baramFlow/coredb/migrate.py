@@ -1380,26 +1380,28 @@ def _version_12(root: etree.Element, path):
 
         p = b.find('temperature', namespaces=_nsmap)
         old = p.find('spatialDistribution', namespaces=_nsmap)
-        table = getFileData(path, old.text)
-        if table is not None:
-            e = etree.fromstring(f'''
-                <spatialDistribution xmlns="http://www.baramcfd.org/baram">
-                    <x>{" ".join(table[0])}</x>
-                    <y>{" ".join(table[1])}</y>
-                    <z>{" ".join(table[2])}</z>
-                    <v>{" ".join(table[3])}</v>
-                </spatialDistribution>
-            ''')
-        else:
-            e = etree.fromstring('''
-                <spatialDistribution xmlns="http://www.baramcfd.org/baram">
-                    <x>0</x>
-                    <y>0</y>
-                    <z>0</z>
-                    <v>0</v>
-                </spatialDistribution>
-            ''')
-        p.replace(old, e)
+        if old.find('x', namespaces=_nsmap) is None:
+            logger.debug(f'    Replacing File Data of {old} with element')
+            table = getFileData(path, old.text)
+            if table is not None:
+                e = etree.fromstring(f'''
+                    <spatialDistribution xmlns="http://www.baramcfd.org/baram">
+                        <x>{" ".join(table[0])}</x>
+                        <y>{" ".join(table[1])}</y>
+                        <z>{" ".join(table[2])}</z>
+                        <v>{" ".join(table[3])}</v>
+                    </spatialDistribution>
+                ''')
+            else:
+                e = etree.fromstring('''
+                    <spatialDistribution xmlns="http://www.baramcfd.org/baram">
+                        <x>0</x>
+                        <y>0</y>
+                        <z>0</z>
+                        <v>0</v>
+                    </spatialDistribution>
+                ''')
+            p.replace(old, e)
 
         if b.find('fallbackBoundary', namespaces=_nsmap) is None:
             logger.debug(f'    Adding "fallbackBoundary" to {b}')
