@@ -19,7 +19,6 @@ from libbaram.pfloat import PFloat
 class PointMotionType(Enum):
     FIXED             = 'fixed'
     SLIP              = 'slip'
-    NORMAL            = 'normal'
     PRESCRIBED_MOTION = 'prescribedMotion'
     RIGID_BODY_MOTION = 'rigidBodyMotion'
     CYCLIC            = 'cyclic'
@@ -202,6 +201,7 @@ class MovingBoundaryEntry:
     boundary: str = '0'
     pointMotionType: PointMotionType = PointMotionType.FIXED
 
+    useFixedNormal: bool = False
     normal: Vector = dataClassField(default_factory=Vector.yUnit)
 
     motionFunctions: list[MotionFunction] = dataClassField(default_factory=list)
@@ -213,6 +213,7 @@ class MovingBoundaryEntry:
         boundary = e.find('boundary', namespaces=nsmap).text
         pointMotionType = PointMotionType(e.find('pointMotionType', namespaces=nsmap).text)
 
+        useFixedNormal = e.find('useFixedNormal', namespaces=nsmap).text == 'true'
         normal = Vector.fromElement(e.find('normal', namespaces=nsmap))
 
         motionFunctions = []
@@ -225,6 +226,7 @@ class MovingBoundaryEntry:
 
         return MovingBoundaryEntry(
             uuid=uuid, boundary=boundary, pointMotionType=pointMotionType,
+            useFixedNormal=useFixedNormal,
             normal=normal,
             motionFunctions=motionFunctions,
             rigidBodyMotion=rigidBodyMotion)
@@ -234,6 +236,7 @@ class MovingBoundaryEntry:
                  E('uuid', str(self.uuid)),
                  E('boundary', self.boundary),
                  E('pointMotionType', self.pointMotionType.value),
+                 E('useFixedNormal', self.useFixedNormal),
                  self.normal.toElement('normal'),
                  E('motionFunctions', *[f.toElement() for f in self.motionFunctions]),
                  self.rigidBodyMotion.toElement())

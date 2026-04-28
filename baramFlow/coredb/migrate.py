@@ -1503,6 +1503,19 @@ def _version_12(root: etree.Element, path):
         index = root.index(root.find('regions', namespaces=_nsmap))
         root.insert(index + 1, p)
 
+
+    ## This is for development. Remove this block before releasing v26.2.0
+    for p in root.findall('dynamicMesh/movingBoundary/boundary', namespaces=_nsmap):
+        if p.find('useFixedNormal', namespaces=_nsmap) is None:
+            index = p.index(p.find('normal', namespaces=_nsmap))
+            pointMotionType = p.find('pointMotionType', namespaces=_nsmap)
+            if pointMotionType.text == 'normal':
+                p.insert(index, E('useFixedNormal', True))
+                pointMotionType.text = 'slip'
+            else:
+                p.insert(index, E('useFixedNormal', False))
+
+
 _fTable = [
     None,
     _version_1,

@@ -63,7 +63,7 @@
       <number>0</number>
      </property>
      <widget class="QWidget" name="emptyPage"/>
-     <widget class="QWidget" name="normalPage">
+     <widget class="QWidget" name="slipPage">
       <layout class="QVBoxLayout" name="normalPageLayout">
        <property name="leftMargin">
         <number>0</number>
@@ -80,7 +80,13 @@
        <item>
         <widget class="QGroupBox" name="normalGroup">
          <property name="title">
-          <string>Normal Vector</string>
+          <string>Use Fixed Normal Vector</string>
+         </property>
+         <property name="checkable">
+          <bool>true</bool>
+         </property>
+         <property name="checked">
+          <bool>false</bool>
          </property>
          <layout class="QFormLayout" name="normalFormLayout">
           <item row="0" column="0">

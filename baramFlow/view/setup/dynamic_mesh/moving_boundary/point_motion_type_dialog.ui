@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>376</width>
-    <height>374</height>
+    <height>344</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -31,13 +31,6 @@
        <widget class="QRadioButton" name="slipRadio">
         <property name="text">
          <string>Slip</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QRadioButton" name="normalRadio">
-        <property name="text">
-         <string>Normal</string>
         </property>
        </widget>
       </item>

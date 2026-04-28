@@ -106,13 +106,13 @@ class PointDisplacement(BoundaryCondition):
                 return self._constructFixedValue(Vector.zero().toFloatList())
 
             elif boundaryEntry.pointMotionType == PointMotionType.SLIP:
-                return {'type': 'slip'}
-
-            elif boundaryEntry.pointMotionType == PointMotionType.NORMAL:
-                return {
-                            'type': 'fixedNormalSlip',
-                            'n': boundaryEntry.normal.toFloatList()
-                        }
+                if not boundaryEntry.useFixedNormal:
+                    return {'type': 'slip'}
+                else:
+                    return {
+                                'type': 'fixedNormalSlip',
+                                'n': boundaryEntry.normal.toFloatList()
+                            }
 
             elif boundaryEntry.pointMotionType == PointMotionType.PRESCRIBED_MOTION:
                 return self._constructPrescribedMotion(boundaryEntry)
@@ -135,7 +135,7 @@ class PointDisplacement(BoundaryCondition):
             multiMotionCoeffs[uuidToNnstr(mFunction.uuid)] = data
             if mFunction.functionType == MotionFunctionType.MANUAL_POSITION:
                 writeManualPositionsDataFile(mFunction)
-                
+
         return {
             'type': 'solidBodyMotionDisplacement',
             'solidBodyMotionFunction': 'multiMotion',

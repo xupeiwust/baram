@@ -162,7 +162,7 @@ class DynamicMeshDict(DictionaryFile):
 
     def _buildMovingBoundary(self):
         movingBoundaries = [BoundaryDB.getBoundaryName(mb.boundary) for mb in self._dynamicMesh.movingBoundaries
-                            if mb.pointMotionType in (PointMotionType.NORMAL, PointMotionType.PRESCRIBED_MOTION, PointMotionType.RIGID_BODY_MOTION)]
+                            if mb.pointMotionType in (PointMotionType.PRESCRIBED_MOTION, PointMotionType.RIGID_BODY_MOTION)]
 
         self._data = {
             'dynamicFvMesh': 'dynamicMotionSolverFvMesh',

@@ -3222,7 +3222,6 @@
                                                             <xs:restriction base="xs:string">
                                                                 <xs:enumeration value="fixed"/>
                                                                 <xs:enumeration value="slip"/>
-                                                                <xs:enumeration value="normal"/>
                                                                 <xs:enumeration value="prescribedMotion"/>
                                                                 <xs:enumeration value="rigidBodyMotion"/>
                                                                 <xs:enumeration value="cyclic"/>
@@ -3232,6 +3231,7 @@
                                                             </xs:restriction>
                                                         </xs:simpleType>
                                                     </xs:element>
+                                                    <xs:element name="useFixedNormal" type="xs:boolean" default="false"/>
                                                     <xs:element name="normal" type="vector"/>
                                                     <xs:element ref="motionFunctions"/>
                                                     <xs:element name="rigidBodyMotion">

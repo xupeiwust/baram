@@ -26,7 +26,6 @@ from .point_motion_dialog_ui import Ui_PointMotionDialog
 POINT_MOTION_TYPE_NAMES = {
     PointMotionType.FIXED: 'Fixed',
     PointMotionType.SLIP: 'Slip',
-    PointMotionType.NORMAL: 'Normal',
     PointMotionType.PRESCRIBED_MOTION: 'Prescribed Motion',
     PointMotionType.RIGID_BODY_MOTION: 'Rigid Body Motion',
     PointMotionType.CYCLIC: 'Cyclic',
@@ -48,7 +47,6 @@ class PointMotionTypeDialog(QDialog):
         self._radioMap = {
             PointMotionType.FIXED: self._ui.fixedRadio,
             PointMotionType.SLIP: self._ui.slipRadio,
-            PointMotionType.NORMAL: self._ui.normalRadio,
             PointMotionType.PRESCRIBED_MOTION: self._ui.prescribedMotionRadio,
             PointMotionType.RIGID_BODY_MOTION: self._ui.rigidBodyMotionRadio,
             PointMotionType.CYCLIC: self._ui.cyclicRadio,
@@ -88,6 +86,7 @@ class PointMotionDialog(QDialog):
         self._rigidBodyMotion = deepcopy(entry.rigidBodyMotion)
 
         # Normal vector
+        self._ui.normalGroup.setChecked(entry.useFixedNormal)
         self._ui.normal.setVector(entry.normal)
 
         # Add motion function menu
@@ -113,8 +112,8 @@ class PointMotionDialog(QDialog):
 
     def _updatePage(self):
         self._ui.typeLabel.setText(POINT_MOTION_TYPE_NAMES[self._pointMotionType])
-        if self._pointMotionType == PointMotionType.NORMAL:
-            self._ui.stack.setCurrentWidget(self._ui.normalPage)
+        if self._pointMotionType == PointMotionType.SLIP:
+            self._ui.stack.setCurrentWidget(self._ui.slipPage)
         elif self._pointMotionType == PointMotionType.PRESCRIBED_MOTION:
             self._ui.stack.setCurrentWidget(self._ui.prescribedPage)
         elif self._pointMotionType == PointMotionType.RIGID_BODY_MOTION:
@@ -221,12 +220,13 @@ class PointMotionDialog(QDialog):
             mf.order = i + 1
 
         try:
-            normal = self._ui.normal.vector('Normal')
+            normal = self._ui.normal.vector(self.tr('Normal'))
         except ValueError as e:
             await AsyncMessageBox().warning(self, self.tr('Warning'), str(e))
             return
 
         self._entry.pointMotionType = self._pointMotionType
+        self._entry.useFixedNormal = self._ui.normalGroup.isChecked()
         self._entry.normal = normal
         self._entry.motionFunctions = self._motionFunctions
         self._entry.rigidBodyMotion = self._rigidBodyMotion
