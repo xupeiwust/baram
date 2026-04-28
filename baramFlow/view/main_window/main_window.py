@@ -665,9 +665,6 @@ class MainWindow(QMainWindow, expert_mode.IExpertModeObserver):
 
         db = coredb.CoreDB()
         if db.hasMesh():
-            ScaffoldsDB().load()
-            await GraphicsDB().load()
-
             # Workaround to give some time for QT to set up timer or event loop.
             # This workaround is not necessary on Windows because BARAM for Windows
             #     uses custom-built VTK that is compiled with VTK_ALLOWTHREADS
@@ -675,6 +672,9 @@ class MainWindow(QMainWindow, expert_mode.IExpertModeObserver):
 
             async with OpenFOAMReader() as reader:
                 await reader.setupReader()
+
+            ScaffoldsDB().load()
+            await GraphicsDB().load()
 
             loader = PolyMeshLoader()
             loader.progress.connect(progressDialog.setLabelText)
