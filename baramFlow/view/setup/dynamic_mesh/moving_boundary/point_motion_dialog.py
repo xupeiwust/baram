@@ -48,7 +48,6 @@ class PointMotionTypeDialog(QDialog):
             PointMotionType.FIXED: self._ui.fixedRadio,
             PointMotionType.SLIP: self._ui.slipRadio,
             PointMotionType.PRESCRIBED_MOTION: self._ui.prescribedMotionRadio,
-            PointMotionType.RIGID_BODY_MOTION: self._ui.rigidBodyMotionRadio,
             PointMotionType.CYCLIC: self._ui.cyclicRadio,
             PointMotionType.SYMMETRY: self._ui.symmetryRadio,
             PointMotionType.EMPTY: self._ui.emptyRadio,

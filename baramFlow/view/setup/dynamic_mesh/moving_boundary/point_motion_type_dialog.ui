@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>376</width>
-    <height>344</height>
+    <height>314</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -38,13 +38,6 @@
        <widget class="QRadioButton" name="prescribedMotionRadio">
         <property name="text">
          <string>Prescribed Motion</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QRadioButton" name="rigidBodyMotionRadio">
-        <property name="text">
-         <string>Rigid Body Motion</string>
         </property>
        </widget>
       </item>
@@ -82,7 +75,7 @@
    <item>
     <widget class="QLabel" name="label">
      <property name="text">
-      <string>&quot;Prescribed Motion&quot; and &quot;Rigid Body Motion&quot; are available only for walls defined as 'Moving Wall' &gt; 'Mesh Motion' in the Wall Boundary Condition.</string>
+      <string>&quot;Prescribed Motion&quot; is available only for walls defined as 'Moving Wall' &gt; 'Mesh Motion' in the Wall Boundary Condition.</string>
      </property>
      <property name="wordWrap">
       <bool>true</bool>
