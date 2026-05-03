@@ -82,14 +82,14 @@ class PointDisplacement(BoundaryCondition):
                 BoundaryType.SUPERSONIC_OUTFLOW.value:  (lambda: self._constructPointDisplacement(bcid)),
                 BoundaryType.WALL.value:                (lambda: self._constructPointDisplacement(bcid)),
                 BoundaryType.THERMO_COUPLED_WALL.value: (lambda: self._constructPointDisplacement(bcid)),
-                BoundaryType.SYMMETRY.value:            (lambda: self._constructPointDisplacement(bcid)),
+                BoundaryType.SYMMETRY.value:            (lambda: self._constructSymmetry()),
                 BoundaryType.INTERFACE.value:           (lambda: self._constructPointDisplacement(bcid)),
-                BoundaryType.POROUS_JUMP.value:         (lambda: self._constructPointDisplacement(bcid)),
-                BoundaryType.FAN.value:                 (lambda: self._constructPointDisplacement(bcid)),
-                BoundaryType.EMPTY.value:               (lambda: self._constructPointDisplacement(bcid)),
-                BoundaryType.CYCLIC.value:              (lambda: self._constructPointDisplacement(bcid)),
-                BoundaryType.CYCLIC_ACMI.value:         (lambda: self._constructPointDisplacement(bcid)),
-                BoundaryType.WEDGE.value:               (lambda: self._constructPointDisplacement(bcid)),
+                BoundaryType.POROUS_JUMP.value:         (lambda: self._constructCyclic()),
+                BoundaryType.FAN.value:                 (lambda: self._constructCyclic()),
+                BoundaryType.EMPTY.value:               (lambda: self._constructEmpty()),
+                BoundaryType.CYCLIC.value:              (lambda: self._constructCyclic()),
+                BoundaryType.CYCLIC_ACMI.value:         (lambda: self._constructCyclicACMI()),
+                BoundaryType.WEDGE.value:               (lambda: self._constructWedge()),
             }.get(type_, lambda: None)()
 
         return field
@@ -119,18 +119,6 @@ class PointDisplacement(BoundaryCondition):
 
             elif boundaryEntry.pointMotionType == PointMotionType.RIGID_BODY_MOTION:
                 return self._constructRigidBodyMotion(boundaryEntry)
-
-            elif boundaryEntry.pointMotionType == PointMotionType.SYMMETRY:
-                return {'type': 'symmetry'}
-
-            elif boundaryEntry.pointMotionType == PointMotionType.EMPTY:
-                return {'type': 'empty'}
-
-            elif boundaryEntry.pointMotionType == PointMotionType.CYCLIC:
-                return {'type': 'cyclic'}
-
-            elif boundaryEntry.pointMotionType == PointMotionType.WEDGE:
-                return {'type': 'wedge'}
 
         elif self._dynamicMesh.motionType == MotionType.RIGID_BODY_DYNAMICS:
             if bcid in self._rigidBodyDynamicsBoundary:
