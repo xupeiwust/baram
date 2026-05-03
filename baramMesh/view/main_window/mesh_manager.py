@@ -23,17 +23,16 @@ class MeshManager(ActorManager):
 
         self._name = 'Mesh'
 
-    async def load(self, time=None):
+    async def load(self, time):
         if not self._displayControl.isEnabled():
             return
 
         self.clear()
         self._visibility = True
 
-        if time is not None:
-            self._time = time
+        self._time = time
 
-        if self._time is None:
+        if self._time < 0:
             return
 
         progressDialog = ProgressDialog(app.window, self.tr('Loading Mesh'))

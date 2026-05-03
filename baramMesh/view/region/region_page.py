@@ -11,8 +11,6 @@ from .region_card import RegionCard
 
 
 class RegionPage(StepPage):
-    OUTPUT_TIME = 0
-
     def __init__(self, ui):
         super().__init__(ui, ui.regionPage)
 
