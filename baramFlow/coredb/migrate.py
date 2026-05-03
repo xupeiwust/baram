@@ -1515,6 +1515,10 @@ def _version_12(root: etree.Element, path):
             else:
                 p.insert(index, E('useFixedNormal', False))
 
+        pointMotionType = p.find('pointMotionType', namespaces=_nsmap)
+        if pointMotionType.text in ['cyclic', 'symmetry', 'empty', 'wedge']:
+            pointMotionType.text = 'fixed'
+
 
 _fTable = [
     None,

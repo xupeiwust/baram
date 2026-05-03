@@ -83,12 +83,12 @@ class PointDisplacement(BoundaryCondition):
                 BoundaryType.WALL.value:                (lambda: self._constructPointDisplacement(bcid)),
                 BoundaryType.THERMO_COUPLED_WALL.value: (lambda: self._constructPointDisplacement(bcid)),
                 BoundaryType.SYMMETRY.value:            (lambda: self._constructSymmetry()),
-                BoundaryType.INTERFACE.value:           (lambda: self._constructPointDisplacement(bcid)),
+                BoundaryType.INTERFACE.value:           (lambda: self._constructCyclic()),
                 BoundaryType.POROUS_JUMP.value:         (lambda: self._constructCyclic()),
                 BoundaryType.FAN.value:                 (lambda: self._constructCyclic()),
                 BoundaryType.EMPTY.value:               (lambda: self._constructEmpty()),
                 BoundaryType.CYCLIC.value:              (lambda: self._constructCyclic()),
-                BoundaryType.CYCLIC_ACMI.value:         (lambda: self._constructCyclicACMI()),
+                BoundaryType.CYCLIC_ACMI.value:         (lambda: self._constructCyclic()),
                 BoundaryType.WEDGE.value:               (lambda: self._constructWedge()),
             }.get(type_, lambda: None)()
 

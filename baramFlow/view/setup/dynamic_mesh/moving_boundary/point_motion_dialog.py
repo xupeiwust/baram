@@ -48,10 +48,6 @@ class PointMotionTypeDialog(QDialog):
             PointMotionType.FIXED: self._ui.fixedRadio,
             PointMotionType.SLIP: self._ui.slipRadio,
             PointMotionType.PRESCRIBED_MOTION: self._ui.prescribedMotionRadio,
-            PointMotionType.CYCLIC: self._ui.cyclicRadio,
-            PointMotionType.SYMMETRY: self._ui.symmetryRadio,
-            PointMotionType.EMPTY: self._ui.emptyRadio,
-            PointMotionType.WEDGE: self._ui.wedgeRadio,
         }
 
         for pmt, radio in self._radioMap.items():

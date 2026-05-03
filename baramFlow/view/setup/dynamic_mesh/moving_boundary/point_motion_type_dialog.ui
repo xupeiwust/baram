@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>376</width>
-    <height>314</height>
+    <height>194</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -38,34 +38,6 @@
        <widget class="QRadioButton" name="prescribedMotionRadio">
         <property name="text">
          <string>Prescribed Motion</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QRadioButton" name="cyclicRadio">
-        <property name="text">
-         <string>Cyclic</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QRadioButton" name="symmetryRadio">
-        <property name="text">
-         <string>Symmetry</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QRadioButton" name="emptyRadio">
-        <property name="text">
-         <string>Empty</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QRadioButton" name="wedgeRadio">
-        <property name="text">
-         <string>Wedge</string>
         </property>
        </widget>
       </item>
