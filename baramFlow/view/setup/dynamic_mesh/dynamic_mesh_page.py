@@ -9,24 +9,20 @@ from PySide6.QtCore import Qt, QSize
 from PySide6.QtWidgets import (QLabel, QListWidgetItem, QMenu, QWidget,
                                 QVBoxLayout, QHBoxLayout, QMessageBox)
 
-from baramFlow.base.dynamic_mesh.dynamic_mesh import DYNAMIC_MESH_PATH, DynamicMesh, MotionType
+from baramFlow.base.dynamic_mesh.dynamic_mesh import MotionType
 from baramFlow.base.dynamic_mesh.motion_definition import MotionDefinition
-from baramFlow.coredb import coredb
 from baramFlow.coredb.boundary_db import BoundaryDB
 from baramFlow.coredb.cell_zone_db import CellZoneDB
-from baramFlow.base.dynamic_mesh.moving_boundary import MovingBoundaryEntry, PointMotionType
+from baramFlow.base.dynamic_mesh.moving_boundary import MovingBoundaryEntry
 from baramFlow.base.dynamic_mesh.rigid_body_dynamics import Body
 from baramFlow.base.dynamic_mesh.rigid_body_solver import RigidBodyDynamicsSolverType
-from baramFlow.base.dynamic_mesh.restraint import Restraint, RestraintType
 
-from baramFlow.services.dynamic_mesh.dynamic_mesh_service import DynamicMeshService
+from baramFlow.services.dynamic_mesh.dynamic_mesh_service import DynamicMeshService, CONSTRAINT_BOUNDARY_TYPE_MAP
 from baramFlow.view.setup.dynamic_mesh.motion_type_dialog import MotionTypeDialog
 from baramFlow.view.setup.dynamic_mesh.moving_cell_zone.motion_definition_dialog import MotionDefinitionDialog
 from baramFlow.view.setup.dynamic_mesh.moving_boundary.point_motion_dialog import (
     PointMotionDialog, POINT_MOTION_TYPE_NAMES,
 )
-from baramFlow.view.setup.dynamic_mesh.restraints.restraint_widget import RestraintWidget, RESTRAINT_TYPE_NAMES
-from baramFlow.view.setup.dynamic_mesh.restraints.restraint_dialogs import RESTRAINT_DIALOGS
 from baramFlow.view.setup.dynamic_mesh.rigid_body_dynamics.body_dialog import BodyDialog
 from baramFlow.view.widgets.content_page import ContentPage
 
@@ -253,9 +249,15 @@ class DynamicMeshPage(ContentPage):
         name = BoundaryDB.getBoundaryName(entry.boundary)
         nameLabel = QLabel(name)
 
-        summary = POINT_MOTION_TYPE_NAMES.get(entry.pointMotionType, '')
-        if entry.useFixedNormal:
-            summary = f'Fixed Normal {entry.normal} Slip'
+        bctype = BoundaryDB.getBoundaryType(entry.boundary)
+        constrained = bctype in CONSTRAINT_BOUNDARY_TYPE_MAP
+
+        if constrained:
+            summary = POINT_MOTION_TYPE_NAMES.get(CONSTRAINT_BOUNDARY_TYPE_MAP[bctype], '')
+        else:
+            summary = POINT_MOTION_TYPE_NAMES.get(entry.pointMotionType, '')
+            if entry.useFixedNormal:
+                summary = f'Fixed Normal {entry.normal} Slip'
         summaryLabel = QLabel(f'<b>{summary}</b>')
 
         layout.addWidget(nameLabel, 1)
@@ -264,6 +266,9 @@ class DynamicMeshPage(ContentPage):
         item = QListWidgetItem()
         item.setSizeHint(QSize(0, 40))
         item.setData(Qt.ItemDataRole.UserRole, entry.uuid)
+        if constrained:
+            item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEnabled & ~Qt.ItemFlag.ItemIsSelectable)
+            widget.setEnabled(False)
         self._ui.mbList.addItem(item)
         self._ui.mbList.setItemWidget(item, widget)
 
