@@ -58,7 +58,7 @@ class DynamicMeshService:
 
     async def load(self):
         db = coredb.CoreDB()
-        self._dynamicMesh = DynamicMesh.fromElement(db.getElement(DYNAMIC_MESH_PATH))
+        self._dynamicMesh.replaceWith(DynamicMesh.fromElement(db.getElement(DYNAMIC_MESH_PATH)))
         # ToDo: For compatibility. Remove this code block after 20271231
         # Add boundaries to moving boundary list
         # Begin
@@ -77,7 +77,7 @@ class DynamicMeshService:
         await self.load()
 
     async def _handleProjectClose(self):
-        self._dynamicMesh = DynamicMesh()
+        self._dynamicMesh.replaceWith(DynamicMesh())
 
     async def _handleMeshUpdate(self,
                                 oldMesh: dict[str, RegionComponents],
@@ -88,7 +88,7 @@ class DynamicMeshService:
 
         # dynamic mesh does not support multi-region
         if len(newMesh) > 1:
-            self._dynamicMesh = DynamicMesh()
+            self._dynamicMesh.replaceWith(DynamicMesh())
             return
 
         newDefaultRegion = list(newMesh.values())[0]
@@ -96,7 +96,7 @@ class DynamicMeshService:
         newCellZones  = bidict(newDefaultRegion['cellZones'])
 
         if len(oldMesh) == 0:
-            self._dynamicMesh = DynamicMesh()
+            self._dynamicMesh.replaceWith(DynamicMesh())
             boundaries = [bcid for bcname, bcid in newBoundaries.items()]
             self._dynamicMesh.movingBoundaries = self._generateMovingBoundaries(boundaries)
             return

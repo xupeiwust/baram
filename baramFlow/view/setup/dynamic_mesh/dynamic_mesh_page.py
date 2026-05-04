@@ -46,7 +46,7 @@ class DynamicMeshPage(ContentPage):
         self._ui = Ui_DynamicMeshPage()
         self._ui.setupUi(self)
 
-        self._dynamicMesh = DynamicMeshService().getDynamicMesh()  # self.__init__ is called again if another mesh is imported
+        self._dynamicMesh = DynamicMeshService().getDynamicMesh()
 
         # Solver combo items
         self._ui.rbdSolverCombo.addItem('Newmark', RigidBodyDynamicsSolverType.NEWMARK)
