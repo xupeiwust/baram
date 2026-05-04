@@ -90,8 +90,7 @@ def main():
     app.setupApplication(properties)
     app.setPlug(AppPlugIn())
 
-    if properties.analyticsEnabled:
-        Analytics().configure(app_name=properties.name, config_dir=AppSettings.settingsPath())
+    Analytics().configure(app_name=properties.name, config_dir=AppSettings.settingsPath())
 
     os.environ['LC_NUMERIC'] = 'C'
     os.environ["QT_SCALE_FACTOR"] = AppSettings.getUiScaling()

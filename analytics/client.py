@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 import logging
-import os
 import sys
 import uuid
 from pathlib import Path
@@ -49,6 +48,8 @@ class Analytics:
         self._config_dir: Optional[Path] = None
         self._distinct_id_file: Optional[Path] = None
         self._session_id: Optional[str] = None
+        self._api_key: str = ''
+        self._host: str = ''
         self._posthog = None
         self._consent = None
         self._launch_captured = False
@@ -56,14 +57,20 @@ class Analytics:
     def configure(self, app_name: str, config_dir: Path) -> None:
         """Bind the singleton to an app's name + config dir.
 
-        Called from main() once AppProperties is known. OEM variants that
-        disable analytics simply don't call this — every other method then
-        no-ops.
+        Silently no-ops when `analytics/_config.py` is absent or empty — that's
+        the signal that this build (e.g. dev source tree, OEM variant without
+        keys) doesn't ship analytics. Every other method then no-ops via the
+        `configured` guard, so no consent dialog appears either.
         """
+        api_key, host = self._loadConfig()
+        if not api_key or not host:
+            return
         from .consent import AnalyticsConsent
         self._app_name = app_name
         self._config_dir = Path(config_dir)
         self._distinct_id_file = self._config_dir / 'analytics_id'
+        self._api_key = api_key
+        self._host = host
         # One session per process launch — events from this run group together
         # in PostHog's session view.
         self._session_id = str(uuid.uuid4())
@@ -107,9 +114,7 @@ class Analytics:
             return
         try:
             from posthog import Posthog
-            api_key, host = self._loadConfig()
-            if api_key and host:
-                self._posthog = Posthog(api_key, host=host, disable_geoip=False)
+            self._posthog = Posthog(self._api_key, host=self._host, disable_geoip=False)
         except Exception:
             logger.debug('PostHog analytics not available', exc_info=True)
 
@@ -189,7 +194,7 @@ class Analytics:
             from . import _config as cfg  # pyright: ignore[reportMissingImports]
             return getattr(cfg, 'POSTHOG_API_KEY', ''), getattr(cfg, 'POSTHOG_HOST', '')
         except ImportError:
-            return os.environ.get('POSTHOG_API_KEY', ''), os.environ.get('POSTHOG_HOST', '')
+            return '', ''
 
     def _getDistinctId(self) -> str:
         if self._distinct_id_file is None:
