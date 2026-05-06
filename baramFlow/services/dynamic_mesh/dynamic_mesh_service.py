@@ -16,11 +16,15 @@ from baramFlow.coredb.boundary_db import BoundaryDB, BoundaryType
 _mutex = Lock()
 
 
-_CONSTRAINT_BOUNDARY_TYPE_MAP = {
-    BoundaryType.SYMMETRY: PointMotionType.SYMMETRY,
-    BoundaryType.EMPTY:    PointMotionType.EMPTY,
-    BoundaryType.WEDGE:    PointMotionType.WEDGE,
-    BoundaryType.CYCLIC:   PointMotionType.CYCLIC
+CONSTRAINT_BOUNDARY_TYPE_MAP = {
+    BoundaryType.POROUS_JUMP: PointMotionType.CYCLIC,
+    BoundaryType.FAN:         PointMotionType.CYCLIC,
+    BoundaryType.SYMMETRY:    PointMotionType.SYMMETRY,
+    BoundaryType.INTERFACE:   PointMotionType.CYCLIC,
+    BoundaryType.EMPTY:       PointMotionType.EMPTY,
+    BoundaryType.CYCLIC:      PointMotionType.CYCLIC,
+    BoundaryType.CYCLIC_ACMI: PointMotionType.CYCLIC,
+    BoundaryType.WEDGE:       PointMotionType.WEDGE,
 }
 
 class DynamicMeshService:
@@ -54,7 +58,7 @@ class DynamicMeshService:
 
     async def load(self):
         db = coredb.CoreDB()
-        self._dynamicMesh = DynamicMesh.fromElement(db.getElement(DYNAMIC_MESH_PATH))
+        self._dynamicMesh.replaceWith(DynamicMesh.fromElement(db.getElement(DYNAMIC_MESH_PATH)))
         # ToDo: For compatibility. Remove this code block after 20271231
         # Add boundaries to moving boundary list
         # Begin
@@ -73,7 +77,7 @@ class DynamicMeshService:
         await self.load()
 
     async def _handleProjectClose(self):
-        self._dynamicMesh = DynamicMesh()
+        self._dynamicMesh.replaceWith(DynamicMesh())
 
     async def _handleMeshUpdate(self,
                                 oldMesh: dict[str, RegionComponents],
@@ -81,10 +85,10 @@ class DynamicMeshService:
 
         if len(newMesh) == 0:
             return
-        
+
         # dynamic mesh does not support multi-region
         if len(newMesh) > 1:
-            self._dynamicMesh = DynamicMesh()
+            self._dynamicMesh.replaceWith(DynamicMesh())
             return
 
         newDefaultRegion = list(newMesh.values())[0]
@@ -92,7 +96,7 @@ class DynamicMeshService:
         newCellZones  = bidict(newDefaultRegion['cellZones'])
 
         if len(oldMesh) == 0:
-            self._dynamicMesh = DynamicMesh()
+            self._dynamicMesh.replaceWith(DynamicMesh())
             boundaries = [bcid for bcname, bcid in newBoundaries.items()]
             self._dynamicMesh.movingBoundaries = self._generateMovingBoundaries(boundaries)
             return
@@ -110,7 +114,6 @@ class DynamicMeshService:
                 mb = next(mb for mb in self._dynamicMesh.movingBoundaries if mb.boundary == oldBoundaries[bcname])
             else:
                 mb = MovingBoundaryEntry(boundary=bcid)
-                self._constraintBoundaryUpdate(mb)
 
             newMovingBoundaries.append(mb)
 
@@ -119,27 +122,19 @@ class DynamicMeshService:
         for body in self._dynamicMesh.rigidBodyDynamics.bodies:
             body.processMeshUpdate(oldBoundaries, newBoundaries)
 
+    # This method is left here just to leave a scaffold for future evolution
     async def _handleBoundaryTypeChange(self, bcid: str, oldType: BoundaryType, newType: BoundaryType):
         boundaryEntry = next((be for be in self._dynamicMesh.movingBoundaries if be.boundary == bcid), None)
         if boundaryEntry is None:
             raise AssertionError
 
-        if newType in _CONSTRAINT_BOUNDARY_TYPE_MAP:
-            boundaryEntry.pointMotionType = _CONSTRAINT_BOUNDARY_TYPE_MAP[newType]
-
     def _handleSave(self):
         self.saveToCoreDB()
-
-    def _constraintBoundaryUpdate(self, mb: MovingBoundaryEntry):
-        bctype = BoundaryDB.getBoundaryType(mb.boundary)
-        if bctype in _CONSTRAINT_BOUNDARY_TYPE_MAP:
-            mb.pointMotionType = _CONSTRAINT_BOUNDARY_TYPE_MAP[bctype]
 
     def _generateMovingBoundaries(self, boundaries: list[str]):
         movingBoundaries = []
         for bcid in boundaries:
             mb = MovingBoundaryEntry(boundary=str(bcid))
-            self._constraintBoundaryUpdate(mb)
             movingBoundaries.append(mb)
 
         return movingBoundaries

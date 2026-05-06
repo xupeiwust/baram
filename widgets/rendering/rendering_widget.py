@@ -42,6 +42,12 @@ class RenderWindowInteractor(QVTKRenderWindowInteractor):
 
         super().__init__(parent=parent, **kw)
 
+        # This is a fix based on the merge request in VTK.
+        #     https://gitlab.kitware.com/vtk/vtk/-/merge_requests/12956
+        # This code can be removed if we adopt newer VTK package that includes above MR.
+        if self._RenderWindow.IsA("vtkCocoaRenderWindow"):
+            self.setAttribute(Qt.WidgetAttribute.WA_PaintOnScreen, False)
+
     def Finalize(self):
         if self._RenderWindow is not None:
             self._RenderWindow.Finalize()

@@ -52,6 +52,12 @@ class DynamicMesh:
                            movingBoundaries=movingBoundaries,
                            rigidBodyDynamics=rigidBodyDynamics)
 
+    def replaceWith(self, other: 'DynamicMesh'):
+        self.motionType = other.motionType
+        self.motionDefinitions = other.motionDefinitions
+        self.movingBoundaries = other.movingBoundaries
+        self.rigidBodyDynamics = other.rigidBodyDynamics
+
     def toElement(self, tag):
         movingCellZoneElement = E('movingCellZone')
         for md in self.motionDefinitions:

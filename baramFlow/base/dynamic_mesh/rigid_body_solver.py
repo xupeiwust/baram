@@ -18,8 +18,8 @@ class RigidBodyDynamicsSolverType(Enum):
 @dataclass
 class RigidBodySolver:
     solverType: RigidBodyDynamicsSolverType = RigidBodyDynamicsSolverType.NEWMARK
-    velocityIntegrationCoefficient: PFloat = dataClassField(default_factory=lambda: PFloat('0.7'))
-    positionIntegrationCoefficient: PFloat = dataClassField(default_factory=lambda: PFloat('1.0'))
+    velocityIntegrationCoefficient: PFloat = dataClassField(default_factory=lambda: PFloat('0.5'))
+    positionIntegrationCoefficient: PFloat = dataClassField(default_factory=lambda: PFloat('0.25'))
     offCenteringAccelerationCoefficient: PFloat = dataClassField(default_factory=lambda: PFloat('0.5'))
     offCenteringVelocityCoefficient: PFloat = dataClassField(default_factory=lambda: PFloat('0.5'))
 
