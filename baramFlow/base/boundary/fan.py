@@ -23,5 +23,5 @@ class Fan:
         xpath = BoundaryDB.getXPath(bcid)
 
         db.setValue(xpath + '/fan/reverseDirection', boolToXml(self.reverseDirection))
-        if self.fanCurve.name is not None:
-            db.setValue(xpath + '/fanCurveName', str(self.fanCurve.name))
+        if self.fanCurve is not None:
+            self.fanCurve.applyToDB(db, bcid)
