@@ -117,7 +117,7 @@ class ChartWidget(QWidget):
             return
 
         dialog = SimpleSheetDialog(
-            self, self.tr('Export Chart Data')
+            self, self.tr('Export Chart Data'),
             ['Time step'] + self._data.columns.tolist(), self._data.reset_index().values.tolist(), readOnly=False)
         try:
             await dialog.show()
