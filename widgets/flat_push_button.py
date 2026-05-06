@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import sys
+
 from PySide6.QtWidgets import QPushButton, QStyle, QStyleOptionButton, QStylePainter
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QMouseEvent, QPainter, QPalette
@@ -11,6 +13,10 @@ class FlatPushButton(QPushButton):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        if sys.platform == 'darwin':
+            # macOS native style paints a light bezel even when only CE_PushButtonLabel
+            # is drawn; a stylesheet switches the widget off the native style.
+            self.setStyleSheet('QPushButton { background: transparent; border: none; }')
 
     def paintEvent(self, event):
         option = QStyleOptionButton()
