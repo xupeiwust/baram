@@ -18,6 +18,7 @@ from vtkmodules.vtkCommonCore import vtkSMPTools
 # noinspection PyUnresolvedReferences
 import resource_rc
 
+from app_properties import meshAppProperties
 from libbaram.mpi import checkMPI, MPIStatus, MPI_PREFIX
 from libbaram.process import getAvailablePhysicalCores
 
@@ -25,7 +26,6 @@ from analytics import Analytics
 from analytics.events import EVENT_LOOP_ERROR
 
 from baramMesh.app import app
-from baramMesh.settings.app_properties import AppProperties
 from baramMesh.view.main_window.main_window import MainWindow
 
 logger = logging.getLogger()
@@ -74,18 +74,10 @@ def main():
         QMessageBox.information(None, QApplication.translate('main', 'Check MPI'), message)
         return
 
-    properties = AppProperties(
-        name='BaramMesh',
-        fullName=QApplication.translate('Main', 'BaramMesh'),
-        iconResource='baramMesh.ico',
-        logoResource='baramMesh.ico',
-        projectSuffix='.bm',
-        exportSuffix='.bf'
-    )
-    app.setupApplication(properties)
+    app.setupApplication(meshAppProperties)
 
-    if properties.analyticsEnabled:
-        Analytics().configure(app_name=properties.name, config_dir=app.settings.settingsPath())
+    if meshAppProperties.analyticsEnabled:
+        Analytics().configure(app_name=meshAppProperties.name, config_dir=app.settings.settingsPath())
 
     os.environ['LC_NUMERIC'] = 'C'
     os.environ["QT_SCALE_FACTOR"] = app.settings.getScale()

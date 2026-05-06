@@ -19,12 +19,7 @@ from PySide6.QtWidgets import QMainWindow, QFileDialog, QMessageBox
 from PySide6.QtCore import QCoreApplication, Qt, QEvent, QTimer
 
 from analytics import Analytics
-
-from baramFlow.base import expert_mode
-from baramFlow.base.graphic.graphics_db import GraphicsDB
-from baramFlow.base.scaffold.scaffolds_db import ScaffoldsDB
-from baramFlow.openfoam.openfoam_reader import OpenFOAMReader
-from baramFlow.view.results.graphics.graphic_dock import GraphicDock
+from app_properties import flowAppProperties
 from libbaram.exception import CanceledException
 from libbaram.openfoam.polymesh import removeVoidBoundaries
 from libbaram.run import hasUtility, openTerminal
@@ -35,9 +30,12 @@ from widgets.progress_dialog import ProgressDialog
 from widgets.parallel.parallel_environment_dialog import ParallelEnvironmentDialog
 
 from baramFlow.app import app
+from baramFlow.base import expert_mode
 from baramFlow.base.cache_manager import CacheManager
+from baramFlow.base.graphic.graphics_db import GraphicsDB
 from baramFlow.base.monitor.monitor import MonitorManager
 from baramFlow.base.model.model import ModelManager
+from baramFlow.base.scaffold.scaffolds_db import ScaffoldsDB
 from baramFlow.case_manager import CaseManager, LiveCase
 from baramFlow.coredb import coredb
 from baramFlow.coredb.app_settings import AppSettings
@@ -50,6 +48,7 @@ from baramFlow.openfoam import parallel
 from baramFlow.openfoam.constant.cell_zones_to_regions import CellZonesToRegions
 from baramFlow.openfoam.constant.region_properties import RegionProperties
 from baramFlow.openfoam.file_system import FileSystem
+from baramFlow.openfoam.openfoam_reader import OpenFOAMReader
 from baramFlow.openfoam.polymesh.polymesh_loader import PolyMeshLoader
 from baramFlow.openfoam.redistribution_task import RedistributionTask
 from baramFlow.solver_status import SolverStatus
@@ -74,6 +73,7 @@ from baramFlow.view.solution.initialization.initialization_page import Initializ
 from baramFlow.view.solution.run_conditions.run_conditions_page import RunConditionsPage
 from baramFlow.view.solution.run.process_information_page import ProcessInformationPage
 from baramFlow.view.solution.run.pod_rom_page import PODROMPage
+from baramFlow.view.results.graphics.graphic_dock import GraphicDock
 from baramFlow.view.results.graphics.graphics_page import GraphicsPage
 from baramFlow.view.results.reports.reports_page import ReportsPage
 from baramFlow.view.results.scaffolds.scaffolds_page import ScaffoldsPage
@@ -130,7 +130,7 @@ class MainWindow(QMainWindow, expert_mode.IExpertModeObserver):
         self._ui = Ui_MainWindow()
         self._ui.setupUi(self)
 
-        self.setWindowIcon(app.properties.icon())
+        self.setWindowIcon(flowAppProperties.icon())
 
         self._project = Project.instance()
         self._caseManager = CaseManager()
@@ -324,7 +324,7 @@ class MainWindow(QMainWindow, expert_mode.IExpertModeObserver):
             self.tr('Only configuration and mesh are saved. (Calculation results are not copied)'))
 
         self._dialog = NewProjectDialog(self, self.tr('Save as new project'),
-                                        Path(AppSettings.getRecentLocation()).resolve(), app.properties.projectSuffix)
+                                        Path(AppSettings.getRecentLocation()).resolve(), flowAppProperties.projectSuffix)
         self._dialog.pathSelected.connect(self._saveAsDirectorySelected)
         self._dialog.open()
 
@@ -707,9 +707,9 @@ class MainWindow(QMainWindow, expert_mode.IExpertModeObserver):
     @qasync.asyncSlot()
     async def _caseLoaded(self, name=None):
         if name:
-            self.setWindowTitle(f'{app.properties.fullName} - {name} ({self._project.path})')
+            self.setWindowTitle(f'{flowAppProperties.fullName} - {name} ({self._project.path})')
         else:
-            self.setWindowTitle(f'{app.properties.fullName} - {self._project.path}')
+            self.setWindowTitle(f'{flowAppProperties.fullName} - {self._project.path}')
 
     def _changeScale(self):
         self._dialog = SettingScalingDialog(self)

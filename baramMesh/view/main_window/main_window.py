@@ -16,6 +16,7 @@ from PySide6.QtCore import Signal, QEvent, QMargins, Qt
 from PySide6QtAds import CDockManager, DockWidgetArea
 
 from analytics import Analytics
+from app_properties import meshAppProperties
 
 from libbaram.simple_db.simple_schema import ValidationError
 from libbaram.utils import getFit
@@ -77,7 +78,7 @@ class MainWindow(QMainWindow):
 
         self._readyToQuit = False
 
-        self.setWindowIcon(app.properties.icon())
+        self.setWindowIcon(meshAppProperties.icon())
 
         # OEM variants with analytics disabled don't need this entry.
         self._ui.actionPrivacySettings.setVisible(Analytics().configured)
@@ -199,7 +200,7 @@ class MainWindow(QMainWindow):
 
     def _actionNew(self):
         self._dialog = NewProjectDialog(self, self.tr('New Project'), Path(app.settings.getRecentLocation()).resolve(),
-                                        app.properties.projectSuffix)
+                                        meshAppProperties.projectSuffix)
         self._dialog.accepted.connect(self._createProject)
         self._dialog.setWindowModality(Qt.WindowModality.ApplicationModal)
         # QDialog.open() makes the dialog window modal.
@@ -222,7 +223,7 @@ class MainWindow(QMainWindow):
 
     def _actionSaveAs(self):
         self._dialog = NewProjectDialog(self, self.tr('Save as new project'),
-                                        Path(app.settings.getRecentLocation()).resolve(), app.properties.projectSuffix)
+                                        Path(app.settings.getRecentLocation()).resolve(), meshAppProperties.projectSuffix)
         self._dialog.pathSelected.connect(self._saveAs)
         self._dialog.open()
 
@@ -275,11 +276,12 @@ class MainWindow(QMainWindow):
             app.openProject(path.resolve())
             self._projectOpened()
         except FileNotFoundError:
-            await AsyncMessageBox().information(self, self.tr('Project Open Error'),
-                                                self.tr(f'{path.name} is not a baram project.'))
+            await AsyncMessageBox().information(
+                self, self.tr('Project Open Error'),
+                self.tr('{0} is not a {1} project.').format(path.name, meshAppProperties.fullName))
         except Timeout:
             await AsyncMessageBox().information(self, self.tr('Project Open Error'),
-                                                self.tr(f'{path.name} is already open in another program.'))
+                                                self.tr('{0} is already open in another program.').format(path.name))
         except ValidationError as e:
             await AsyncMessageBox().information(self, self.tr('Project Open Error'),
                                                 self.tr(f'configurations error : {e.path} - {e.name}'))
@@ -383,7 +385,7 @@ class MainWindow(QMainWindow):
             self.show()
             self._startDialog = None
 
-        self.setWindowTitle(f'{app.properties.fullName} - {app.project.path}')
+        self.setWindowTitle(f'{meshAppProperties.fullName} - {app.project.path}')
 
         self._geometryManager = GeometryManager()
         self._meshManager = MeshManager()
@@ -397,7 +399,7 @@ class MainWindow(QMainWindow):
         self._handler.close()
 
     def _clear(self):
-        self.setWindowTitle(f'{app.properties.fullName}')
+        self.setWindowTitle(f'{meshAppProperties.fullName}')
         self._renderingTool.clear()
         self._displayControl.clear()
         self._consoleView.clear()

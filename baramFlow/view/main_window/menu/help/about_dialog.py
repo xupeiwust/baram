@@ -1,11 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from PySide6.QtCore import Qt
 from PySide6.QtGui import QKeyEvent
 from PySide6.QtWidgets import QDialog, QMessageBox
 
-from baramFlow.app import app
+from app_properties import flowAppProperties
 from baramFlow.base import expert_mode
 
 from .about_dialog_ui import Ui_AboutDialog
@@ -21,7 +20,7 @@ class AboutDialog(QDialog):
         self._ui = Ui_AboutDialog()
         self._ui.setupUi(self)
 
-        self._ui.logo.setPixmap(app.properties.logo())
+        self._ui.logo.setPixmap(flowAppProperties.logo())
 
         self._dialog = None
         self._position = 0

@@ -3,7 +3,8 @@
 
 from PySide6.QtWidgets import QDialog
 
-from baramMesh.app import app
+from app_properties import meshAppProperties
+
 from .about_dialog_ui import Ui_AboutDialog
 from .license_dialog import LicenseDialog
 
@@ -17,7 +18,7 @@ class AboutDialog(QDialog):
         self._ui = Ui_AboutDialog()
         self._ui.setupUi(self)
 
-        self._ui.logo.setPixmap(app.properties.logo())
+        self._ui.logo.setPixmap(meshAppProperties.logo())
 
         self._dialog = None
 

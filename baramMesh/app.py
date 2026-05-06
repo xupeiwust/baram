@@ -13,7 +13,6 @@ from baramMesh.openfoam.file_system import FileSystem
 from resources import resource
 
 if TYPE_CHECKING:
-    from baramMesh.settings.app_properties import AppProperties
     from baramMesh.settings.app_settings import AppSettings
 
 
@@ -23,7 +22,6 @@ class App(QObject):
     def __init__(self):
         super().__init__()
 
-        self._properties: Optional['AppProperties'] = None
         self._settings = None
         self._project: Optional[Project] = None
         self._fileSystem = None
@@ -33,11 +31,6 @@ class App(QObject):
         self._projectManager = ProjectManager()
 
         self._qApplication: Optional[QApplication] = None
-
-    @property
-    def properties(self) -> 'AppProperties':
-        assert self._properties is not None
-        return self._properties
 
     @property
     def settings(self) -> 'AppSettings':
@@ -77,7 +70,6 @@ class App(QObject):
         self._qApplication = application
 
     def setupApplication(self, properties):
-        self._properties = properties
         appSettings.load(properties.name)
         self._settings = appSettings
 

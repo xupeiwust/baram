@@ -21,6 +21,7 @@ from vtkmodules.vtkParallelCore import vtkDummyController, vtkMultiProcessContro
 # noinspection PyUnresolvedReferences
 import resource_rc
 
+from app_properties import flowAppProperties
 from libbaram.mpi import checkMPI, MPIStatus, MPI_PREFIX
 from libbaram.process import getAvailablePhysicalCores
 
@@ -28,7 +29,6 @@ from analytics import Analytics
 from analytics.events import EVENT_LOOP_ERROR
 
 from baramFlow.app import app
-from baramFlow.app_properties import AppProperties
 from baramFlow.app_plug_in import AppPlugIn
 from baramFlow.base.graphic.color_scheme import initializeBaramPresetColorSchemes
 from baramFlow.view.main_window.start_window import Baram
@@ -80,18 +80,11 @@ def main():
         QMessageBox.information(None, QApplication.translate('main', 'Check MPI'), message)
         return
 
-    properties = AppProperties(
-        name='BaramFlow',
-        fullName=QApplication.translate('Main', 'BaramFlow'),
-        iconResource='baramFlow.ico',
-        logoResource='baramFlow.ico',
-        projectSuffix='.bf'
-    )
-    app.setupApplication(properties)
+    app.setupApplication(flowAppProperties)
     app.setPlug(AppPlugIn())
 
-    if properties.analyticsEnabled:
-        Analytics().configure(app_name=properties.name, config_dir=AppSettings.settingsPath())
+    if flowAppProperties.analyticsEnabled:
+        Analytics().configure(app_name=flowAppProperties.name, config_dir=AppSettings.settingsPath())
 
     os.environ['LC_NUMERIC'] = 'C'
     os.environ["QT_SCALE_FACTOR"] = AppSettings.getUiScaling()
