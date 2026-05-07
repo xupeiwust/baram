@@ -1286,8 +1286,8 @@ def _version_11(root: etree.Element, path):
 def _version_12(root: etree.Element, path):
     logger.debug('  Upgrading to v13')
 
-    # root.set('version', '13')
-    #
+    root.set('version', '13')
+
     for b in root.findall('regions/region/boundaryConditions/boundaryCondition', namespaces=_nsmap):
         if b.find('fan', namespaces=_nsmap) is None:
             logger.debug(f'    Adding "fan" to  {b}')
