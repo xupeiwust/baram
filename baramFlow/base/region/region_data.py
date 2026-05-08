@@ -76,12 +76,12 @@ class CellZoneModel:
 class RegionInitialValues:
     velocity: Vector
     pressure: str
-    temperature: str | None
+    temperature: str
     scaleOfVelocity: str
-    turbulentIntensity: str | None
+    turbulentIntensity: str
     turbulentViscosity: str
-    intermittency: str | None
-    momentumThicknessRe: str | None
+    intermittency: str
+    momentumThicknessRe: str
     # volumeFractions: list = None
     # userDefinedScalars: list = None
     # species: list = None

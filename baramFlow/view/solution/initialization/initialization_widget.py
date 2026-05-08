@@ -267,33 +267,9 @@ class InitializationWidget(QWidget):
     def data(self):
         rname = DEFAULT_REGION_NAME if self._rname == '' else self._rname
 
-        if self._ui.turbulence.isVisible() and self._ui.turbulence.isEnabled():
-            temperature = None
-            turbulentIntensity = None
-            intermittency = None
-            momentumThicknessRe = None
-
-            if self._ui.temperature.isEnabled():
-                temperature=str(PFloat(self._ui.temperature.text(),
-                                       self.tr('Temperature of region [{}]').format(rname)))
-
-            if self._ui.turbulentIntensity.isEnabled():
-                turbulentIntensity=str(PFloat(self._ui.turbulentIntensity.text(),
-                                              self.tr('Turbulent Intensity of region [{}]').format(rname),
-                                              low=0, high=100))
-
-            if self._ui.intermittency.isEnabled():
-                intermittency=str(PFloat(self._ui.intermittency.text(),
-                                         self.tr('Intermittency of region [{}]').format(rname),
-                                         low=0, high=1))
-
-            if self._ui.momentumThicknessRe.isEnabled():
-                momentumThicknessRe=str(PFloat(
-                    self._ui.momentumThicknessRe.text(),
-                    self.tr('Transition onset momentum-thickness Re of region [{}]').format(rname),
-                    low=0))
-
-            patch = RegionInitialization(
+        return RegionInitializationPatch(
+            rname=self._rname,
+            patch=RegionInitialization(
                 initialValues=RegionInitialValues(
                     velocity=Vector(x=PFloat(self._ui.xVelocity.text(),
                                              self.tr('X-Velocity of region [{}]').format(rname)),
@@ -303,19 +279,21 @@ class InitializationWidget(QWidget):
                                              self.tr('Z-Velocity of region [{}]').format(rname))),
                     pressure=str(PFloat(self._ui.pressure.text(),
                                         self.tr('Pressure of region [{}]').format(rname))),
-                    temperature=temperature,
+                    temperature=str(PFloat(self._ui.temperature.text(),
+                                           self.tr('Temperature of region [{}]').format(rname))),
                     scaleOfVelocity=str(PFloat(self._ui.scaleOfVelocity.text(),
                                                self.tr('Scale of Velocity of region [{}]').format(rname))),
-                    turbulentIntensity=turbulentIntensity,
+                    turbulentIntensity=str(PFloat(self._ui.turbulentIntensity.text(),
+                                                  self.tr('Turbulent Intensity of region [{}]').format(rname),
+                                                  low=0, high=100)),
                     turbulentViscosity=str(PFloat(self._ui.turbulentViscosityRatio.text(),
                                                   self.tr('Turbulent Viscosity of region [{}]').format(rname))),
-                    intermittency=intermittency,
-                    momentumThicknessRe=momentumThicknessRe))
-
-            return RegionInitializationPatch(rname=self._rname,
-                                             patch=patch)
-        else:
-            return None
+                    intermittency=str(PFloat(self._ui.intermittency.text(),
+                                             self.tr('Intermittency of region [{}]').format(rname),
+                                             low=0, high=1)),
+                    momentumThicknessRe=str(PFloat(self._ui.momentumThicknessRe.text(),
+                                                   self.tr('Transition onset momentum-thickness Re of region [{}]').format(rname),
+                                                   low=0)))))
 
     def _connectSignalsSlots(self):
         Project.instance().solverStatusChanged.connect(self._updateEnabled)

@@ -21,19 +21,9 @@ class RegionInitializationPatch:
         db.setValue(path + '/velocity/y', str(initialValues.velocity.y))
         db.setValue(path + '/velocity/z', str(initialValues.velocity.z))
         db.setValue(path + '/pressure', initialValues.pressure)
-
-        if initialValues.temperature is not None:
-            db.setValue(path + '/temperature', initialValues.temperature)
-
+        db.setValue(path + '/temperature', initialValues.temperature)
         db.setValue(path + '/scaleOfVelocity', initialValues.scaleOfVelocity)
-
-        if initialValues.turbulentIntensity is not None:
-            db.setValue(path + '/turbulentIntensity', initialValues.turbulentIntensity)
-
+        db.setValue(path + '/turbulentIntensity', initialValues.turbulentIntensity)
         db.setValue(path + '/turbulentViscosity', initialValues.turbulentViscosity)
-
-        if initialValues.intermittency is not None:
-            db.setValue(path + '/intermittency', initialValues.intermittency)
-
-        if initialValues.momentumThicknessRe is not None:
-            db.setValue(path + '/momentumThicknessRe', initialValues.momentumThicknessRe)
+        db.setValue(path + '/intermittency', initialValues.intermittency)
+        db.setValue(path + '/momentumThicknessRe', initialValues.momentumThicknessRe)
