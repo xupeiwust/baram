@@ -61,7 +61,7 @@ class GeneralPage(ContentPage):
                         self, self.tr("Change to Transient Mode"),
                         self.tr('Use the final result for the initial value of transient calculation?'))
                     if confirm == QMessageBox.StandardButton.Yes:
-                        FileSystem.latestTimeToZero()
+                        CaseManager().latestTimeToZero()
             else:
                 turbulenceModel = TurbulenceModelsDB.getModel()
                 if turbulenceModel == TurbulenceModel.LES or turbulenceModel == TurbulenceModel.DES:

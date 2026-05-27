@@ -46,6 +46,7 @@ class BoundaryType(Enum):
     INTERFACE	        = 'interface'
     EMPTY	            = 'empty'
     CYCLIC	            = 'cyclic'
+    CYCLIC_ACMI         = 'cyclicACMI'
     WEDGE	            = 'wedge'
 
 
@@ -55,6 +56,7 @@ class GeometricalType(Enum):
     MAPPED_WALL = 'mappedWall'
     CYCLIC      = 'cyclic'
     CYCLIC_AMI  = 'cyclicAMI'
+    CYCLIC_ACMI  = 'cyclicACMI'
     SYMMETRY    = 'symmetry'
     EMPTY       = 'empty'
     WEDGE       = 'wedge'
@@ -86,24 +88,9 @@ TYPE_MAP = {
     BoundaryType.INTERFACE            : GeometricalType.CYCLIC_AMI,
     BoundaryType.EMPTY                : GeometricalType.EMPTY,
     BoundaryType.CYCLIC               : GeometricalType.CYCLIC,
+    BoundaryType.CYCLIC_ACMI          : GeometricalType.CYCLIC_ACMI,
     BoundaryType.WEDGE                : GeometricalType.WEDGE,
 }
-
-
-class VelocitySpecification(Enum):
-    COMPONENT = 'component'
-    MAGNITUDE = 'magnitudeNormal'
-
-
-class VelocityProfile(Enum):
-    CONSTANT = 'constant'
-    SPATIAL_DISTRIBUTION = 'spatialDistribution'
-    TEMPORAL_DISTRIBUTION = 'temporalDistribution'
-
-
-class FlowRateInletSpecification(Enum):
-    VOLUME_FLOW_RATE = 'volumeFlowRate'
-    MASS_FLOW_RATE = 'massFlowRate'
 
 
 class WallMotion(Enum):
@@ -122,9 +109,10 @@ class ShearCondition(Enum):
     SLIP = 'slip'
 
 
-class WallTemperature(Enum):
+class WallHeatTransferMode(Enum):
     ADIABATIC = 'adiabatic'
     CONSTANT_TEMPERATURE = 'constantTemperature'
+    TEMPERATURE_DISTRIBUTION = 'temperatureDistribution'
     CONSTANT_HEAT_FLUX = 'constantHeatFlux'
     CONVECTION = 'convection'
 
@@ -141,27 +129,6 @@ class SpalartAllmarasSpecification(Enum):
     TURBULENT_VISCOSITY_RATIO = 'turbulentViscosityRatio'
 
 
-class KEpsilonSpecification(Enum):
-    K_AND_EPSILON = 'kAndEpsilon'
-    INTENSITY_AND_VISCOSITY_RATIO = 'intensityAndViscosityRatio'
-
-
-class KOmegaSpecification(Enum):
-    K_AND_OMEGA = 'kAndOmega'
-    INTENSITY_AND_VISCOSITY_RATIO = 'intensityAndViscosityRatio'
-
-
-class TemperatureProfile(Enum):
-    CONSTANT = 'constant'
-    SPATIAL_DISTRIBUTION = 'spatialDistribution'
-    TEMPORAL_DISTRIBUTION = 'temporalDistribution'
-
-
-class TemperatureTemporalDistribution(Enum):
-    PIECEWISE_LINEAR = 'piecewiseLinear'
-    POLYNOMIAL = 'polynomial'
-
-
 class ContactAngleModel(Enum):
     DISABLE = 'none'
     CONSTANT = 'constantContactAngle'
@@ -175,20 +142,9 @@ class ContactAngleLimit(Enum):
     ALPHA = 'alpha'
 
 
-class DirectionSpecificationMethod(Enum):
-    DIRECT = 'direct'
-    AOA_AOS = 'AoA_AoS'
-
-
 class FlowDirectionSpecificationMethod(Enum):
     DIRECT = 'direct'
     SURFACE_NORMAL = 'surfaceNormal'
-
-
-DirectionSpecificationMethodTexts = {
-    DirectionSpecificationMethod.DIRECT:    QCoreApplication.translate('BoundaryDB', 'Direct'),
-    DirectionSpecificationMethod.AOA_AOS:   QCoreApplication.translate('BoundaryDB', 'AOA and AOS')
-}
 
 
 class BoundaryDB:
@@ -201,6 +157,7 @@ class BoundaryDB:
         BoundaryType.FAN,
         BoundaryType.INTERFACE,
         BoundaryType.CYCLIC,
+        BoundaryType.CYCLIC_ACMI,
     }
 
     @classmethod
@@ -254,7 +211,7 @@ class BoundaryDB:
             if str(bcid) in boundaries:
                 continue
 
-            if BoundaryType(ptype) in [BoundaryType.POROUS_JUMP, BoundaryType.FAN, BoundaryType.INTERFACE, BoundaryType.CYCLIC]:
+            if BoundaryType(ptype) in [BoundaryType.POROUS_JUMP, BoundaryType.FAN, BoundaryType.INTERFACE, BoundaryType.CYCLIC, BoundaryType.CYCLIC_ACMI]:
                 cpid = cls.getCoupledBoundary(str(bcid))
                 if cpid == '0':
                     continue
@@ -295,8 +252,9 @@ class BoundaryDB:
             BoundaryType.SYMMETRY:  QCoreApplication.translate('BoundaryDB', 'Symmetry'),
             BoundaryType.INTERFACE: QCoreApplication.translate('BoundaryDB', 'Interface'),
             BoundaryType.EMPTY:     QCoreApplication.translate('BoundaryDB', 'Empty'),
-            BoundaryType.CYCLIC:    QCoreApplication.translate('BoundaryDB', 'Cyclic'),
-            BoundaryType.WEDGE:     QCoreApplication.translate('BoundaryDB', 'Wedge'),
+            BoundaryType.CYCLIC:      QCoreApplication.translate('BoundaryDB', 'Cyclic'),
+            BoundaryType.CYCLIC_ACMI: QCoreApplication.translate('BoundaryDB', 'CyclicACMI'),
+            BoundaryType.WEDGE:       QCoreApplication.translate('BoundaryDB', 'Wedge'),
         }.get(bctype, 'Unknown Type')
 
     @classmethod

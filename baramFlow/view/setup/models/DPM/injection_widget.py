@@ -25,4 +25,4 @@ class InjectionWidget(QWidget):
         self._injection = injection
 
         self._ui.name.setText(injection.name)
-        self._ui.type.setText(DPM_INJECTION_TYPE_TEXTS[injection.injector.type])
+        self._ui.type.setText(DPM_INJECTION_TYPE_TEXTS[injection.type])

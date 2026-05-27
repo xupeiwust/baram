@@ -6,13 +6,14 @@ import sys
 
 from PySide6.QtWidgets import QApplication
 
-from baramFlow.coredb.batch_parameter_db import BatchParametersDB
+from baramFlow.coredb.libdb import E
+from baramFlow.services.user_parameters import UserParameters
 
 
 class PFloat():
     def __init__(self,
                  text: str,
-                 name: str,
+                 name: str = '',
                  low:  float = -sys.float_info.max,
                  high: float =  sys.float_info.max,
                  lowInclusive:bool  = True,
@@ -22,12 +23,14 @@ class PFloat():
 
         if self._text.startswith('$'):  # Parametric value
             if len(self._text) < 2:
-                raise ValueError(f"{name} - {QApplication.translate(b'PFloat', b'Invalid Parameter Name')}")
+                raise ValueError(f"{name} - {QApplication.translate('PFloat', 'Invalid Parameter Name')}")
 
             try:
-                value = float(BatchParametersDB.defaultValue(self._text[1:]))
+                value = float(UserParameters().getValue(self._text[1:]))
             except LookupError:
-                raise ValueError(f"{name} - {self.tr('Invalid User Parameter')}")
+                raise ValueError(f"{name} - {QApplication.translate('PFloat', 'Invalid User Parameter')}")
+
+            self._isParam = True
 
         else:
             try:
@@ -35,17 +38,26 @@ class PFloat():
             except ValueError as e:
                 raise ValueError(f'{name} - {str(e)}')
 
+            self._isParam = False
+
         if value < low:
-            raise ValueError(f"{name} {QApplication.translate(b'PFloat', b'is less than ')} {low}")
+            raise ValueError(f"{name} {QApplication.translate('PFloat', 'is less than ')} {low}")
         elif value == low and not lowInclusive:
-            raise ValueError(f"{name} {QApplication.translate(b'PFloat', b'should be greater than ')} {low}")
+            raise ValueError(f"{name} {QApplication.translate('PFloat', 'should be greater than ')} {low}")
 
         if value > high:
-            raise ValueError(f"{name} {QApplication.translate(b'PFloat', b'is greater than ')} {high}")
+            raise ValueError(f"{name} {QApplication.translate('PFloat', 'is greater than ')} {high}")
         elif value == high and not highInclusive:
-            raise ValueError(f"{name} {QApplication.translate(b'PFloat', b'should be less than ')} {high}")
+            raise ValueError(f"{name} {QApplication.translate('PFloat', 'should be less than ')} {high}")
 
         self._value = value
+
+    @staticmethod
+    def fromElement(e):
+        return PFloat(e.text)
+
+    def toElement(self, tag):
+        return E(tag, self._text)
 
     def __str__(self):
         return self._text

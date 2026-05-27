@@ -1,25 +1,59 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from pathlib import Path
+import asyncio
 
 import qasync
-from PySide6.QtWidgets import QFileDialog
+from PySide6.QtCore import QObject
 
+from libbaram.pfloat import PFloat
 from widgets.async_message_box import AsyncMessageBox
+from widgets.simple_sheet_dialog import SimpleSheetDialog
 
+from baramFlow.base.base import SpatialVectorList, TemporalVectorList, TemporalScalarList
+from baramFlow.base.boundary.boundary_patch import VelocityInletPatch
+from baramFlow.base.xml_helper import Vector
+from baramFlow.base.boundary.velocity_inlet import VelocitySpecification, VelocityProfile, CoordinateSystem
+from baramFlow.base.boundary.velocity_inlet import VelocityInlet
+from baramFlow.base.boundary.velocity_inlet import InletVelocity, VelocityMagnitude, VelocityComponentCartesian
+from baramFlow.base.boundary.velocity_inlet import LocalCylindricalTemporalDistribution, VelocityLocalCylindrical
+from baramFlow.base.boundary.velocity_inlet import LocalCylindricalConstant
 from baramFlow.coredb import coredb
-from baramFlow.coredb.filedb import BcFileRole, FileFormatError
 from baramFlow.coredb.coredb_writer import CoreDBWriter
-from baramFlow.coredb.boundary_db import BoundaryDB, VelocitySpecification, VelocityProfile
+from baramFlow.coredb.boundary_db import BoundaryDB
 from baramFlow.coredb.region_db import RegionDB
-from baramFlow.coredb.project import Project
+from baramFlow.services.boundary.boundary_service import BoundaryService
 from baramFlow.view.widgets.resizable_dialog import ResizableDialog
-from baramFlow.view.widgets.number_input_dialog import PiecewiseLinearDialog
 from .velocity_inlet_dialog_ui import Ui_VelocityInletDialog
 from .conditional_widget_helper import ConditionalWidgetHelper
 
-PROFILE_TYPE_SPATIAL_DISTRIBUTION_INDEX = 1
+
+class ProfileTypeComboBox(QObject):
+    def __init__(self, combo):
+        super().__init__()
+
+        self._combo = combo
+        self._indexes = None
+
+        self._combo.addItem(self.tr("Constant"), VelocityProfile.CONSTANT)
+        self._combo.addItem(self.tr("Spatial Distribution"), VelocityProfile.SPATIAL_DISTRIBUTION)
+        self._combo.addItem(self.tr("Temporal Distribution"), VelocityProfile.TEMPORAL_DISTRIBUTION)
+
+        self._indexes = {p: self._combo.findData(p) for p in VelocityProfile}
+
+    def setSpatialDistributionEnabled(self, enabled):
+        if enabled:
+            self._combo.model().item(self._indexes[VelocityProfile.SPATIAL_DISTRIBUTION]).setEnabled(True)
+        else:
+            self._combo.model().item(self._indexes[VelocityProfile.SPATIAL_DISTRIBUTION]).setEnabled(False)
+            if self._combo.currentData() == VelocityProfile.SPATIAL_DISTRIBUTION:
+                self._combo.setCurrentIndex(self._indexes[VelocityProfile.CONSTANT])
+
+    def setCurrentData(self, data):
+        self._combo.setCurrentIndex(self._indexes[data])
+
+    def currentData(self):
+        return self._combo.currentData()
 
 
 class VelocityInletDialog(ResizableDialog):
@@ -32,19 +66,9 @@ class VelocityInletDialog(ResizableDialog):
 
         self._bcid = bcid
 
-        self._specifications = {
-            VelocitySpecification.COMPONENT.value: self.tr("Component"),
-            VelocitySpecification.MAGNITUDE.value: self.tr("Magnitude, Normal to Boundary"),
-        }
-        self._profileTypes = {
-            VelocityProfile.CONSTANT.value: self.tr("Constant"),
-            VelocityProfile.SPATIAL_DISTRIBUTION.value: self.tr("Spatial Distribution"),
-            VelocityProfile.TEMPORAL_DISTRIBUTION.value: self.tr("Temporal Distribution"),
-        }
-        self._setupCombo(self._ui.velocitySpecificationMethod, self._specifications)
-        self._setupCombo(self._ui.profileType, self._profileTypes)
-
         self._xpath = BoundaryDB.getXPath(bcid)
+
+        self._profileTypeCombo = ProfileTypeComboBox(self._ui.profileType)
 
         self._turbulenceWidget = None
         self._temperatureWidget = None
@@ -52,12 +76,10 @@ class VelocityInletDialog(ResizableDialog):
         self._scalarsWidget = None
         self._speciesWidget = None
 
-        self._componentSpatialDistributionFile = None
-        self._componentSpatialDistributionFileName = None
+        self._componentSpatialDistribution = None
         self._componentTemporalDistribution = None
-        self._magnitudeSpatialDistributionFile = None
-        self._magnitudeSpatialDistributionFileName = None
         self._magnitudeTemporalDistribution = None
+        self._velocityComponents = None
         self._dialog = None
 
         layout = self._ui.dialogContents.layout()
@@ -67,6 +89,14 @@ class VelocityInletDialog(ResizableDialog):
         self._volumeFractionWidget = ConditionalWidgetHelper.volumeFractionWidget(rname, layout)
         self._scalarsWidget = ConditionalWidgetHelper.userDefinedScalarsWidget(rname, layout)
         self._speciesWidget = ConditionalWidgetHelper.speciesWidget(RegionDB.getMaterial(rname), layout)
+
+        self._ui.velocitySpecificationMethod.addItem(self.tr("Component"),
+                                                     VelocitySpecification.COMPONENT)
+        self._ui.velocitySpecificationMethod.addItem(self.tr("Magnitude, Normal to Boundary"),
+                                                     VelocitySpecification.MAGNITUDE)
+
+        self._ui.coordinateSystem.addItem(self.tr('Cartesian'), CoordinateSystem.CARTESIAN)
+        self._ui.coordinateSystem.addItem(self.tr('Local Cylindrical'), CoordinateSystem.LOCAL_CYLINDRICAL)
 
         self._connectSignalsSlots()
         self._load()
@@ -82,147 +112,107 @@ class VelocityInletDialog(ResizableDialog):
             return
         # ToDo: Add validation for other parameters
 
-        xpath = self._xpath + self.RELATIVE_XPATH
-        fileDB = Project.instance().fileDB()
-        db = coredb.CoreDB()
+        try:
+            velocityInlet = VelocityInlet(
+                velocity=InletVelocity(specificationMethod=self._ui.velocitySpecificationMethod.currentData(),
+                                       coordinateSystem=self._ui.coordinateSystem.currentData()))
 
-        oldDistributionFileKey = None
-        distributionFileKey = None
+            profile = VelocityProfile(self._ui.profileType.currentData())
 
-        writer = CoreDBWriter()
-        specification = self._ui.velocitySpecificationMethod.currentData()
-        writer.append(xpath + '/velocity/specification', specification, None)
-        profile = self._ui.profileType.currentData()
-        if specification == VelocitySpecification.COMPONENT.value:
-            writer.append(xpath + '/velocity/component/profile', profile, None)
-            if profile == VelocityProfile.CONSTANT.value:
-                writer.append(xpath + '/velocity/component/constant/x', self._ui.xVelocity.text(),
-                              self.tr("X-Velocity"))
-                writer.append(xpath + '/velocity/component/constant/y', self._ui.yVelocity.text(),
-                              self.tr("Y-Velocity"))
-                writer.append(xpath + '/velocity/component/constant/z', self._ui.zVelocity.text(),
-                              self.tr("Z-Velocity"))
-            elif profile == VelocityProfile.SPATIAL_DISTRIBUTION.value:
-                if self._componentSpatialDistributionFile:
-                    try:
-                        distributionFileKey = fileDB.putBcFile(self._bcid, BcFileRole.BC_VELOCITY_COMPONENT,
-                                                               self._componentSpatialDistributionFile)
-                        writer.append(xpath + '/velocity/component/spatialDistribution', distributionFileKey, None)
-                    except FileFormatError:
-                        await AsyncMessageBox().information(self, self.tr("Input Error"),
-                                                            self.tr("Velocity CSV File is wrong"))
-                        return
-                elif not self._componentSpatialDistributionFileName:
-                    await AsyncMessageBox().information(self, self.tr("Input Error"),
-                                                        self.tr("Select Velocity CSV File."))
-                    return
-            elif profile == VelocityProfile.TEMPORAL_DISTRIBUTION.value:
-                if self._componentTemporalDistribution:
-                    writer.append(xpath + '/velocity/component/temporalDistribution/piecewiseLinear/t',
-                                  self._componentTemporalDistribution[0],
-                                  self.tr("Piecewise Linear Velocity"))
-                    writer.append(xpath + '/velocity/component/temporalDistribution/piecewiseLinear/x',
-                                  self._componentTemporalDistribution[1],
-                                  self.tr("Piecewise Linear Velocity"))
-                    writer.append(xpath + '/velocity/component/temporalDistribution/piecewiseLinear/y',
-                                  self._componentTemporalDistribution[2],
-                                  self.tr("Piecewise Linear Velocity"))
-                    writer.append(xpath + '/velocity/component/temporalDistribution/piecewiseLinear/z',
-                                  self._componentTemporalDistribution[3],
-                                  self.tr("Piecewise Linear Velocity"))
-                elif db.getValue(xpath + '/velocity/component/temporalDistribution/piecewiseLinear/t') == '':
-                    await AsyncMessageBox().information(self, self.tr("Input Error"),
-                                                        self.tr("Edit Piecewise Linear Velocity."))
-                    return
-        elif specification == VelocitySpecification.MAGNITUDE.value:
-            writer.append(xpath + '/velocity/magnitudeNormal/profile', profile, None)
-            if profile == VelocityProfile.CONSTANT.value:
-                writer.append(xpath + '/velocity/magnitudeNormal/constant',
-                              self._ui.velocityMagnitude.text(), self.tr("Velocity Magnitude"))
-            elif profile == VelocityProfile.SPATIAL_DISTRIBUTION.value:
-                if self._magnitudeSpatialDistributionFile:
-                    try:
-                        distributionFileKey = fileDB.putBcFile(self._bcid, BcFileRole.BC_VELOCITY_MAGNITUDE,
-                                                               self._magnitudeSpatialDistributionFile)
-                        writer.append(xpath + '/velocity/magnitudeNormal/spatialDistribution',
-                                      distributionFileKey, None)
-                    except FileFormatError:
-                        await AsyncMessageBox().information(self, self.tr("Input Error"),
-                                                            self.tr("Velocity CSV File is wrong"))
-                        return
-                elif not self._magnitudeSpatialDistributionFileName:
-                    await AsyncMessageBox().information(self, self.tr("Input Error"),
-                                                        self.tr("Select Velocity CSV File."))
-                    return
-            elif profile == VelocityProfile.TEMPORAL_DISTRIBUTION.value:
-                if self._magnitudeTemporalDistribution:
-                    writer.append(xpath + '/velocity/magnitudeNormal/temporalDistribution/piecewiseLinear/t',
-                                  self._magnitudeTemporalDistribution[0],
-                                  self.tr("Piecewise Linear Velocity"))
-                    writer.append(xpath + '/velocity/magnitudeNormal/temporalDistribution/piecewiseLinear/v',
-                                  self._magnitudeTemporalDistribution[1],
-                                  self.tr("Piecewise Linear Velocity"))
-                elif db.getValue(xpath + '/velocity/magnitudeNormal/temporalDistribution/piecewiseLinear/t') == '':
-                    await AsyncMessageBox().information(self, self.tr("Input Error"),
-                                                        self.tr("Edit Piecewise Linear Velocity."))
-                    return
+            if velocityInlet.velocity.specificationMethod == VelocitySpecification.MAGNITUDE:
+                velocityInlet.velocity.magnitude = VelocityMagnitude(profile=profile)
+                if profile == VelocityProfile.CONSTANT:
+                    velocityInlet.velocity.magnitude.constant = str(
+                        PFloat(self._ui.velocityMagnitude.text(), self.tr('Velocity Magnitude')))
+                elif profile == VelocityProfile.TEMPORAL_DISTRIBUTION:
+                    velocityInlet.velocity.magnitude.temporalDistribution.piecewiseLinear = self._magnitudeTemporalDistribution
+            elif velocityInlet.velocity.coordinateSystem == CoordinateSystem.CARTESIAN:
+                velocityInlet.velocity.component = VelocityComponentCartesian(profile=profile)
+                if profile == VelocityProfile.CONSTANT:
+                    velocityInlet.velocity.component.constant = Vector(
+                        x=PFloat(self._ui.xVelocity.text(), self.tr('X-Velocity')),
+                        y=PFloat(self._ui.yVelocity.text(), self.tr('Y-Velocity')),
+                        z=PFloat(self._ui.zVelocity.text(), self.tr('Z-Velocity')))
+                elif profile == VelocityProfile.SPATIAL_DISTRIBUTION:
+                    velocityInlet.velocity.component.spatialDistribution = self._componentSpatialDistribution
+                elif profile == VelocityProfile.TEMPORAL_DISTRIBUTION:
+                    velocityInlet.velocity.component.temporalDistribution.piecewiseLinear = self._componentTemporalDistribution
+            else:
+                velocityInlet.velocity.localCylindrical = VelocityLocalCylindrical(
+                    profile=profile,
+                    axisOrigin=self._ui.axisOrigin.vector(self.tr('Axis Origin')),
+                    axisDirection=self._ui.axisDirection.vector(self.tr('Axis Direction')))
+                if profile == VelocityProfile.CONSTANT:
+                    velocityInlet.velocity.localCylindrical.constant = LocalCylindricalConstant(
+                        axialVelocity=str(PFloat(self._ui.axialVelocity.text(), self.tr('Axial Velocity'))),
+                        radialVelocity=str(PFloat(self._ui.radialVelocity.text(), self.tr('Radiant Velocity'))),
+                        angularSpeed=str(PFloat(self._ui.angularSpeed.text(), self.tr('Angular Speed'))))
+                elif profile == VelocityProfile.TEMPORAL_DISTRIBUTION:
+                    velocityInlet.velocity.localCylindrical.temporalDistribution = self._velocityComponents
 
-        if not self._turbulenceWidget.appendToWriter(writer):
+            data = VelocityInletPatch(
+                velocityInet=velocityInlet,
+                userDefinedScalars=self._scalarsWidget.data(),
+                species=self._speciesWidget.data(),
+                turbulence=self._turbulenceWidget.data(),
+                temperature=self._temperatureWidget.data())
+
+            writer = CoreDBWriter()
+            if not self._turbulenceWidget.appendToWriter(writer):
+                return
+
+            if not await self._volumeFractionWidget.appendToWriter(writer, self._xpath + '/volumeFractions'):
+                return
+
+            BoundaryService.updateBoundaryCondition(self._bcid, data, writer)
+        except ValueError as e:
+            await AsyncMessageBox().information(self, self.tr('Input Error'), str(e))
             return
 
-        if not self._temperatureWidget.appendToWriter(writer):
-            return
-
-        if not await self._volumeFractionWidget.appendToWriter(writer, self._xpath + '/volumeFractions'):
-            return
-
-        if not self._scalarsWidget.appendToWriter(writer, self._xpath + '/userDefinedScalars'):
-            return
-
-        if not await self._speciesWidget.appendToWriter(writer, self._xpath + '/species'):
-            return
-
-        errorCount = writer.write()
-        if errorCount > 0:
-            if distributionFileKey:
-                fileDB.delete(distributionFileKey)
-
-            self._temperatureWidget.rollbackWriting()
-            await AsyncMessageBox().information(self, self.tr("Input Error"), writer.firstError().toMessage())
-        else:
-            self._temperatureWidget.completeWriting()
-            self.accept()
+        self.accept()
 
     def _connectSignalsSlots(self):
-        self._ui.velocitySpecificationMethod.currentIndexChanged.connect(self._comboChanged)
-        self._ui.profileType.currentIndexChanged.connect(self._comboChanged)
-        self._ui.spatialDistributionFileSelect.clicked.connect(self._selectSpatialDistributionFile)
-        self._ui.temporalDistributionEdit.clicked.connect(self._editTemporalDistribution)
+        self._ui.velocitySpecificationMethod.currentIndexChanged.connect(self._onSpecificationMethodChanged)
+        self._ui.coordinateSystem.currentIndexChanged.connect(self._onCoordinateSystemChanged)
+        self._ui.profileType.currentIndexChanged.connect(self._updateVelocitySettings)
+        self._ui.spatialDistributionEdit.clicked.connect(self._onSpatialDistributionEditClicked)
+        self._ui.piecewiseLinearEdit.clicked.connect(self._onPiecewiseLinearEditClicked)
+        self._ui.velocityComponentsEdit.clicked.connect(self._onVelocityComponentsEditClicked)
         self._ui.ok.clicked.connect(self._accept)
 
     def _load(self):
         xpath = self._xpath + self.RELATIVE_XPATH
 
-        filedb = Project.instance().fileDB()
         db = coredb.CoreDB()
 
-        specification = db.getValue(xpath + '/velocity/specification')
-        self._ui.velocitySpecificationMethod.setCurrentText(self._specifications[specification])
+        specification = VelocitySpecification(db.getValue(xpath + '/velocity/specification'))
+        self._ui.velocitySpecificationMethod.setCurrentIndex(
+            self._ui.velocitySpecificationMethod.findData(specification))
+        coordinateSystem = CoordinateSystem(db.getValue(xpath + '/velocity/coordinateSystem'))
+        self._ui.coordinateSystem.setCurrentIndex(self._ui.coordinateSystem.findData(coordinateSystem))
         profile = None
-        if specification == VelocitySpecification.COMPONENT.value:
-            profile = db.getValue(xpath + '/velocity/component/profile')
-        elif specification == VelocitySpecification.MAGNITUDE.value:
-            profile = db.getValue(xpath + '/velocity/magnitudeNormal/profile')
-        self._componentSpatialDistributionFileName = filedb.getUserFileName(
-            db.getValue(xpath + '/velocity/component/spatialDistribution'))
-        self._magnitudeSpatialDistributionFileName = filedb.getUserFileName(
-            db.getValue(xpath + '/velocity/magnitudeNormal/spatialDistribution'))
-        self._ui.profileType.setCurrentText(self._profileTypes[profile])
+        if specification == VelocitySpecification.COMPONENT:
+            if coordinateSystem == CoordinateSystem.CARTESIAN:
+                profile = VelocityProfile(db.getValue(xpath + '/velocity/component/profile'))
+            elif coordinateSystem == CoordinateSystem.LOCAL_CYLINDRICAL:
+                profile = VelocityProfile(db.getValue(xpath + '/velocity/localCylindrical/profile'))
+        elif specification == VelocitySpecification.MAGNITUDE:
+            profile = VelocityProfile(db.getValue(xpath + '/velocity/magnitudeNormal/profile'))
+        self._ui.profileType.setCurrentIndex(self._ui.profileType.findData(profile))
+
         self._ui.xVelocity.setText(db.getValue(xpath + '/velocity/component/constant/x'))
         self._ui.yVelocity.setText(db.getValue(xpath + '/velocity/component/constant/y'))
         self._ui.zVelocity.setText(db.getValue(xpath + '/velocity/component/constant/z'))
         self._ui.velocityMagnitude.setText(db.getValue(xpath + '/velocity/magnitudeNormal/constant'))
-        self._comboChanged()
+
+        self._ui.axialVelocity.setText(db.getValue(xpath + '/velocity/localCylindrical/constant/axialVelocity'))
+        self._ui.radialVelocity.setText(db.getValue(xpath + '/velocity/localCylindrical/constant/radialVelocity'))
+        self._ui.angularSpeed.setText(db.getValue(xpath + '/velocity/localCylindrical/constant/angularSpeed'))
+
+        self._ui.axisOrigin.setVector(Vector.fromElement(
+            db.getElement(xpath + '/velocity/localCylindrical/axisOrigin')))
+        self._ui.axisDirection.setVector(Vector.fromElement(
+            db.getElement(xpath + '/velocity/localCylindrical/axisDirection')))
 
         self._turbulenceWidget.load()
         self._temperatureWidget.load()
@@ -230,95 +220,101 @@ class VelocityInletDialog(ResizableDialog):
         self._scalarsWidget.load(self._xpath + '/userDefinedScalars')
         self._speciesWidget.load(self._xpath + '/species')
 
-    def _setupCombo(self, combo, items):
-        for value, text in items.items():
-            combo.addItem(text, value)
+        self._updateVelocitySettings()
 
-    def _comboChanged(self):
+    def _onSpecificationMethodChanged(self):
+        self._ui.velocitySettingsType.layout().setRowVisible(
+            self._ui.coordinateSystem,
+            self._ui.velocitySpecificationMethod.currentData() == VelocitySpecification.COMPONENT)
+
+        self._updateProfileOptions()
+
+    def _onCoordinateSystemChanged(self):
+        self._updateProfileOptions()
+
+    def _updateProfileOptions(self):
+        self._profileTypeCombo.setSpatialDistributionEnabled(
+            self._ui.velocitySpecificationMethod.currentData() == VelocitySpecification.COMPONENT
+            and self._ui.coordinateSystem.currentData() == CoordinateSystem.CARTESIAN)
+
+        self._updateVelocitySettings()
+
+    def _updateVelocitySettings(self):
         specification = self._ui.velocitySpecificationMethod.currentData()
-        profile = self._ui.profileType.currentData()
+        coordinate = self._ui.coordinateSystem.currentData()
+        profile = self._profileTypeCombo.currentData()
 
-        if specification == VelocitySpecification.MAGNITUDE.value:
-            self._ui.profileType.model().item(PROFILE_TYPE_SPATIAL_DISTRIBUTION_INDEX).setEnabled(False)
-            if self._ui.profileType.currentData() == VelocityProfile.SPATIAL_DISTRIBUTION.value:
-                profile = VelocityProfile.CONSTANT.value
-                self._ui.profileType.setCurrentText(self._profileTypes[profile])
+        isCartesian = False
+        isMagnitude = False
+        isCylindrical = False
+
+        if specification == VelocitySpecification.MAGNITUDE:
+            isMagnitude = True
+        elif coordinate == CoordinateSystem.LOCAL_CYLINDRICAL:
+            isCylindrical = True
         else:
-            self._ui.profileType.model().item(PROFILE_TYPE_SPATIAL_DISTRIBUTION_INDEX).setEnabled(True)
+            isCartesian = True
 
-        self._ui.componentConstant.setVisible(
-            specification == VelocitySpecification.COMPONENT.value
-            and profile == VelocityProfile.CONSTANT.value
-        )
-        self._ui.magnitudeConsant.setVisible(
-            specification == VelocitySpecification.MAGNITUDE.value
-            and profile == VelocityProfile.CONSTANT.value
-        )
+        self._ui.componentConstant.setVisible(isCartesian and profile == VelocityProfile.CONSTANT)
+        self._ui.magnitudeConsant.setVisible(isMagnitude and profile == VelocityProfile.CONSTANT)
+        self._ui.spatialDistribution.setVisible(isCartesian and profile == VelocityProfile.SPATIAL_DISTRIBUTION)
+        self._ui.cartesianTemporalDistribution.setVisible(
+            not isCylindrical and profile == VelocityProfile.TEMPORAL_DISTRIBUTION)
+        self._ui.localCylindricalConstant.setVisible(isCylindrical and profile == VelocityProfile.CONSTANT)
+        self._ui.localCylindricalTemporalDistribution.setVisible(
+            isCylindrical and profile == VelocityProfile.TEMPORAL_DISTRIBUTION)
+        self._ui.localCylindrical.setVisible(isCylindrical)
 
-        if profile == VelocityProfile.SPATIAL_DISTRIBUTION.value:
-            if specification == VelocitySpecification.COMPONENT.value:
-                self._ui.spatialDistributionFileName.setText(self._componentSpatialDistributionFileName)
-            elif specification == VelocitySpecification.MAGNITUDE.value:
-                self._ui.spatialDistributionFileName.setText(self._magnitudeSpatialDistributionFileName)
-            self._ui.spatialDistribution.show()
-        else:
-            self._ui.spatialDistribution.hide()
+    @qasync.asyncSlot()
+    async def _onSpatialDistributionEditClicked(self):
+        if self._componentSpatialDistribution is None:
+            self._componentSpatialDistribution = SpatialVectorList.fromElement(
+                coredb.CoreDB().getElement(self._xpath + '/velocityInlet/velocity/component/spatialDistribution'))
 
-        self._ui.temporalDistribution.setVisible(profile == VelocityProfile.TEMPORAL_DISTRIBUTION.value)
+        dialog = SimpleSheetDialog(self, self.tr('Spatial Distribution'), ['x', 'y', 'z', 'Ux', 'Uy', 'Uz'],
+                                   self._componentSpatialDistribution.data())
+        try:
+            self._componentSpatialDistribution = SpatialVectorList(await dialog.show())
+        except asyncio.exceptions.CancelledError:
+            return
 
-    def _selectSpatialDistributionFile(self):
-        self._dialog = QFileDialog(self, self.tr('Select CSV File'), '', 'CSV (*.csv)')
-        self._dialog.setFileMode(QFileDialog.FileMode.ExistingFile)
-        self._dialog.accepted.connect(self._spatialDistributionFileSelected)
-        self._dialog.open()
-
-    def _editTemporalDistribution(self):
-        db = coredb.CoreDB()
-        if self._ui.velocitySpecificationMethod.currentData() == VelocitySpecification.COMPONENT.value:
+    @qasync.asyncSlot()
+    async def _onPiecewiseLinearEditClicked(self):
+        if self._ui.velocitySpecificationMethod.currentData() == VelocitySpecification.COMPONENT:
             if self._componentTemporalDistribution is None:
-                self._componentTemporalDistribution = [
-                    db.getValue(
-                        self._xpath + '/velocityInlet/velocity/component/temporalDistribution/piecewiseLinear/t'),
-                    db.getValue(
-                        self._xpath + '/velocityInlet/velocity/component/temporalDistribution/piecewiseLinear/x'),
-                    db.getValue(
-                        self._xpath + '/velocityInlet/velocity/component/temporalDistribution/piecewiseLinear/y'),
-                    db.getValue(
-                        self._xpath + '/velocityInlet/velocity/component/temporalDistribution/piecewiseLinear/z'),
-                ]
-            self._dialog = PiecewiseLinearDialog(self, self.tr("Temporal Distribution"),
-                                                 [self.tr("t"), self.tr("Ux"), self.tr("Uy"), self.tr("Uz")],
-                                                 self._componentTemporalDistribution)
-            self._dialog.accepted.connect(self._componentTemporalDistributionAccepted)
-            self._dialog.open()
-        elif self._ui.velocitySpecificationMethod.currentData() == VelocitySpecification.MAGNITUDE.value:
+                self._componentTemporalDistribution = TemporalVectorList.fromElement(
+                    coredb.CoreDB().getElement(
+                        self._xpath + '/velocityInlet/velocity/component/temporalDistribution/piecewiseLinear'))
+
+            dialog = SimpleSheetDialog(self, self.tr('Temporal Distribution'), ['t', 'Ux', 'Uy', 'Uz'],
+                                             self._componentTemporalDistribution.data())
+            try:
+                self._componentTemporalDistribution = TemporalVectorList(await dialog.show())
+            except asyncio.exceptions.CancelledError:
+                return
+        elif self._ui.velocitySpecificationMethod.currentData() == VelocitySpecification.MAGNITUDE:
             if self._magnitudeTemporalDistribution is None:
-                self._magnitudeTemporalDistribution = [
-                    db.getValue(
-                        self._xpath + '/velocityInlet/velocity/magnitudeNormal/temporalDistribution/piecewiseLinear/t'),
-                    db.getValue(
-                        self._xpath + '/velocityInlet/velocity/magnitudeNormal/temporalDistribution/piecewiseLinear/v'),
-                ]
-            self._dialog = PiecewiseLinearDialog(self, self.tr("Temporal Distribution"),
-                                                 [self.tr("t"), self.tr("Umag")],
-                                                 self._magnitudeTemporalDistribution)
-            self._dialog.accepted.connect(self._magnitudeTemporalDistributionAccepted)
-            self._dialog.open()
+                self._magnitudeTemporalDistribution = TemporalScalarList.fromElement(
+                    coredb.CoreDB().getElement(
+                        self._xpath + '/velocityInlet/velocity/magnitudeNormal/temporalDistribution/piecewiseLinear'))
 
-    def _componentTemporalDistributionAccepted(self):
-        self._componentTemporalDistribution = self._dialog.getValues()
+            dialog = SimpleSheetDialog(self, self.tr('Temporal Distribution'), ['t', 'Umag'],
+                                       self._magnitudeTemporalDistribution.data())
+            try:
+                self._magnitudeTemporalDistribution = TemporalScalarList(await dialog.show())
+            except asyncio.exceptions.CancelledError:
+                return
 
-    def _magnitudeTemporalDistributionAccepted(self):
-        self._magnitudeTemporalDistribution = self._dialog.getValues()
+    @qasync.asyncSlot()
+    async def _onVelocityComponentsEditClicked(self):
+        if self._velocityComponents is None:
+            self._velocityComponents = LocalCylindricalTemporalDistribution.fromElement(
+                coredb.CoreDB().getElement(
+                    self._xpath + '/velocityInlet/velocity/localCylindrical/temporalDistribution'))
 
-    def _spatialDistributionFileSelected(self):
-        if files := self._dialog.selectedFiles():
-            file = Path(files[0])
-            self._ui.spatialDistributionFileName.setText(file.name)
-            specification = self._ui.velocitySpecificationMethod.currentData()
-            if specification == VelocitySpecification.COMPONENT.value:
-                self._componentSpatialDistributionFile = file
-                self._componentSpatialDistributionFileName = file.name
-            elif specification == VelocitySpecification.MAGNITUDE.value:
-                self._magnitudeSpatialDistributionFile = file
-                self._magnitudeSpatialDistributionFileName = file.name
+        dialog = SimpleSheetDialog(self, self.tr('Spatial Distribution'), ['t', 'u', 'v', 'ω'],
+                                   self._velocityComponents.data())
+        try:
+            self._velocityComponents = LocalCylindricalTemporalDistribution(await dialog.show())
+        except asyncio.exceptions.CancelledError:
+            return

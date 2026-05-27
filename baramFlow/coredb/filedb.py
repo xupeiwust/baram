@@ -59,6 +59,8 @@ class FileDB:
                 else:
                     return None
 
+        return None
+
     def getUserFileName(self, key):
         if key:
             with pd.HDFStore(self._tmpPath) as store:
@@ -66,6 +68,8 @@ class FileDB:
                     return store.get_storer(key).attrs.fileName
                 else:
                     return None
+
+        return None
 
     def putText(self, key, data):
         with h5py.File(self._tmpPath, 'a') as f:

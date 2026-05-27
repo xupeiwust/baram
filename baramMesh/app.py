@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 
 from PySide6.QtCore import QObject, QTranslator, QCoreApplication, QLocale, Signal
 from PySide6.QtWidgets import QApplication
@@ -12,6 +12,9 @@ from baramMesh.settings.project_manager import ProjectManager
 from baramMesh.openfoam.file_system import FileSystem
 from resources import resource
 
+if TYPE_CHECKING:
+    from baramMesh.settings.app_settings import AppSettings
+
 
 class App(QObject):
     renderingToggled = Signal(bool)
@@ -19,7 +22,6 @@ class App(QObject):
     def __init__(self):
         super().__init__()
 
-        self._properties = None
         self._settings = None
         self._project: Optional[Project] = None
         self._fileSystem = None
@@ -31,11 +33,8 @@ class App(QObject):
         self._qApplication: Optional[QApplication] = None
 
     @property
-    def properties(self):
-        return self._properties
-
-    @property
-    def settings(self):
+    def settings(self) -> 'AppSettings':
+        assert self._settings is not None
         return self._settings
 
     @property
@@ -71,7 +70,6 @@ class App(QObject):
         self._qApplication = application
 
     def setupApplication(self, properties):
-        self._properties = properties
         appSettings.load(properties.name)
         self._settings = appSettings
 

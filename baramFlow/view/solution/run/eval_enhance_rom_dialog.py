@@ -21,12 +21,12 @@ from PySide6.QtWidgets import (
 from PySide6.QtGui import QDoubleValidator
 
 from baramFlow.base.constants import VectorComponent
+from baramFlow.base.base import DirectionSpecificationMethod
 from baramFlow.base.field import Field
 from baramFlow.coredb.coredb_reader import CoreDBReader
 from baramFlow.coredb.boundary_db import BoundaryDB
 from baramFlow.coredb.cell_zone_db import CellZoneDB
 from baramFlow.coredb.monitor_db import MonitorDB
-from baramFlow.coredb.monitor_db import DirectionSpecificationMethod
 from baramFlow.openfoam.function_objects.surface_field_value import SurfaceReportType
 from baramFlow.openfoam.function_objects.vol_field_value import VolumeReportType
 from baramFlow.view.widgets.post_field_selector import (

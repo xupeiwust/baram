@@ -91,14 +91,14 @@ class SurfaceDialog(QDialog):
                 element = db.checkout(f'geometry/{gId}')
 
                 cfdType = self._typeRadios.checkedData()
-                element.setValue('cfdType', cfdType)
+                if element.setValue('cfdType', cfdType):
+                    if cfdType != CFDType.INTERFACE:
+                        element.setValue('slaveLayerGroup', None)
+                        if cfdType != CFDType.BOUNDARY:
+                            element.setValue('layerGroup', None)
+
                 element.setValue('nonConformal', self._ui.nonConformal.isChecked())
                 element.setValue('interRegion', self._ui.interRegion.isChecked())
-
-                if cfdType != CFDType.INTERFACE.value:
-                    element.setValue('slaveLayerGroup', None)
-                    if cfdType != CFDType.BOUNDARY.value:
-                        element.setValue('layerGroup', None)
 
                 db.commit(element)
 
@@ -114,7 +114,7 @@ class SurfaceDialog(QDialog):
             await AsyncMessageBox().information(self, self.tr("Input Error"), e.toMessage())
 
     def _connectSignalsSlots(self):
-        self._typeRadios.dataChecked.connect(self._onTypeChanged)
+        self._typeRadios.selectionChanged.connect(self._onTypeChanged)
         self._transformWidget.transformed.connect(self._onTransformed)
         self._ui.ok.clicked.connect(self._accept)
         self._ui.cancel.clicked.connect(self.close)

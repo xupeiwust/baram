@@ -3,12 +3,16 @@
 
 import qasync
 
+from libbaram.pfloat import PFloat
 from widgets.async_message_box import AsyncMessageBox
 
+from baramFlow.base.boundary.boundary_patch import PressureInletPatch
+from baramFlow.base.boundary.pressure_port import PressureInlet
 from baramFlow.coredb import coredb
 from baramFlow.coredb.coredb_writer import CoreDBWriter
 from baramFlow.coredb.boundary_db import BoundaryDB
 from baramFlow.coredb.region_db import RegionDB
+from baramFlow.services.boundary.boundary_service import BoundaryService
 from baramFlow.view.widgets.resizable_dialog import ResizableDialog
 from .pressure_inlet_dialog_ui import Ui_PressureInletDialog
 from .conditional_widget_helper import ConditionalWidgetHelper
@@ -22,11 +26,11 @@ class PressureInletDialog(ResizableDialog):
         self._ui = Ui_PressureInletDialog()
         self._ui.setupUi(self)
 
+        self._bcid = bcid
         self._xpath = BoundaryDB.getXPath(bcid)
 
         self._turbulenceWidget = None
         self._temperatureWidget = None
-        self._volumeFractionWidget = None
         self._scalarsWidget = None
         self._speciesWidget = None
 
@@ -52,33 +56,35 @@ class PressureInletDialog(ResizableDialog):
             return
         # ToDo: Add validation for other parameters
 
-        path = self._xpath + self.RELATIVE_XPATH
+        try:
+            writer = CoreDBWriter()
 
-        writer = CoreDBWriter()
-        writer.append(path + '/pressure', self._ui.totalPressure.text(), self.tr("Total Pressure"))
+            if not self._turbulenceWidget.appendToWriter(writer):
+                return
 
-        if not self._turbulenceWidget.appendToWriter(writer):
+            if not self._temperatureWidget.appendToWriter(writer):
+                return
+
+            if not await self._volumeFractionWidget.appendToWriter(writer, self._xpath + '/volumeFractions'):
+                return
+
+            if not self._scalarsWidget.appendToWriter(writer, self._xpath + '/userDefinedScalars'):
+                return
+
+            if not await self._speciesWidget.appendToWriter(writer, self._xpath + '/species'):
+                return
+
+            data = PressureInletPatch(
+                pressureInlet=PressureInlet(
+                    pressure=str(PFloat(self._ui.totalPressure.text(), self.tr("Total Pressure")))),
+                turbulence=self._turbulenceWidget.data())
+
+            BoundaryService.updateBoundaryCondition(self._bcid, data, writer)
+        except ValueError as e:
+            await AsyncMessageBox().information(self, self.tr('Input Error'), str(e))
             return
 
-        if not self._temperatureWidget.appendToWriter(writer):
-            return
-
-        if not await self._volumeFractionWidget.appendToWriter(writer, self._xpath + '/volumeFractions'):
-            return
-
-        if not self._scalarsWidget.appendToWriter(writer, self._xpath + '/userDefinedScalars'):
-            return
-
-        if not await self._speciesWidget.appendToWriter(writer, self._xpath + '/species'):
-            return
-
-        errorCount = writer.write()
-        if errorCount > 0:
-            self._temperatureWidget.rollbackWriting()
-            await AsyncMessageBox().information(self, self.tr("Input Error"), writer.firstError().toMessage())
-        else:
-            self._temperatureWidget.completeWriting()
-            self.accept()
+        self.accept()
 
     def _load(self):
         db = coredb.CoreDB()

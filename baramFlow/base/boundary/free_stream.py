@@ -1,0 +1,62 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+from dataclasses import dataclass
+
+from baramFlow.base.base import DirectionSpecificationMethod
+from baramFlow.base.xml_helper import Vector
+from baramFlow.coredb.boundary_db import BoundaryDB
+from baramFlow.coredb.coredb import _CoreDB
+from baramFlow.coredb.libdb import nsmap
+
+
+@dataclass
+class FlowDirection:
+    specificationMethod: DirectionSpecificationMethod
+    flowDirection: Vector   = None
+    dragDirection: Vector   = None
+    liftDirection: Vector   = None
+    angleOfAttack: str      = None
+    angleOfSideslip: str    = None
+
+    def applyToDBByPath(self, db: _CoreDB, parentPath: str):
+        element = db.getElement(parentPath + '/flowDirection')
+        element.find('specificationMethod', namespaces=nsmap).text = self.specificationMethod.value
+        if self.specificationMethod == DirectionSpecificationMethod.DIRECT:
+            element.replace(element.find('flowDirection', namespaces=nsmap),
+                            self.flowDirection.toElement('flowDirection'))
+        elif self.specificationMethod == DirectionSpecificationMethod.AOA_AOS:
+            element.replace(element.find('dragDirection', namespaces=nsmap),
+                            self.dragDirection.toElement('dragDirection'))
+            element.replace(element.find('liftDirection', namespaces=nsmap),
+                            self.liftDirection.toElement('liftDirection'))
+            element.find('angleOfAttack', namespaces=nsmap).text = self.angleOfAttack
+            element.find('angleOfSideslip', namespaces=nsmap).text = self.angleOfSideslip
+
+
+@dataclass
+class FreeStream:
+    flowDirection: FlowDirection
+    speed: str
+    pressure: str
+
+    def applyToDB(self, db: _CoreDB, bcid: str):
+        xpath = BoundaryDB.getXPath(bcid) + '/freeStream'
+        self.flowDirection.applyToDBByPath(db, xpath)
+        db.setValue(xpath + '/speed', self.speed)
+        db.setValue(xpath + '/pressure', self.pressure)
+
+
+@dataclass
+class FarFieldRiemann:
+    flowDirection: FlowDirection
+    machNumber: str
+    staticPressure: str
+    staticTemperature: str
+
+    def applyToDB(self, db: _CoreDB, bcid: str):
+        xpath = BoundaryDB.getXPath(bcid) + '/farFieldRiemann'
+        self.flowDirection.applyToDBByPath(db, xpath)
+        db.setValue(xpath + '/machNumber', self.machNumber)
+        db.setValue(xpath + '/staticPressure', self.staticPressure)
+        db.setValue(xpath + '/staticTemperature', self.staticTemperature)

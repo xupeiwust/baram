@@ -4,15 +4,13 @@
 from dataclasses import dataclass
 from uuid import UUID
 
-from lxml import etree
-
 from vtkmodules.vtkCommonDataModel import vtkDataObject, vtkMultiBlockDataSet, vtkPolyData
 from vtkmodules.vtkFiltersCore import vtkArrayCalculator, vtkContourFilter
 
 from baramFlow.base.constants import FieldCategory, FieldType, VectorComponent
 from baramFlow.base.field import Field, getFieldInstance, VELOCITY
 from baramFlow.coredb import coredb
-from baramFlow.coredb.libdb import nsmap
+from baramFlow.coredb.libdb import E, nsmap
 from baramFlow.base.scaffold.scaffold import Scaffold
 from baramFlow.openfoam.solver_field import getSolverFieldName
 from libbaram.openfoam.polymesh import collectInternalMesh
@@ -58,17 +56,15 @@ class IsoSurface(Scaffold):
                           spacing=spacing)
 
     def toElement(self):
-        string = ('<surface xmlns="http://www.baramcfd.org/baram">'
-                 f'    <uuid>{str(self.uuid)}</uuid>'
-                 f'    <name>{self.name}</name>'
-                 f'    <fieldCategory>{self.field.category.value}</fieldCategory>'
-                 f'    <fieldCodeName>{self.field.codeName}</fieldCodeName>'
-                 f'    <fieldComponent>{self.fieldComponent.value}</fieldComponent>'
-                 f'    <isoValues>{self.isoValues}</isoValues>'
-                 f'    <surfacesPerValue>{self.surfacePerValue}</surfacesPerValue>'
-                 f'    <spacing>{self.spacing}</spacing>'
-                  '</surface>')
-        return etree.fromstring(string)
+        return E('surface',
+                 E('uuid', str(self.uuid)),
+                 E('name', self.name),
+                 E('fieldCategory', self.field.category.value),
+                 E('fieldCodeName', self.field.codeName),
+                 E('fieldComponent', str(self.fieldComponent.value)),
+                 E('isoValues', self.isoValues),
+                 E('surfacesPerValue', str(self.surfacePerValue)),
+                 E('spacing', self.spacing))
 
     def xpath(self):
         return f'/surface[uuid="{str(self.uuid)}"]'

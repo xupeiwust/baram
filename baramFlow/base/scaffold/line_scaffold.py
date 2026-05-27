@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 from dataclasses import dataclass
-from lxml import etree
 from uuid import UUID
 
 from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet, vtkPolyData
@@ -11,7 +10,7 @@ from vtkmodules.vtkFiltersParallelDIY2 import vtkProbeLineFilter
 from vtkmodules.vtkFiltersSources import vtkLineSource
 
 from baramFlow.coredb import coredb
-from baramFlow.coredb.libdb import nsmap
+from baramFlow.coredb.libdb import E, nsmap
 from baramFlow.base.scaffold.scaffold import Scaffold
 from libbaram.openfoam.polymesh import collectInternalMesh
 from libbaram.vtk_threads import vtk_run_in_thread
@@ -65,22 +64,18 @@ class LineScaffold(Scaffold):
                           numberOfSamples=numberOfSamples)
 
     def toElement(self):
-        string = ('<lineScaffold xmlns="http://www.baramcfd.org/baram">'
-                 f'    <uuid>{str(self.uuid)}</uuid>'
-                 f'    <name>{self.name}</name>'
-                 f'    <point1>'
-                 f'        <x>{self.point1X}</x>'
-                 f'        <y>{self.point1Y}</y>'
-                 f'        <z>{self.point1Z}</z>'
-                 f'    </point1>'
-                 f'    <point2>'
-                 f'        <x>{self.point2X}</x>'
-                 f'        <y>{self.point2Y}</y>'
-                 f'        <z>{self.point2Z}</z>'
-                 f'    </point2>'
-                 f'    <numberOfSamples>{str(self.numberOfSamples)}</numberOfSamples>'
-                  '</lineScaffold>')
-        return etree.fromstring(string)
+        return E('lineScaffold',
+                 E('uuid', str(self.uuid)),
+                 E('name', self.name),
+                 E('point1',
+                     E('x', self.point1X),
+                     E('y', self.point1Y),
+                     E('z', self.point1Z)),
+                 E('point2',
+                     E('x', self.point2X),
+                     E('y', self.point2Y),
+                     E('z', self.point2Z)),
+                 E('numberOfSamples', str(self.numberOfSamples)))
 
     def xpath(self):
         return f'/lineScaffold[uuid="{str(self.uuid)}"]'

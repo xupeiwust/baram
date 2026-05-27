@@ -6,19 +6,20 @@ from baramFlow.coredb.models_db import ModelsDB
 from baramFlow.coredb.region_db import RegionDB
 from libbaram.openfoam.dictionary.dictionary_file import DictionaryFile, DataClass
 
-from baramFlow.base.boundary.boundary import BoundaryManager, PatchInteractionType
+from baramFlow.base.boundary.boundary import PatchInteractionType
 from baramFlow.base.model.DPM_model import DPMModelManager, KinematicModel, FlowRate, DiameterDistribution, Injection
 from baramFlow.base.model.DPM_model import ConeInjection, PointInjection, SurfaceInjection
 from baramFlow.base.model.model import DPMEvaporationModel, DPMTrackingScheme, DPMParticleType, DPMTurbulentDispersion, DPMFlowRateSpec
 from baramFlow.base.model.model import DPMDragForce, DPMLiftForce, DPMInjectionType, DPMDiameterDistribution
 from baramFlow.base.model.model import DPMParticleVelocityType, DPMParticleSpeed
-from baramFlow.coredb.boundary_db import BoundaryDB, BoundaryType
+from baramFlow.coredb.boundary_db import BoundaryDB
 from baramFlow.coredb.coredb_reader import CoreDBReader
 from baramFlow.coredb.general_db import GeneralDB
 from baramFlow.coredb.material_db import MaterialDB
 from baramFlow.coredb.turbulence_model_db import TurbulenceModelsDB, TurbulenceModel
 from baramFlow.openfoam.dictionary_helper import DictionaryHelper
 from baramFlow.openfoam.file_system import FileSystem
+from baramFlow.services.boundary.boundary_service import BoundaryService
 
 
 def _getGasName(liquidMid: str, rname: str):
@@ -315,10 +316,10 @@ class CloudProperties(DictionaryFile):
         data = {}
 
         for injection in injections:
-            if injection.injector.type == DPMInjectionType.POINT:
+            if injection.type == DPMInjectionType.POINT:
                 data[injection.name] = self._constructManualInjection(injection.injector.pointInjection)
             else:
-                if injection.injector.type == DPMInjectionType.SURFACE:
+                if injection.type == DPMInjectionType.SURFACE:
                     data[injection.name] = self._constructPatchInjection(injection.injector.surfaceInjection)
                 else:
                     data[injection.name] = self._constructConeInjection(injection.injector.coneInjection)
@@ -338,7 +339,7 @@ class CloudProperties(DictionaryFile):
         recycles = {}
 
         for bcid, name, ptype in self._db.getBoundaryConditions(''):
-            interaction = BoundaryManager.patchInteraction(str(bcid))
+            interaction = BoundaryService.patchInteraction(str(bcid))
             type_ = interaction.type
 
             if type_ == PatchInteractionType.RECYCLE:

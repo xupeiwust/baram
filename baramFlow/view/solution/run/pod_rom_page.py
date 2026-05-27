@@ -18,6 +18,7 @@ from widgets.async_message_box import AsyncMessageBox
 from widgets.progress_dialog import ProgressDialog
 from widgets.multi_selector_dialog import MultiSelectorDialog, SelectorItem
 
+from baramFlow.base.base import DirectionSpecificationMethod
 from baramFlow.case_manager import CaseManager, BatchCase
 from baramFlow.coredb.filedb import FileDB
 from baramFlow.coredb.general_db import GeneralDB
@@ -29,7 +30,6 @@ from .eval_enhance_rom_dialog import EvalNEnhanceROMDialog
 
 from baramFlow.coredb.coredb_reader import CoreDBReader
 from baramFlow.coredb.boundary_db import BoundaryDB
-from baramFlow.coredb.monitor_db import DirectionSpecificationMethod
 from baramFlow.coredb.reference_values_db import ReferenceValuesDB
 
 from baramFlow.base.constants import VectorComponent, FieldType
@@ -654,11 +654,7 @@ class PODROMPage(ContentPage):
         solverFieldName = getSolverFieldName(field)
 
         if isinstance(field, CollateralField):
-            time = FileSystem.latestTime()
-            if FileSystem.fieldExists(time, solverFieldName):
-                functions[f'readField_{solverFieldName}'] = foReadFieldsReport([solverFieldName], rname)  # FO for reading the collateral field
-            else:
-                functions.update(collateralFieldDict([field]))  # FO for generating the collateral field
+            functions.update(collateralFieldDict([field]))  # FO for generating the collateral field
 
         elif isinstance(field, SpecieField):
             if field.codeName not in RegionDB.getSecondaryMaterials(rname):
@@ -761,11 +757,7 @@ class PODROMPage(ContentPage):
             solverFieldName = getSolverFieldName(field)
 
             if isinstance(field, CollateralField):
-                time = FileSystem.latestTime()
-                if FileSystem.fieldExists(time, solverFieldName):
-                    functions[f'readField_{solverFieldName}'] = foReadFieldsReport([solverFieldName], rname)  # FO for reading the collateral field
-                else:
-                    functions.update(collateralFieldDict([field]))  # FO for generating the collateral field
+                functions.update(collateralFieldDict([field]))  # FO for generating the collateral field
 
             elif isinstance(field, SpecieField):
                 if field.codeName not in RegionDB.getSecondaryMaterials(rname):
@@ -854,11 +846,7 @@ class PODROMPage(ContentPage):
         solverFieldName = getSolverFieldName(field)
 
         if isinstance(field, CollateralField):
-            time = FileSystem.latestTime()
-            if FileSystem.fieldExists(time, solverFieldName):
-                functions[f'readField_{solverFieldName}'] = foReadFieldsReport([solverFieldName], rname)  # FO for reading the collateral field
-            else:
-                functions.update(collateralFieldDict([field]))  # FO for generating the collateral field
+            functions.update(collateralFieldDict([field]))  # FO for generating the collateral field
 
         elif isinstance(field, SpecieField):
             if field.codeName not in RegionDB.getSecondaryMaterials(rname):

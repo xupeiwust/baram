@@ -7,9 +7,9 @@ from PySide6.QtCore import Signal
 from PySide6.QtWidgets import QWidget, QHBoxLayout, QPushButton
 
 from baramFlow.base.base import Function1Scalar, Function1Vector, Function1VectorRow, Function1ScalarRow
-from baramFlow.view.setup.models.DPM.vector_widget import VectorWidget
 from baramFlow.view.widgets.batchable_float_edit import BatchableFloatEdit
 from baramFlow.view.widgets.piecewise_linear_dialog import PiecewiseLinearDialog
+from baramFlow.view.widgets.vector_widget import VectorWidget
 from widgets.python_combo_box import PythonComboBox
 
 from baramFlow.base.constants import Function1Type

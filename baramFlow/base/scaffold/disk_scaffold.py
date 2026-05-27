@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 from dataclasses import dataclass
-from lxml import etree
 from uuid import UUID
 
 from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet, vtkPolyData, vtkStaticCellLocator
@@ -10,7 +9,7 @@ from vtkmodules.vtkFiltersCore import vtkPointDataToCellData, vtkResampleWithDat
 from vtkmodules.vtkFiltersSources import vtkDiskSource
 
 from baramFlow.coredb import coredb
-from baramFlow.coredb.libdb import nsmap
+from baramFlow.coredb.libdb import E, nsmap
 from baramFlow.base.scaffold.scaffold import Scaffold
 from libbaram.openfoam.polymesh import collectInternalMesh
 from libbaram.vtk_threads import vtk_run_in_thread
@@ -75,25 +74,21 @@ class DiskScaffold(Scaffold):
                           circumferentialSamples=circumferentialSamples)
 
     def toElement(self):
-        string = ('<diskScaffold xmlns="http://www.baramcfd.org/baram">'
-                 f'    <uuid>{str(self.uuid)}</uuid>'
-                 f'    <name>{self.name}</name>'
-                 f'    <center>'
-                 f'        <x>{self.centerX}</x>'
-                 f'        <y>{self.centerY}</y>'
-                 f'        <z>{self.centerZ}</z>'
-                 f'    </center>'
-                 f'    <normal>'
-                 f'        <x>{self.normalX}</x>'
-                 f'        <y>{self.normalY}</y>'
-                 f'        <z>{self.normalZ}</z>'
-                 f'    </normal>'
-                 f'    <outerRadius>{self.outerRadius}</outerRadius>'
-                 f'    <innerRadius>{self.innerRadius}</innerRadius>'
-                 f'    <radialSamples>{str(self.radialSamples)}</radialSamples>'
-                 f'    <circumferentialSamples>{str(self.circumferentialSamples)}</circumferentialSamples>'
-                  '</diskScaffold>')
-        return etree.fromstring(string)
+        return E('diskScaffold',
+                 E('uuid', str(self.uuid)),
+                 E('name', self.name),
+                 E('center',
+                     E('x', self.centerX),
+                     E('y', self.centerY),
+                     E('z', self.centerZ)),
+                 E('normal',
+                     E('x', self.normalX),
+                     E('y', self.normalY),
+                     E('z', self.normalZ)),
+                 E('outerRadius', self.outerRadius),
+                 E('innerRadius', self.innerRadius),
+                 E('radialSamples', str(self.radialSamples)),
+                 E('circumferentialSamples', str(self.circumferentialSamples)))
 
     def xpath(self):
         return f'/diskScaffold[uuid="{str(self.uuid)}"]'

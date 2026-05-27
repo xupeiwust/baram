@@ -2,9 +2,13 @@
 # -*- coding: utf-8 -*-
 
 from enum import Enum, auto
+from uuid import UUID
 
 from PySide6.QtCore import QCoreApplication
 from lxml import etree
+
+from lxml.builder import ElementMaker
+
 
 ns = 'http://www.baramcfd.org/baram'
 nsmap = {'': ns}
@@ -19,8 +23,8 @@ class DBError(Enum):
 
 
 class ValueException(Exception):
-    def __init__(self, error: DBError, note):
-        super().__init__(error, note)
+    def __init__(self, error: DBError, xpath, note):
+        super().__init__(error, note or xpath)
 
 
 def getElement(parent, xpath):
@@ -66,9 +70,40 @@ def dbErrorToMessage(exception: ValueException):
         return QCoreApplication.translate('CoreDBError', '{} is invalid. {1}').format(name, error)
 
 
-def dbTextToBool(text):
+def xmlToBool(text):
+    assert text == 'true' or text == 'false'
     return text == 'true'
 
 
-def boolToDBText(value):
+def boolToXml(value: bool) -> str:
     return 'true' if value else 'false'
+
+
+def xmlToStr(text):
+    return '' if text is None else text
+
+
+def handle_bool(builder, value: bool) -> str:
+    return boolToXml(value)
+
+
+def handleEnum(builder, value: Enum) -> str:
+    return value.value
+
+
+def toStr(builder, value) -> str:
+    return str(value)
+
+
+E = ElementMaker(namespace=ns, typemap={
+    bool: handle_bool,
+    Enum: handleEnum,
+    UUID: toStr
+})
+
+
+class ElementEnum(Enum):
+    def toElement(self, tag:str):
+        return E(tag, self.value)
+
+

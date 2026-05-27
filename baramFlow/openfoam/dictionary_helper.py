@@ -20,7 +20,7 @@ class DictionaryHelper:
         return value.text
 
     def vectorValue(self, value: Vector):
-        return [self.pFloatValue(value.x), self.pFloatValue(value.y), self.pFloatValue(value.z)]
+        return [float(value.x), float(value.y), float(value.z)]
 
     def function1ScalarValue(self, value: Function1Scalar):
         if value.type == Function1Type.CONSTANT:

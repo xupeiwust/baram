@@ -1,24 +1,26 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import copy
+
 import qasync
 from PySide6.QtWidgets import QDialog
 
-from baramFlow.base.constants import FieldCategory
-from baramFlow.base.field import TEMPERATURE
-from baramFlow.base.monitor.monitor import getMonitorField
 from libbaram.mesh import Bounds
+from libbaram.pfloat import PFloat
 from widgets.async_message_box import AsyncMessageBox
 from widgets.rendering.point_widget import PointWidget
 from widgets.selector_dialog import SelectorDialog
 
 from baramFlow.app import app
+from baramFlow.base.constants import FieldCategory
+from baramFlow.base.field import TEMPERATURE, getFieldInstance
 from baramFlow.base.material.material import Phase
+from baramFlow.base.monitor.monitor import MonitorManager, PointMonitorConfiguration, MonitorField
+from baramFlow.base.xml_helper import Vector
 from baramFlow.case_manager import CaseManager
 from baramFlow.coredb import coredb
 from baramFlow.coredb.boundary_db import BoundaryDB
-from baramFlow.coredb.libdb import ValueException, dbErrorToMessage
-from baramFlow.coredb.monitor_db import MonitorDB
 from baramFlow.coredb.region_db import RegionDB
 from baramFlow.coredb.scalar_model_db import UserDefinedScalarsDB
 from baramFlow.mesh.vtk_loader import isPointInDataSet
@@ -29,7 +31,7 @@ from .point_dialog_ui import Ui_PointDialog
 class PointDialog(QDialog):
     TEXT_FOR_NONE_BOUNDARY = 'None'
 
-    def __init__(self, parent, name=None):
+    def __init__(self, parent, uuid=None):
         """Constructs point monitor setup dialog.
 
         Args:
@@ -39,9 +41,9 @@ class PointDialog(QDialog):
         self._ui = Ui_PointDialog()
         self._ui.setupUi(self)
 
-        self._name = name
+        self._uuid = uuid
+        self._base = None
         self._isNew = False
-        self._xpath = None
         self._snapOntoBoundary = None
 
         self._renderingView = app.renderingView.view()
@@ -49,16 +51,6 @@ class PointDialog(QDialog):
         self._pointWidget = PointWidget(self._renderingView)
 
         loadFieldsComboBox(self._ui.field)
-
-        if name is None:
-            db = coredb.CoreDB()
-            self._name = db.addPointMonitor()
-            self._isNew = True
-        else:
-            self._ui.nameWidget.hide()
-            self._ui.monitor.setTitle(name)
-
-        self._xpath = MonitorDB.getPointMonitorXPath(self._name)
 
         self._pointWidget.outlineOff()
         self._pointWidget.setBounds(self._bounds)
@@ -71,14 +63,10 @@ class PointDialog(QDialog):
             self._ui.ok.hide()
             self._ui.cancel.setText(self.tr('Close'))
 
-    def getName(self):
-        return self._name
+    def getID(self):
+        return self._base.uuid
 
     def reject(self):
-        if self._isNew:
-            db = coredb.CoreDB()
-            db.removePointMonitor(self._name)
-
         super().reject()
 
     def done(self, result):
@@ -96,44 +84,50 @@ class PointDialog(QDialog):
         connectFieldsToComponents(self._ui.field, self._ui.fieldComponent)
 
     def _load(self):
-        db = coredb.CoreDB()
-        self._ui.name.setText(self._name)
-        self._ui.writeInterval.setText(db.getValue(self._xpath + '/writeInterval'))
-
-        field = getMonitorField(MonitorDB.getPointMonitorXPath(self._name))
-        self._ui.field.setCurrentIndex(self._ui.field.findData(field.field))
-        self._ui.fieldComponent.setCurrentIndex(self._ui.fieldComponent.findData(field.component))
-
-        self._ui.coordinateX.setText(db.getValue(self._xpath + '/coordinate/x'))
-        self._ui.coordinateY.setText(db.getValue(self._xpath + '/coordinate/y'))
-        self._ui.coordinateZ.setText(db.getValue(self._xpath + '/coordinate/z'))
-        snapOntoBoundary = db.getValue(self._xpath + '/snapOntoBoundary')
-        if snapOntoBoundary == 'true':
-            self._setSnapOntoBoundary(db.getValue(self._xpath + '/boundary'))
+        if self._uuid is None:
+            self._isNew = True
+            data = MonitorManager.newPointMonitor()
         else:
-            self._setSnapOntoBoundary(None)
+            data = MonitorManager.getPointMonitor(self._uuid)
+            self._ui.nameWidget.hide()
+            self._ui.monitor.setTitle(data.monitorBase.name)
+
+        self._base = data.monitorBase
+        self._ui.name.setText(data.monitorBase.name)
+        self._ui.writeInterval.setText(data.monitorBase.writeInterval)
+
+        self._ui.field.setCurrentIndex(self._ui.field.findData(data.field.field))
+        self._ui.fieldComponent.setCurrentIndex(self._ui.fieldComponent.findData(data.field.component))
+        self._ui.coordinateX.setPFloat(data.coordinate.x)
+        self._ui.coordinateY.setPFloat(data.coordinate.y)
+        self._ui.coordinateZ.setPFloat(data.coordinate.z)
+
+        self._setSnapOntoBoundary(data.snapOntoBoundary)
 
         self._movePointWidget()
         self._pointWidget.on()
 
     @qasync.asyncSlot()
     async def _accept(self):
-        name = self._name
-        if self._isNew:
-            name = self._ui.name.text().strip()
-            if not name:
-                await AsyncMessageBox().information(self, self.tr("Input Error"), self.tr("Enter Monitor Name."))
-                return
+        name = self._ui.name.text().strip()
+        if not name:
+            await AsyncMessageBox().information(self, self.tr('Input Error'), self.tr('Enter Monitor Name.'))
+            return
+
+        if name != self._base.name and MonitorManager.isExistingName(name):
+            await AsyncMessageBox().information(self, self.tr('Input Error'),
+                                                self.tr('Name "{0}" already exist.'.format(name)))
+            return
 
         field = self._ui.field.currentData()
         if field is None:
-            await AsyncMessageBox().information(self, self.tr("Input Error"), self.tr("Select Field."))
+            await AsyncMessageBox().information(self, self.tr('Input Error'), self.tr('Select Field.'))
             return
 
         db = coredb.CoreDB()
         regions = db.getRegions()
         region = None
-        if self._snapOntoBoundary:
+        if self._snapOntoBoundary != '0':
             region = BoundaryDB.getBoundaryRegion(self._snapOntoBoundary)
         else:
             coordinate = (float(self._ui.coordinateX.text()),
@@ -161,38 +155,39 @@ class PointDialog(QDialog):
             return
 
         try:
-            with coredb.CoreDB() as db:
-                db.setValue(self._xpath + '/writeInterval', self._ui.writeInterval.text(), self.tr("Write Interval"))
-                db.setValue(self._xpath + '/fieldCategory', field.category.value)
-                db.setValue(self._xpath + '/fieldCodeName', field.codeName)
-                db.setValue(self._xpath + '/fieldComponent', str(self._ui.fieldComponent.currentData().value))
-                db.setValue(self._xpath + '/coordinate/x', self._ui.coordinateX.text(), self.tr("Coordinate X"))
-                db.setValue(self._xpath + '/coordinate/y', self._ui.coordinateY.text(), self.tr("Coordinate Y"))
-                db.setValue(self._xpath + '/coordinate/z', self._ui.coordinateZ.text(), self.tr("Coordinate Z"))
-                db.setValue(self._xpath + '/region', region)
-                if self._snapOntoBoundary:
-                    db.setValue(self._xpath + '/snapOntoBoundary', 'true')
-                    db.setValue(self._xpath + '/boundary', self._snapOntoBoundary)
-                else:
-                    db.setValue(self._xpath + '/snapOntoBoundary', 'false')
-                    db.setValue(self._xpath + '/boundary', '0')
+            base = copy.deepcopy(self._base)
+            base.name = name
+            base.writeInterval = str(PFloat(self._ui.writeInterval.text(), self.tr('Write Interval'),
+                                            low=0, lowInclusive=False))
 
-                if self._isNew:
-                    db.setValue(self._xpath + '/name', name, self.tr("Name"))
-        except ValueException as ve:
-            await AsyncMessageBox().information(self, self.tr('Input Error'), dbErrorToMessage(ve))
-            return False
+            data = PointMonitorConfiguration(
+                monitorBase=base,
+                field=MonitorField(field=getFieldInstance(field.category, field.codeName),
+                                   component=self._ui.fieldComponent.currentData()),
+                coordinate=Vector(
+                    self._ui.coordinateX.pFloat(self.tr('Coordinate X')),
+                    self._ui.coordinateY.pFloat(self.tr('Coordinate Y')),
+                    self._ui.coordinateZ.pFloat(self.tr('Coordinate Z'))),
+                snapOntoBoundary=self._snapOntoBoundary,
+                region=region)
 
-        self._name = name
+            if self._isNew:
+                MonitorManager.addPointMonitor(data)
+            else:
+                MonitorManager.updatePointMonitor(data)
+        except ValueError as e:
+            await AsyncMessageBox().information(self, self.tr('Input Error'), str(e))
+            return
 
         self.accept()
 
     def _setSnapOntoBoundary(self, bcid):
-        self._snapOntoBoundary = bcid
-        if bcid is None:
+        if bcid is None or bcid == '0':
             self._ui.snapOntoBoundary.setText(self.TEXT_FOR_NONE_BOUNDARY)
+            self._snapOntoBoundary = '0'
         else:
             self._ui.snapOntoBoundary.setText(BoundaryDB.getBoundaryText(bcid))
+            self._snapOntoBoundary = bcid
 
     def _selectSnapOntoBoundary(self):
         self._dialog = SelectorDialog(self, self.tr("Select Boundary"), self.tr("Select Boundary"),

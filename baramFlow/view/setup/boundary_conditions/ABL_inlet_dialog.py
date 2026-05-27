@@ -7,12 +7,14 @@ from PySide6.QtWidgets import QDialog
 from libbaram.pfloat import PFloat
 from widgets.async_message_box import AsyncMessageBox
 
-from baramFlow.base.boundary.ABL_inlet import ABLFlowDirection, Vector, ABLInletCondition, AtmosphericBoundaryLayer
-from baramFlow.base.boundary.ABL_inlet import PasquillStability, updateABLInletBoundaryConditions
-from baramFlow.coredb.libdb import dbTextToBool
+from baramFlow.base.boundary.ABL_inlet import ABLFlowDirection, Vector, AtmosphericBoundaryLayer
+from baramFlow.base.boundary.ABL_inlet import PasquillStability
+from baramFlow.base.boundary.boundary_patch import ABLInletPatch
+from baramFlow.coredb.libdb import xmlToBool
 from baramFlow.coredb import coredb
 from baramFlow.coredb.boundary_db import BoundaryDB, FlowDirectionSpecificationMethod
 from baramFlow.coredb.region_db import RegionDB
+from baramFlow.services.boundary.boundary_service import BoundaryService
 from .ABL_inlet_dialog_ui import Ui_ABLInletDialog
 from .conditional_widget_helper import ConditionalWidgetHelper
 
@@ -58,9 +60,9 @@ class ABLInletDialog(QDialog):
                 flowDirection = ABLFlowDirection(
                     specificationMethod=specMethod,
                     value = Vector(
-                        x=str(PFloat(self._ui.flowDirectionXComponent.text(), self.tr("Flow Direction X-Component"))),
-                        y=str(PFloat(self._ui.flowDirectionYComponent.text(), self.tr("Flow Direction Y-Component"))),
-                        z=str(PFloat(self._ui.flowDirectionZComponent.text(), self.tr("Flow Direction Z-Component")))))
+                        x=PFloat(self._ui.flowDirectionXComponent.text(), self.tr("Flow Direction X-Component")),
+                        y=PFloat(self._ui.flowDirectionYComponent.text(), self.tr("Flow Direction Y-Component")),
+                        z=PFloat(self._ui.flowDirectionZComponent.text(), self.tr("Flow Direction Z-Component"))))
             else:
                 flowDirection = ABLFlowDirection(specificationMethod=specMethod)
 
@@ -79,16 +81,16 @@ class ABLInletDialog(QDialog):
             else:
                 pasquillStability = PasquillStability(disabled=True)
 
-            data = ABLInletCondition(
+            data = ABLInletPatch(
                 abl= AtmosphericBoundaryLayer(
                     flowDirection=flowDirection,
                     groundNormalDirection=Vector(
-                        x=str(PFloat(self._ui.groundNormalDirectionXComponent.text(),
-                                     self.tr("Ground-Normal Direction X-Component"))),
-                        y=str(PFloat(self._ui.groundNormalDirectionYComponent.text(),
-                                     self.tr("Ground-Normal Direction Y-Component"))),
-                        z=str(PFloat(self._ui.groundNormalDirectionZComponent.text(),
-                                     self.tr("Ground-Normal Direction Z-Component")))),
+                        x=PFloat(self._ui.groundNormalDirectionXComponent.text(),
+                                     self.tr("Ground-Normal Direction X-Component")),
+                        y=PFloat(self._ui.groundNormalDirectionYComponent.text(),
+                                     self.tr("Ground-Normal Direction Y-Component")),
+                        z=PFloat(self._ui.groundNormalDirectionZComponent.text(),
+                                     self.tr("Ground-Normal Direction Z-Component"))),
                     referenceFlowSpeed=str(PFloat(self._ui.referenceFlowSpeed.text(), self.tr("Reference Flow Speed"))),
                     referenceHeight= str(PFloat(self._ui.referenceHeight.text(), self.tr("Reference Height"))),
                     surfaceRoughnessLength= str(
@@ -97,11 +99,11 @@ class ABLInletDialog(QDialog):
                     pasquillStability=pasquillStability),
                 userDefinedScalars=self._scalarsWidget.data(),
                 species=self._speciesWidget.data())
+
+            BoundaryService.updateBoundaryCondition(self._bcid, data)
         except ValueError as e:
             await AsyncMessageBox().information(self, self.tr('Input Error'), str(e))
             return
-
-        updateABLInletBoundaryConditions(self._bcid, data)
 
         self.accept()
 
@@ -124,7 +126,7 @@ class ABLInletDialog(QDialog):
         self._ui.minimumZCoordinate.setText(db.getValue(self._generalXPath + '/minimumZCoordinate'))
 
         self._ui.pasquillStability.setChecked(
-            not dbTextToBool(db.getAttribute(self._generalXPath + '/pasquillStability', 'disabled')))
+            not xmlToBool(db.getAttribute(self._generalXPath + '/pasquillStability', 'disabled')))
         self._ui.stabilityClass.setCurrentIndex(
             self._ui.stabilityClass.findData(db.getValue(self._generalXPath + '/pasquillStability/stabilityClass')))
         self._ui.latitude.setText(db.getValue(self._generalXPath + '/pasquillStability/latitude'))

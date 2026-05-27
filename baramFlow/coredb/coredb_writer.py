@@ -133,3 +133,10 @@ class CoreDBWriter:
     def firstError(self):
         return self._errors[0]
 
+    def updateInDB(self, db):
+        for i in self._items:
+            try:
+                i.apply(db)
+            except ValueException as ex:
+                error, message = ex.args
+                raise ValueError(DBWriterError(i.label, error, message).toMessage())

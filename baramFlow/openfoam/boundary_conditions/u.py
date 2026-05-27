@@ -3,14 +3,16 @@
 
 from math import sqrt
 
+from libbaram.openfoam.dictionary.dictionary_file import DataClass
+
+from baramFlow.base.base import SpatialVectorList
+from baramFlow.base.boundary.flow_rate_port import FlowRateSpecification
+from baramFlow.base.boundary.velocity_inlet import VelocitySpecification, VelocityProfile, CoordinateSystem
 from baramFlow.base.material.material import UNIVERSAL_GAS_CONSTANT
-from baramFlow.coredb.project import Project
-from baramFlow.coredb.boundary_db import BoundaryDB, BoundaryType, VelocitySpecification, VelocityProfile
-from baramFlow.coredb.boundary_db import FlowRateInletSpecification, InterfaceMode
+from baramFlow.coredb.boundary_db import BoundaryDB, BoundaryType, InterfaceMode
 from baramFlow.coredb.boundary_db import WallMotion, ShearCondition, MovingWallMotion
 from baramFlow.coredb.material_db import MaterialDB
 from baramFlow.openfoam.boundary_conditions.boundary_condition import BoundaryCondition
-from libbaram.openfoam.dictionary.dictionary_file import DataClass
 
 
 class U(BoundaryCondition):
@@ -64,20 +66,21 @@ class U(BoundaryCondition):
                 BoundaryType.FAN.value:                 (lambda: self._constructCyclic()),
                 BoundaryType.EMPTY.value:               (lambda: self._constructEmpty()),
                 BoundaryType.CYCLIC.value:              (lambda: self._constructCyclic()),
+                BoundaryType.CYCLIC_ACMI.value:         (lambda: self._constructCyclicACMI()),
                 BoundaryType.WEDGE.value:               (lambda: self._constructWedge()),
-            }.get(type_)()
+            }.get(type_, lambda: None)()
 
         return field
 
     def _constructFlowRateInletVelocity(self, xpath, outlet=False):
         spec = self._db.getValue(xpath + '/flowRate/specification')
-        if spec == FlowRateInletSpecification.VOLUME_FLOW_RATE.value:
+        if spec == FlowRateSpecification.VOLUME_FLOW_RATE.value:
             return {
                 'type': 'flowRateInletVelocity',
                 'volumetricFlowRate': (-float(self._db.getValue(xpath + '/flowRate/volumeFlowRate')) if outlet
                                        else self._db.getValue(xpath + '/flowRate/volumeFlowRate'))
             }
-        elif spec == FlowRateInletSpecification.MASS_FLOW_RATE.value:
+        elif spec == FlowRateSpecification.MASS_FLOW_RATE.value:
             return {
                 'type': 'flowRateInletVelocity',
                 'massFlowRate': (-float(self._db.getValue(xpath + '/flowRate/massFlowRate')) if outlet
@@ -151,35 +154,33 @@ class U(BoundaryCondition):
         }
 
     def _constructVelocityInletU(self, xpath, name):
-        spec = self._db.getValue(xpath + '/velocityInlet/velocity/specification')
-        if spec == VelocitySpecification.COMPONENT.value:
-            profile = self._db.getValue(xpath + '/velocityInlet/velocity/component/profile')
-            if profile == VelocityProfile.CONSTANT.value:
-                return self._constructFixedValue(
-                    self._db.getVector(xpath + '/velocityInlet/velocity/component/constant'))
-            elif profile == VelocityProfile.SPATIAL_DISTRIBUTION.value:
-                return self._constructTimeVaryingMappedFixedValue(
-                    self._region.rname, name, 'U',
-                    Project.instance().fileDB().getFileContents(
-                        self._db.getValue(xpath + '/velocityInlet/velocity/component/spatialDistribution')))
-            elif profile == VelocityProfile.TEMPORAL_DISTRIBUTION.value:
-                return self._constructUniformFixedValue(
-                    xpath + '/velocityInlet/velocity/component/temporalDistribution/piecewiseLinear',
-                    self.TableType.TEMPORAL_VECTOR_LIST)
-        elif spec == VelocitySpecification.MAGNITUDE.value:
-            profile = self._db.getValue(xpath + '/velocityInlet/velocity/magnitudeNormal/profile')
-            if profile == VelocityProfile.CONSTANT.value:
+        spec = VelocitySpecification(self._db.getValue(xpath + '/velocityInlet/velocity/specification'))
+        coordinateSystem = CoordinateSystem(self._db.getValue(xpath + '/velocityInlet/velocity/coordinateSystem'))
+        if spec == VelocitySpecification.MAGNITUDE:
+            profile = VelocityProfile(self._db.getValue(xpath + '/velocityInlet/velocity/magnitudeNormal/profile'))
+            if profile == VelocityProfile.CONSTANT:
                 return self._constructSurfaceNormalFixedValue(
                     self._db.getValue(xpath + '/velocityInlet/velocity/magnitudeNormal/constant'))
-            elif profile == VelocityProfile.SPATIAL_DISTRIBUTION.value:
-                return self._constructTimeVaryingMappedFixedValue(
-                    self._region.rname, name, 'U',
-                    Project.instance().fileDB().getFileContents(
-                        self._db.getValue(xpath + '/velocityInlet/velocity/magnitudeNormal/spatialDistribution')))
-            elif profile == VelocityProfile.TEMPORAL_DISTRIBUTION.value:
+            elif profile == VelocityProfile.TEMPORAL_DISTRIBUTION:
                 return self._constructUniformNormalFixedValue(
                     xpath + '/velocityInlet/velocity/magnitudeNormal/temporalDistribution/piecewiseLinear',
                     self.TableType.TEMPORAL_SCALAR_LIST)
+        elif coordinateSystem == CoordinateSystem.CARTESIAN:
+            profile = VelocityProfile(self._db.getValue(xpath + '/velocityInlet/velocity/component/profile'))
+            if profile == VelocityProfile.CONSTANT:
+                return self._constructFixedValue(
+                    self._db.getVector(xpath + '/velocityInlet/velocity/component/constant'))
+            elif profile == VelocityProfile.SPATIAL_DISTRIBUTION:
+                return self._constructTimeVaryingMappedFixedValue(
+                    self._region.rname, name, 'U',
+                    SpatialVectorList.fromElement(
+                        self._db.getElement(xpath + '/velocityInlet/velocity/component/spatialDistribution')).dataFrame())
+            elif profile == VelocityProfile.TEMPORAL_DISTRIBUTION:
+                return self._constructUniformFixedValue(
+                    xpath + '/velocityInlet/velocity/component/temporalDistribution/piecewiseLinear',
+                    self.TableType.TEMPORAL_VECTOR_LIST)
+        elif coordinateSystem == CoordinateSystem.LOCAL_CYLINDRICAL:
+            return self._constructCylindricalInletVelocity(xpath)
 
     def _constructFarfieldRiemannU(self, xpath):
         gamma = 1.4
@@ -218,3 +219,56 @@ class U(BoundaryCondition):
             return self._constructNoSlip()
         else:
             return self._constructCyclicAMI()
+
+    def _constructCylindricalInletVelocity(self, xpath):
+        def table(times, values):
+            t = times.split()
+            v = values.split()
+
+            return [[t[i], v[i]] for i in range(len(t))]
+
+        profile = VelocityProfile(self._db.getValue(xpath + '/velocityInlet/velocity/localCylindrical/profile'))
+        if profile == VelocityProfile.CONSTANT:
+            return {
+                'type': 'cylindricalInletVelocity',
+                'origin': self._db.getVector(xpath + '/velocityInlet/velocity/localCylindrical/axisOrigin'),
+                'axis': self._db.getVector(xpath + '/velocityInlet/velocity/localCylindrical/axisDirection'),
+                'axialVelocity': {
+                    'type': 'constant',
+                    'value': self._db.getValue(xpath + '/velocityInlet/velocity/localCylindrical/constant/axialVelocity')
+                },
+                'radialVelocity': {
+                    'type': 'constant',
+                    'value': self._db.getValue(xpath + '/velocityInlet/velocity/localCylindrical/constant/radialVelocity')
+                },
+                'rpm': {
+                    'type': 'constant',
+                    'value': self._db.getValue(xpath + '/velocityInlet/velocity/localCylindrical/constant/angularSpeed')
+                },
+                'value': self._initialValueByTime()
+            }
+        elif profile == VelocityProfile.TEMPORAL_DISTRIBUTION:
+            return {
+                'type': 'cylindricalInletVelocity',
+                'origin': self._db.getVector(xpath + '/velocityInlet/velocity/localCylindrical/axisOrigin'),
+                'axis': self._db.getVector(xpath + '/velocityInlet/velocity/localCylindrical/axisDirection'),
+                'axialVelocity': {
+                    'type': 'table',
+                    'values': table(
+                        self._db.getValue(xpath + '/velocityInlet/velocity/localCylindrical/temporalDistribution/t'),
+                        self._db.getValue(xpath + '/velocityInlet/velocity/localCylindrical/temporalDistribution/u'))
+                },
+                'radialVelocity': {
+                    'type': 'table',
+                    'values': table(
+                        self._db.getValue(xpath + '/velocityInlet/velocity/localCylindrical/temporalDistribution/t'),
+                        self._db.getValue(xpath + '/velocityInlet/velocity/localCylindrical/temporalDistribution/v'))
+                },
+                'rpm': {
+                    'type': 'table',
+                    'values': table(
+                        self._db.getValue(xpath + '/velocityInlet/velocity/localCylindrical/temporalDistribution/t'),
+                        self._db.getValue(xpath + '/velocityInlet/velocity/localCylindrical/temporalDistribution/omega'))
+                },
+                'value': self._initialValueByTime()
+            }

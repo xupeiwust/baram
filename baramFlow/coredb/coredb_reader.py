@@ -4,14 +4,16 @@
 from threading import Lock
 
 from PySide6.QtCore import QCoreApplication
+from thermo import PR
 
 from libbaram.math import calucateDirectionsByRotation
 
-from baramFlow.base.material.material import UNIVERSAL_GAS_CONSTANT, Phase, DensitySpecification, TransportSpecification
+from baramFlow.base.base import DirectionSpecificationMethod
+from baramFlow.base.material.material import (
+    UNIVERSAL_GAS_CONSTANT, Phase, DensitySpecification, SpecificHeatSpecification, TransportSpecification)
 from baramFlow.libbaram.calculation import AverageCalculator
 
 from . import coredb
-from .boundary_db import DirectionSpecificationMethod
 from .coredb import ValueException, DBError, _CoreDB
 from .general_db import GeneralDB
 from .initialization_db import InitializationDB
@@ -50,8 +52,7 @@ class Region:
         self._t = float(db.getValue(f'{self._initialValuesXpath}/temperature'))
 
         if self.isFluid():
-            p = (float(db.getValue(f'{self._initialValuesXpath}/pressure'))
-                 + float(db.getValue('/general/operatingConditions/pressure')))
+            p = float(db.getValue(f'{self._initialValuesXpath}/pressure'))
             v = float(db.getValue(f'{self._initialValuesXpath}/scaleOfVelocity'))
             i = (float(db.getValue(f'{self._initialValuesXpath}/turbulentIntensity')) / 100.0)
             b = float(db.getValue(f'{self._initialValuesXpath}/turbulentViscosity'))
@@ -118,6 +119,14 @@ class Region:
     @property
     def initialVelocity(self):
         return self._U
+
+    @property
+    def initialIntermittency(self):
+        return float(self._db.getValue(f'{self._initialValuesXpath}/intermittency'))
+
+    @property
+    def initialMomentumThicknessRe(self):
+        return float(self._db.getValue(f'{self._initialValuesXpath}/momentumThicknessRe'))
 
     def initialScalar(self, scalarID):
         return self._db.getValue(f'{self._initialValuesXpath}/userDefinedScalars/scalar[scalarID="{scalarID}"]/value')
@@ -186,12 +195,13 @@ class CoreDBReader(_CoreDB):
                 message = 'a float is required'
 
             raise ValueException(
-                error,
+                error, xpath,
                 QCoreApplication.translate('CoreDBReader', 'Invalid value({0}) for parameter {1} - {2} for {3}')
                 .format(value, parameter, message, xpath))
 
     def getDensity(self, materials, t: float, p: float) -> float:  # kg / m^3
         def density(mid_):
+            operatingPressure = float(self.getValue(GeneralDB.OPERATING_CONDITIONS_XPATH + '/pressure'))
             xpath = MaterialDB.getXPath(mid_)
             spec = DensitySpecification(self.getValue(xpath + '/density/specification'))
             if spec == DensitySpecification.CONSTANT:
@@ -200,7 +210,6 @@ class CoreDBReader(_CoreDB):
                 r'''
                 .. math:: \rho = \frac{MW \times P}{R \times T}
                 '''
-                operatingPressure = float(self.getValue(GeneralDB.OPERATING_CONDITIONS_XPATH + '/pressure'))
                 mw = float(self.getValue(xpath + '/molecularWeight'))
                 return (p + operatingPressure) * mw / (UNIVERSAL_GAS_CONSTANT * t)
             elif spec == DensitySpecification.POLYNOMIAL:
@@ -214,13 +223,21 @@ class CoreDBReader(_CoreDB):
                 .. math:: \rho = \frac{MW \times P_{ref}}{R \times T}
                 '''
                 referencePressure = float(self.getValue(ReferenceValuesDB.REFERENCE_VALUES_XPATH + '/pressure'))
-                operatingPressure = float(self.getValue(GeneralDB.OPERATING_CONDITIONS_XPATH + '/pressure'))
                 mw = float(self.getValue(xpath + '/molecularWeight'))
                 return (referencePressure + operatingPressure) * mw / (UNIVERSAL_GAS_CONSTANT * t)
             elif spec == DensitySpecification.BOUSSINESQ:
                 return float(self.getValue(xpath + '/density/boussinesq/rho0'))
             elif spec == DensitySpecification.PERFECT_FLUID:
                 return float(self.getValue(xpath + '/density/perfectFluid/rho0'))
+            elif spec  == DensitySpecification.REAL_GAS_PENG_ROBINSON:
+                eos = PR(Tc=float(self.getValue(xpath + '/criticalTemperature')),
+                         Pc=float(self.getValue(xpath + '/criticalPressure')),
+                         omega=float(self.getValue(xpath + '/acentricFactor')),
+                         T=t, P=(p+operatingPressure))
+
+                mw = float(self.getValue(xpath + '/molecularWeight'))
+
+                return mw * eos.rho_g / 1000
             else:
                 raise KeyError
 
@@ -278,15 +295,29 @@ class CoreDBReader(_CoreDB):
     def getSpecificHeat(self, materials, t: float) -> float:
         def specificHeat(mid_):
             xpath = MaterialDB.getXPath(mid_)
-            spec = self.getValue(xpath + '/specificHeat/specification')
-            if spec == 'constant':
+            spec = SpecificHeatSpecification(self.getValue(xpath + '/specificHeat/specification'))
+            if spec == SpecificHeatSpecification.CONSTANT:
                 return float(self.getValue(xpath + '/specificHeat/constant'))
-            elif spec == 'polynomial':
+            elif spec == SpecificHeatSpecification.POLYNOMIAL:
                 coeffs = list(map(float, self.getValue(xpath + '/specificHeat/polynomial').split()))
                 cp = 0.0
                 for exp, c in enumerate(coeffs):
                     cp += c * t ** exp
                 return cp
+            elif spec == SpecificHeatSpecification.JANAF:
+                janafXpath = xpath + '/specificHeat/janaf'
+                tCommon = float(self.getValue(janafXpath + '/commonTemperature'))
+                tHigh   = float(self.getValue(janafXpath + '/highTemperature'))
+                tLow    = float(self.getValue(janafXpath + '/lowTemperature'))
+                tc = min(max(t, tLow), tHigh)  # cap the temperature with low and high limits
+                if tc < tCommon:
+                    path = janafXpath + '/lowCoefficients'
+                else:
+                    path = janafXpath + '/highCoefficients'
+
+                a = list(map(float, self.getValue(path).split()))
+                mw = float(self.getValue(xpath + '/molecularWeight'))
+                return (a[0] + a[1]*tc + a[2]*tc**2 + a[3]*tc**3 + a[4]*tc**4) * UNIVERSAL_GAS_CONSTANT / mw
             else:
                 raise KeyError
 

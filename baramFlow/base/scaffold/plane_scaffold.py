@@ -2,14 +2,13 @@
 # -*- coding: utf-8 -*-
 
 from dataclasses import dataclass
-from lxml import etree
 from uuid import UUID
 
 from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet, vtkPlane, vtkPolyData
 from vtkmodules.vtkFiltersCore import vtkCutter
 
 from baramFlow.coredb import coredb
-from baramFlow.coredb.libdb import nsmap
+from baramFlow.coredb.libdb import E, nsmap
 from baramFlow.base.scaffold.scaffold import Scaffold
 from libbaram.openfoam.polymesh import collectInternalMesh
 from libbaram.vtk_threads import vtk_run_in_thread
@@ -58,21 +57,17 @@ class PlaneScaffold(Scaffold):
                           normalZ=normalZ)
 
     def toElement(self):
-        string = ('<planeScaffold xmlns="http://www.baramcfd.org/baram">'
-                 f'    <uuid>{str(self.uuid)}</uuid>'
-                 f'    <name>{self.name}</name>'
-                 f'    <origin>'
-                 f'        <x>{self.originX}</x>'
-                 f'        <y>{self.originY}</y>'
-                 f'        <z>{self.originZ}</z>'
-                 f'    </origin>'
-                 f'    <normal>'
-                 f'        <x>{self.normalX}</x>'
-                 f'        <y>{self.normalY}</y>'
-                 f'        <z>{self.normalZ}</z>'
-                 f'    </normal>'
-                  '</planeScaffold>')
-        return etree.fromstring(string)
+        return E('planeScaffold',
+                 E('uuid', str(self.uuid)),
+                 E('name', self.name),
+                 E('origin',
+                     E('x', self.originX),
+                     E('y', self.originY),
+                     E('z', self.originZ)),
+                 E('normal',
+                     E('x', self.normalX),
+                     E('y', self.normalY),
+                     E('z', self.normalZ)))
 
     def xpath(self):
         return f'/planeScaffold[uuid="{str(self.uuid)}"]'

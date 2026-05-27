@@ -14,6 +14,7 @@ from xmlschema.names import XSD_DOUBLE, XSD_MIN_INCLUSIVE, XSD_MAX_INCLUSIVE, XS
 
 # To use ".qrc" QT Resource files
 # noinspection PyUnresolvedReferences
+from baramFlow.base.event_bus import EventBus
 import resource_rc
 
 from resources import resource
@@ -74,29 +75,15 @@ class _CoreDB(object):
     CELL_ZONE_PATH = f'{CONFIGURATION_ROOT}/cell_zone.xml'
     BOUNDARY_CONDITION_PATH = f'{CONFIGURATION_ROOT}/boundary_condition.xml'
 
-    FORCE_MONITOR_PATH   = f'{CONFIGURATION_ROOT}/force_monitor.xml'
-    POINT_MONITOR_PATH   = f'{CONFIGURATION_ROOT}/point_monitor.xml'
-    SURFACE_MONITOR_PATH = f'{CONFIGURATION_ROOT}/surface_monitor.xml'
-    VOLUME_MONITOR_PATH  = f'{CONFIGURATION_ROOT}/volume_monitor.xml'
-
-    FORCE_MONITOR_DEFAULT_NAME = 'force-mon-'
-    POINT_MONITOR_DEFAULT_NAME = 'point-mon-'
-    SURFACE_MONITOR_DEFAULT_NAME = 'surface-mon-'
-    VOLUME_MONITOR_DEFAULT_NAME = 'volume-mon-'
-
-    MONITOR_MAX_INDEX = 100
-    MATERIAL_MAX_INDEX = 1000
     CELL_ZONE_MAX_INDEX = 1000
     BOUNDARY_CONDITION_MAX_INDEX = 10000
-    USER_DEFINED_SCALAR_MAX_INDEX = 10000
 
     def __init__(self):
         self._initialized = True
 
         self._configCount = 0
         self._configCountAtSave = self._configCount
-        self._inContext = False
-        self._backupTree = None
+        self._backupTree = []
         self._lastError = None
         self._lastNote = None
 
@@ -108,20 +95,23 @@ class _CoreDB(object):
 
         self._xmlTree = None
 
+        EventBus().onConfigChanged.connect(self.increaseConfigCount, self)
+
     def __enter__(self):
         logger.debug('enter')
-        self._backupTree = copy.deepcopy(self._xmlTree)
+        self._backupTree.append(copy.deepcopy(self._xmlTree))
         self._lastError = None
-        self._inContext = True
+
         return self
 
     def __exit__(self, eType, eValue, eTraceback):
+        assert len(self._backupTree) > 0
+        tree = self._backupTree.pop()
+
         if self._lastError is not None or eType is not None:
-            self._xmlTree = self._backupTree
+            self._xmlTree = tree
 
         self._lastError = None
-        self._backupTree = None
-        self._inContext = False
 
         if eType == Cancel:
             logger.debug('exit with Cancel')
@@ -268,7 +258,7 @@ class _CoreDB(object):
                 [float(n) for n in numbers]
             except ValueError:
                 self._lastError = DBError.FLOAT_ONLY
-                raise ValueException(DBError.FLOAT_ONLY, self._lastNote)
+                raise ValueException(DBError.FLOAT_ONLY, xpath, self._lastNote)
 
             return element, ' '.join(numbers), None
 
@@ -277,27 +267,27 @@ class _CoreDB(object):
                 decimal = float(value)
             except ValueError:
                 self._lastError = DBError.FLOAT_ONLY
-                raise ValueException(DBError.FLOAT_ONLY, self._lastNote)
+                raise ValueException(DBError.FLOAT_ONLY, xpath, self._lastNote)
 
             if (minValue := getattr(schema.type.base_type.get_facet(XSD_MIN_INCLUSIVE), 'value', None)) is not None:
                 if decimal < minValue:
                     self._lastError = DBError.OUT_OF_RANGE
-                    raise ValueException(DBError.OUT_OF_RANGE, self._lastNote)
+                    raise ValueException(DBError.OUT_OF_RANGE, xpath, self._lastNote)
 
             if (maxValue := getattr(schema.type.base_type.get_facet(XSD_MAX_INCLUSIVE), 'value', None)) is not None:
                 if decimal > maxValue:
                     self._lastError = DBError.OUT_OF_RANGE
-                    raise ValueException(DBError.OUT_OF_RANGE, self._lastNote)
+                    raise ValueException(DBError.OUT_OF_RANGE, xpath, self._lastNote)
 
             if (minValue := getattr(schema.type.base_type.get_facet(XSD_MIN_EXCLUSIVE), 'value', None)) is not None:
                 if decimal <= minValue:
                     self._lastError = DBError.OUT_OF_RANGE
-                    raise ValueException(DBError.OUT_OF_RANGE, self._lastNote)
+                    raise ValueException(DBError.OUT_OF_RANGE, xpath, self._lastNote)
 
             if (maxValue := getattr(schema.type.base_type.get_facet(XSD_MAX_EXCLUSIVE), 'value', None)) is not None:
                 if decimal >= maxValue:
                     self._lastError = DBError.OUT_OF_RANGE
-                    raise ValueException(DBError.OUT_OF_RANGE, self._lastNote)
+                    raise ValueException(DBError.OUT_OF_RANGE, xpath, self._lastNote)
 
             return element, value.lower(), batchParameter
 
@@ -316,21 +306,21 @@ class _CoreDB(object):
                     decimal = int(value)
                 except ValueError:
                     self._lastError = DBError.INTEGER_ONLY
-                    raise ValueException(DBError.INTEGER_ONLY, self._lastNote)
+                    raise ValueException(DBError.INTEGER_ONLY, xpath, self._lastNote)
             else:
                 try:
                     decimal = float(value)
                 except ValueError:
                     self._lastError = DBError.FLOAT_ONLY
-                    raise ValueException(DBError.FLOAT_ONLY, self._lastNote)
+                    raise ValueException(DBError.FLOAT_ONLY, xpath, self._lastNote)
 
             if minValue is not None and decimal < minValue:
                 self._lastError = DBError.OUT_OF_RANGE
-                raise ValueException(DBError.OUT_OF_RANGE, self._lastNote)
+                raise ValueException(DBError.OUT_OF_RANGE, xpath, self._lastNote)
 
             if maxValue is not None and decimal > maxValue:
                 self._lastError = DBError.OUT_OF_RANGE
-                raise ValueException(DBError.OUT_OF_RANGE, self._lastNote)
+                raise ValueException(DBError.OUT_OF_RANGE, xpath, self._lastNote)
 
             return element, value.lower(), None
 
@@ -428,7 +418,7 @@ class _CoreDB(object):
                 else:
                     etree.SubElement(element, f'{{{ns}}}{k}').text = str(v)
 
-        if not self._inContext:
+        if len(self._backupTree) == 0:  # not in context
             raise RuntimeError
 
         if not isinstance(value, dict):
@@ -552,7 +542,7 @@ class _CoreDB(object):
 
         return index
 
-    def getCellZones(self, rname: str) -> list[(int, str)]:
+    def getCellZones(self, rname: str) -> list[tuple[int, str]]:
         elements = self._xmlTree.findall(f'/regions/region[name="{rname}"]/cellZones/cellZone', namespaces=nsmap)
         return [(int(e.attrib['czid']), e.find('name', namespaces=nsmap).text) for e in elements]
 
@@ -624,176 +614,6 @@ class _CoreDB(object):
     def hasMesh(self):
         return True if self._xmlTree.findall(f'/regions/region', namespaces=nsmap) else False
 
-    def addForceMonitor(self) -> str:
-        names = self.getForceMonitors()
-
-        for index in range(1, self.MONITOR_MAX_INDEX):
-            monitorName = self.FORCE_MONITOR_DEFAULT_NAME+str(index)
-            if monitorName not in names:
-                break
-        else:
-            raise OverflowError
-
-        parent = self._xmlTree.find(f'/monitors/forces', namespaces=nsmap)
-
-        forceTree = etree.parse(resource.file(self.FORCE_MONITOR_PATH), self._xmlParser)
-        forceTree.find('name', namespaces=nsmap).text = monitorName
-
-        parent.append(forceTree.getroot())
-
-        self._configCount += 1
-
-        self._xmlSchema.assertValid(self._xmlTree)
-
-        return monitorName
-
-    def removeForceMonitor(self, name: str):
-        monitor = self._xmlTree.find(f'/monitors/forces/forceMonitor[name="{name}"]', namespaces=nsmap)
-        if monitor is None:
-            raise LookupError
-
-        parent = self._xmlTree.find(f'/monitors/forces', namespaces=nsmap)
-        parent.remove(monitor)
-
-        self._configCount += 1
-
-    def getForceMonitors(self) -> list[str]:
-        names = self._xmlTree.xpath(f'/x:configuration/x:monitors/x:forces/x:forceMonitor/x:name/text()', namespaces={'x': ns})
-        return [str(r) for r in names]
-
-    def clearForceMonitors(self):
-        parent = self._xmlTree.find('/monitors/forces', namespaces=nsmap)
-        parent.clear()
-
-    def addPointMonitor(self) -> str:
-        names = self.getPointMonitors()
-
-        for index in range(1, self.MONITOR_MAX_INDEX):
-            monitorName = self.POINT_MONITOR_DEFAULT_NAME+str(index)
-            if monitorName not in names:
-                break
-        else:
-            raise OverflowError
-
-        parent = self._xmlTree.find(f'/monitors/points', namespaces=nsmap)
-
-        pointTree = etree.parse(resource.file(self.POINT_MONITOR_PATH), self._xmlParser)
-        pointTree.find('name', namespaces=nsmap).text = monitorName
-
-        parent.append(pointTree.getroot())
-
-        self._configCount += 1
-
-        self._xmlSchema.assertValid(self._xmlTree)
-
-        return monitorName
-
-    def removePointMonitor(self, name: str):
-        monitor = self._xmlTree.find(f'/monitors/points/pointMonitor[name="{name}"]', namespaces=nsmap)
-        if monitor is None:
-            raise LookupError
-
-        parent = self._xmlTree.find(f'/monitors/points', namespaces=nsmap)
-        parent.remove(monitor)
-
-        self._configCount += 1
-
-    def getPointMonitors(self) -> list[str]:
-        names = self._xmlTree.xpath(f'/x:configuration/x:monitors/x:points/x:pointMonitor/x:name/text()', namespaces={'x': ns})
-        return [str(r) for r in names]
-
-    def clearPointMonitors(self):
-        parent = self._xmlTree.find('/monitors/points', namespaces=nsmap)
-        parent.clear()
-
-    def addSurfaceMonitor(self) -> str:
-        names = self.getSurfaceMonitors()
-
-        for index in range(1, self.MONITOR_MAX_INDEX):
-            monitorName = self.SURFACE_MONITOR_DEFAULT_NAME+str(index)
-            if monitorName not in names:
-                break
-        else:
-            raise OverflowError
-
-        parent = self._xmlTree.find(f'/monitors/surfaces', namespaces=nsmap)
-
-        surfaceTree = etree.parse(resource.file(self.SURFACE_MONITOR_PATH), self._xmlParser)
-        surfaceTree.find('name', namespaces=nsmap).text = monitorName
-
-        parent.append(surfaceTree.getroot())
-
-        self._configCount += 1
-
-        self._xmlSchema.assertValid(self._xmlTree)
-
-        return monitorName
-
-    def removeSurfaceMonitor(self, name: str):
-        monitor = self._xmlTree.find(f'/monitors/surfaces/surfaceMonitor[name="{name}"]', namespaces=nsmap)
-        if monitor is None:
-            raise LookupError
-
-        parent = self._xmlTree.find(f'/monitors/surfaces', namespaces=nsmap)
-        parent.remove(monitor)
-
-        self._configCount += 1
-
-    def getSurfaceMonitors(self) -> list[str]:
-        names = self._xmlTree.xpath(f'/x:configuration/x:monitors/x:surfaces/x:surfaceMonitor/x:name/text()', namespaces={'x': ns})
-        return [str(r) for r in names]
-
-    def clearSurfacesMonitors(self):
-        parent = self._xmlTree.find('/monitors/surfaces', namespaces=nsmap)
-        parent.clear()
-
-    def addVolumeMonitor(self) -> str:
-        names = self.getVolumeMonitors()
-
-        for index in range(1, self.MONITOR_MAX_INDEX):
-            monitorName = self.VOLUME_MONITOR_DEFAULT_NAME+str(index)
-            if monitorName not in names:
-                break
-        else:
-            raise OverflowError
-
-        parent = self._xmlTree.find(f'/monitors/volumes', namespaces=nsmap)
-
-        volumeTree = etree.parse(resource.file(self.VOLUME_MONITOR_PATH), self._xmlParser)
-        volumeTree.find('name', namespaces=nsmap).text = monitorName
-
-        parent.append(volumeTree.getroot())
-
-        self._configCount += 1
-
-        self._xmlSchema.assertValid(self._xmlTree)
-
-        return monitorName
-
-    def removeVolumeMonitor(self, name: str):
-        monitor = self._xmlTree.find(f'/monitors/volumes/volumeMonitor[name="{name}"]', namespaces=nsmap)
-        if monitor is None:
-            raise LookupError
-
-        parent = self._xmlTree.find(f'/monitors/volumes', namespaces=nsmap)
-        parent.remove(monitor)
-
-        self._configCount += 1
-
-    def getVolumeMonitors(self) -> list[str]:
-        names = self._xmlTree.xpath(f'/x:configuration/x:monitors/x:volumes/x:volumeMonitor/x:name/text()', namespaces={'x': ns})
-        return [str(r) for r in names]
-
-    def clearVolumeMonitors(self):
-        parent = self._xmlTree.find('/monitors/volumes', namespaces=nsmap)
-        parent.clear()
-
-    def clearMonitors(self):
-        self.clearForceMonitors()
-        self.clearPointMonitors()
-        self.clearSurfacesMonitors()
-        self.clearVolumeMonitors()
-
     def getBatchParameters(self):
         parameters = {}
         for e in self._xmlTree.findall('/runCalculation/batch/parameters/parameter', namespaces=nsmap):
@@ -863,12 +683,24 @@ class _CoreDB(object):
 
         self._configCount += 1
 
+    def replaceElement(self, xpath, element):
+        oldElement = self._xmlTree.find(xpath, namespaces=nsmap)
+        if oldElement is None:
+            raise LookupError
+
+        parent = oldElement.getparent()
+        parent.replace(oldElement, element)
+
+        self._configCount += 1
+
     def clearElement(self, xpath):
         element = self._xmlTree.find(xpath, namespaces=nsmap)
         if element is None:
             raise LookupError
 
         element.clear()
+
+        self._configCount += 1
 
     def getList(self, xpath) -> list[str]:
         return [e.text for e in self._xmlTree.findall(xpath, namespaces=nsmap)]
@@ -929,11 +761,12 @@ class _CoreDB(object):
                 raise ValueError
 
             root = etree.fromstring(ds[()])
-            migrate.migrate(root)
 
-            tree = etree.ElementTree(root)
-            self._xmlSchema.assertValid(tree)
-            self._xmlTree = tree
+        migrate.migrate(root, path)
+
+        tree = etree.ElementTree(root)
+        self._xmlSchema.assertValid(tree)
+        self._xmlTree = tree
 
         self._configCountAtSave = self._configCount
 
@@ -955,5 +788,9 @@ class _CoreDB(object):
         return self._xmlTree.findall(xpath, namespaces=nsmap)
 
     def increaseConfigCount(self):
-        self._xmlSchema.assertValid(self._xmlTree)
+        try:
+            self._xmlSchema.assertValid(self._xmlTree)
+        except Exception as e:
+            raise ValueError(str(e))
+
         self._configCount += 1

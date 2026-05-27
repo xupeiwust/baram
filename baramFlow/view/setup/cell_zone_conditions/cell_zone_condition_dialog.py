@@ -22,7 +22,6 @@ from .fixed_value_widget import FixedValueWidget
 from .materials_widget import MaterialsWidget
 from .MRF_widget import MRFWidget
 from .porous_zone_widget import PorousZoneWidget
-from .sliding_mesh_widget import SlidingMeshWidget
 from .turbulence_fields import getTurbulenceFields
 from .variable_source_widget import VariableSourceWidget
 
@@ -37,7 +36,6 @@ class CellZoneConditionDialog(QDialog):
             self._ui.zoneTypeRadioGroup.id(self._ui.none): ZoneType.NONE.value,
             self._ui.zoneTypeRadioGroup.id(self._ui.MRF): ZoneType.MRF.value,
             self._ui.zoneTypeRadioGroup.id(self._ui.porousZone): ZoneType.POROUS.value,
-            self._ui.zoneTypeRadioGroup.id(self._ui.slidingMesh): ZoneType.SLIDING_MESH.value,
             self._ui.zoneTypeRadioGroup.id(self._ui.actuatorDisk): ZoneType.ACTUATOR_DISK.value,
         }
 
@@ -56,7 +54,6 @@ class CellZoneConditionDialog(QDialog):
         # Zone Type Widgets
         self._MRFZone = None
         self._porousZone = None
-        self._slidingMeshZone = None
         self._actuatorDiskZone = None
 
         # Source Terms Widgets
@@ -97,12 +94,6 @@ class CellZoneConditionDialog(QDialog):
 
             self._porousZone = PorousZoneWidget(self._xpath)
             layout.addWidget(self._porousZone)
-
-            if GeneralDB.isTimeTransient():
-                self._slidingMeshZone = SlidingMeshWidget(self._xpath)
-                layout.addWidget(self._slidingMeshZone)
-            else:
-                self._ui.slidingMesh.setEnabled(False)
 
             self._actuatorDiskZone = ActuatorDiskWidget(self._xpath)
             layout.addWidget(self._actuatorDiskZone)
@@ -180,8 +171,6 @@ class CellZoneConditionDialog(QDialog):
                         result = self._MRFZone.updateDB(db)
                     elif zoneType == ZoneType.POROUS.value:
                         result = self._porousZone.updateDB(db)
-                    elif zoneType == ZoneType.SLIDING_MESH.value:
-                        result = self._slidingMeshZone.updateDB(db)
                     elif zoneType == ZoneType.ACTUATOR_DISK.value:
                         result = self._actuatorDiskZone.updateDB(db)
 
@@ -257,8 +246,6 @@ class CellZoneConditionDialog(QDialog):
         else:
             self._MRFZone.load()
             self._porousZone.load()
-            if self._slidingMeshZone:
-                self._slidingMeshZone.load()
             self._actuatorDiskZone.load()
 
         self._setMaterials(RegionDB.getMaterial(self._rname), RegionDB.getSecondaryMaterials(self._rname))
@@ -374,8 +361,6 @@ class CellZoneConditionDialog(QDialog):
         if checked:
             self._MRFZone.setVisible(self._ui.MRF.isChecked())
             self._porousZone.setVisible(self._ui.porousZone.isChecked())
-            if self._slidingMeshZone:
-                self._slidingMeshZone.setVisible(self._ui.slidingMesh.isChecked())
             self._actuatorDiskZone.setVisible(self._ui.actuatorDisk.isChecked())
 
     def _getZoneTypeRadio(self, value):

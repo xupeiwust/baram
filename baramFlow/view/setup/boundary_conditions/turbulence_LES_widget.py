@@ -55,6 +55,9 @@ class TurbulenceLESWidget(QWidget):
 
         return True
 
+    def data(self):
+        return None
+
     def _connectSignalsSlots(self):
         self._ui.specificationMethod.currentDataChanged.connect(self._specificationMethodChanged)
 

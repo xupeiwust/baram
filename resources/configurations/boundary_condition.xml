@@ -8,6 +8,7 @@
     <velocityInlet>
         <velocity>
             <specification>magnitudeNormal</specification>
+            <coordinateSystem>cartesian</coordinateSystem>
             <component>
                 <profile>constant</profile>
                 <constant>
@@ -15,7 +16,14 @@
                     <y>0</y>
                     <z>0</z>
                 </constant>
-                <spatialDistribution></spatialDistribution>
+                <spatialDistribution>
+                    <x>0</x>
+                    <y>0</y>
+                    <z>0</z>
+                    <vx>0</vx>
+                    <vy>0</vy>
+                    <vz>0</vz>
+                </spatialDistribution>
                 <temporalDistribution>
                     <specification>piecewiseLinear</specification>
                     <piecewiseLinear>
@@ -29,7 +37,6 @@
             <magnitudeNormal>
                 <profile>constant</profile>
                 <constant>1</constant>
-                <spatialDistribution></spatialDistribution>
                 <temporalDistribution>
                     <specification>piecewiseLinear</specification>
                     <piecewiseLinear>
@@ -38,6 +45,30 @@
                     </piecewiseLinear>
                 </temporalDistribution>
             </magnitudeNormal>
+            <localCylindrical>
+                <profile>constant</profile>
+                <constant>
+                    <axialVelocity>0</axialVelocity>
+                    <radialVelocity>0</radialVelocity>
+                    <angularSpeed>0</angularSpeed>
+                </constant>
+                <temporalDistribution>
+                    <t>0</t>
+                    <u>0</u>
+                    <v>0</v>
+                    <omega>0</omega>
+                </temporalDistribution>
+                <axisOrigin>
+                    <x>0</x>
+                    <y>0</y>
+                    <z>0</z>
+                </axisOrigin>
+                <axisDirection>
+                    <x>0</x>
+                    <y>0</y>
+                    <z>1</z>
+                </axisDirection>
+            </localCylindrical>
         </velocity>
     </velocityInlet>
     <flowRateInlet>
@@ -176,10 +207,11 @@
                 </rotationAxisDirection>
             </rotationalMovingWall>
         </velocity>
-        <temperature>
+        <heatTransfer>
             <type>adiabatic</type>
             <temperature>300</temperature>
             <heatFlux>1000</heatFlux>
+            <temperatureDistributionName>00000000-0000-0000-0000-000000000000</temperatureDistributionName>
             <heatTransferCoefficient>100</heatTransferCoefficient>
             <freeStreamTemperature>300</freeStreamTemperature>
             <externalEmissivity>0</externalEmissivity>
@@ -187,7 +219,7 @@
                 <thicknessLayers>0.001</thicknessLayers>
                 <thermalConductivityLayers>10</thermalConductivityLayers>
             </wallLayers>
-        </temperature>
+        </heatTransfer>
         <radiation>
             <wallEmissivity>1</wallEmissivity>
             <radiativeFluxRelaxation>1</radiativeFluxRelaxation>
@@ -228,6 +260,9 @@
         <inertialCoefficient>5</inertialCoefficient>
         <porousMediaThickness>0.05</porousMediaThickness>
     </porousJump>
+    <fan>
+        <reverseDirection>false</reverseDirection>
+    </fan>
     <turbulence>
         <k-epsilon>
             <specification>intensityAndViscosityRatio</specification>
@@ -243,6 +278,10 @@
             <turbulentIntensity>1</turbulentIntensity>
             <turbulentViscosityRatio>10</turbulentViscosityRatio>
         </k-omega>
+        <transitionSST>
+            <intermittency>1</intermittency>
+            <momentumThicknessRe>200</momentumThicknessRe>
+        </transitionSST>
         <spalartAllmaras>
             <specification>modifiedTurbulentViscosity</specification>
             <modifiedTurbulentViscosity>0</modifiedTurbulentViscosity>
@@ -258,7 +297,12 @@
     <temperature>
         <profile>constant</profile>
         <constant>300</constant>
-        <spatialDistribution></spatialDistribution>
+        <spatialDistribution>
+            <x>0</x>
+            <y>0</y>
+            <z>0</z>
+            <v>0</v>
+        </spatialDistribution>
         <temporalDistribution>
             <specification>piecewiseLinear</specification>
             <piecewiseLinear>
@@ -269,6 +313,7 @@
         </temporalDistribution>
     </temperature>
     <coupledBoundary>0</coupledBoundary>
+    <fallbackBoundary>0</fallbackBoundary>
     <volumeFractions/>
     <userDefinedScalars/>
     <species/>

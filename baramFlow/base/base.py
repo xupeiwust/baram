@@ -2,13 +2,34 @@
 # -*- coding: utf-8 -*-
 
 from dataclasses import dataclass, field
+from enum import Enum
+from uuid import UUID
 
+import pandas as pd
+from PySide6.QtCore import QCoreApplication
+
+from baramFlow.base.xml_helper import Vector
 from baramFlow.coredb.libdb import nsmap
 from baramFlow.base.constants import Function1Type
+from baramFlow.coredb.libdb import E
+
+
+UUID_ZERO = UUID('00000000-0000-0000-0000-000000000000')
+
+
+class DirectionSpecificationMethod(Enum):
+    DIRECT = 'direct'
+    AOA_AOS = 'AoA_AoS'
+
+
+DirectionSpecificationMethodTexts = {
+    DirectionSpecificationMethod.DIRECT:    QCoreApplication.translate('base', 'Direct'),
+    DirectionSpecificationMethod.AOA_AOS:   QCoreApplication.translate('base', 'AOA and AOS')
+}
 
 
 class BatchableNumber:
-    def __init__(self, text, default=None):
+    def __init__(self, text: str, default=None):
         self._text = text
         self._default = default
 
@@ -38,25 +59,11 @@ class BatchableNumber:
         attr = f' batchParameter="{self.parameter()}"' if self.isParameter() else ''
         return f'<{name}{attr}>{self._default if self.isParameter() else self._text}</{name}>'
 
-
-@dataclass
-class Vector:
-    x: BatchableNumber
-    y: BatchableNumber
-    z: BatchableNumber
-
-    @staticmethod
-    def new(x, y, z):
-        return Vector(x=BatchableNumber(x), y=BatchableNumber(y), z=BatchableNumber(z))
-
-    @staticmethod
-    def fromElement(e):
-        return Vector(x=BatchableNumber.fromElement(e.find('x', namespaces=nsmap)),
-                      y=BatchableNumber.fromElement(e.find('y', namespaces=nsmap)),
-                      z=BatchableNumber.fromElement(e.find('z', namespaces=nsmap)))
-
-    def toXML(self):
-        return f"{self.x.toXML('x')}{self.y.toXML('y')}{self.z.toXML('z')}"
+    def toElement(self, tag: str):
+        if self.isParameter():
+            return E(tag, self._default, batchParameter=self.parameter())
+        else:
+            return E(tag, self._text)
 
 
 @dataclass
@@ -71,6 +78,11 @@ class Function1ScalarRow:
 
     def toXML(self):
         return f'<t>{self.t}</t><v>{self.v}</v>'
+
+    def toElement(self, tag: str):
+        return E(tag,
+                 E('t', self.t),
+                 E('v', self.v))
 
 
 @dataclass
@@ -90,12 +102,19 @@ class Function1VectorRow:
     def toXML(self):
         return f'<t>{self.t}</t><x>{self.x}</x><y>{self.y}</y><z>{self.z}</z>'
 
+    def toElement(self, tag:str):
+        return E(tag,
+                 E('t', self.t),
+                 E('x', self.x),
+                 E('y', self.y),
+                 E('z', self.z))
+
 
 @dataclass
 class Function1Scalar:
     type: Function1Type = Function1Type.CONSTANT
     constant: BatchableNumber = field(default_factory=lambda: BatchableNumber('100'))
-    table: list = None
+    table: list[Function1ScalarRow] = field(default_factory=list)
 
     @staticmethod
     def fromElement(e):
@@ -119,11 +138,19 @@ class Function1Scalar:
             <table>{rows}</table>
         '''
 
+    def toElement(self, tag: str):
+        tableElement = E('table')
+        tableElement.extend([row.toElement('row') for row in self.table])
+        return E(tag,
+                 self.type.toElement('type'),
+                 self.constant.toElement('constant'),
+                 tableElement)
+
 
 @dataclass
 class Function1Vector:
     type: Function1Type = Function1Type.CONSTANT
-    constant: Vector = field(default_factory=lambda: Vector.new('1', '1', '1'))
+    constant: Vector = field(default_factory=Vector.xUnit)
     table: list[Function1VectorRow] = field(default_factory=lambda: [])
 
     @staticmethod
@@ -137,13 +164,79 @@ class Function1Vector:
                                constant=Vector.fromElement(e.find('constant', namespaces=nsmap)),
                                table=table)
 
-    def toXML(self):
-        rows = ''
-        for row in self.table:
-            rows += f'<row>{row.toXML()}</row>'
+    def toElement(self, tag: str):
+        tableElement = E('table')
+        tableElement.extend([row.toElement('row') for row in self.table])
+        return E(tag,
+                 self.type.toElement('type'),
+                 self.constant.toElement('constant'),
+                 tableElement)
 
-        return f'''
-            <type>{self.type.value}</type>
-            <constant>{self.constant.toXML()}</constant>
-            <table>{rows}</table>
-        '''
+
+class SimpleSheetData:
+    columns = None
+
+    def __init__(self, data: list[list[float]]):
+        self._data = data
+
+    @classmethod
+    def default(cls):
+        return cls([[0 for i in range(len(cls.columns))]])
+
+    def data(self):
+        return self._data
+
+    def dataFrame(self):
+        return pd.DataFrame(self._data)
+
+    def columnDataString(self, index):
+        return ' '.join([str(self._data[row][index]) for row in range(len(self._data))])
+
+    def columnDataElement(self, index):
+        return E(self.columns[index],
+                 self.columnDataString(index))
+
+    @classmethod
+    def fromElement(cls, e):
+        data = [e.find(c, namespaces=nsmap).text.split() for c in cls.columns]
+
+        return cls(
+            [[float(data[column][row]) for column in range(len(data))] for row in range(len(data[0]))])
+
+    def toElement(self, tag: str):
+        return E(tag,
+                 *[self.columnDataElement(i) for i in range(len(self.columns))])
+
+
+class TemporalScalarList(SimpleSheetData):
+    columns = ['t', 'v']
+
+
+class TemporalVectorList(SimpleSheetData):
+    columns = ['t', 'x', 'y', 'z']
+
+
+class SpatialScalarList(SimpleSheetData):
+    columns = ['x', 'y', 'z', 'v']
+
+
+class SpatialVectorList(SimpleSheetData):
+    columns = ['x', 'y', 'z', 'vx', 'vy', 'vz']
+
+
+class TrackedData:
+    def __init__(self, init=None):
+        self._initData = init
+        self._data = init
+
+    def data(self):
+        return self._data
+
+    def setData(self, data):
+        self._data = data
+
+    def isModified(self):
+        return self._initData != self._data
+
+    def isNone(self):
+        return self._data is None

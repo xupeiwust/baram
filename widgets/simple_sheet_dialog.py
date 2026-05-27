@@ -14,12 +14,13 @@ from .simple_sheet_dialog_ui import Ui_SimpleSheetDialog
 
 
 class SimpleSheetDialog(QDialog):
-    def __init__(self, parent, labels: list[str], data: Optional[list[list[float]]] = None, readOnly: bool = False):
+    def __init__(self, parent, title, labels: list[str], data: Optional[list[list[float]]] = None, readOnly: bool = False):
         super().__init__(parent)
 
         self._ui = Ui_SimpleSheetDialog()
         self._ui.setupUi(self)
 
+        self.setWindowTitle(title)
         self._ui.sheet.setup(labels, data, readOnly=readOnly)
 
         if readOnly:
@@ -30,11 +31,15 @@ class SimpleSheetDialog(QDialog):
 
         self.setWindowModality(Qt.WindowModality.ApplicationModal)
 
+        columns = len(labels)
+        if columns > 2:
+            self.resize(100 * columns + 80, self.size().height())
+
         self._connectSignalsSlots()
 
     def _connectSignalsSlots(self):
         self._ui.ok.clicked.connect(self._okClicked)
-        self._ui.cancel.clicked.connect(self._cancelClicked)
+        self._ui.cancel.clicked.connect(self.reject)
 
     def show(self) -> asyncio.Future:
 
@@ -55,11 +60,11 @@ class SimpleSheetDialog(QDialog):
 
         self.close()
 
-    def _cancelClicked(self):
+    def reject(self):
         if not self._future.cancelled():
             self._future.cancel()
 
-        self.close()
+        super().reject()
 
     def closeEvent(self, event):
         if not self._future.done():

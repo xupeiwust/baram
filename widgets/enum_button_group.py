@@ -8,7 +8,7 @@ from PySide6.QtWidgets import QButtonGroup
 
 
 class EnumButtonGroup(QButtonGroup):
-    dataChecked = Signal(Enum)
+    selectionChanged = Signal(Enum)
 
     def __init__(self):
         super().__init__()
@@ -26,10 +26,11 @@ class EnumButtonGroup(QButtonGroup):
 
     def setCheckedData(self, enum):
         self.button(self._buttons.index(enum)).setChecked(True)
+        self.selectionChanged.emit(enum)
 
     def checkedData(self):
         return self._buttons[self.checkedId()]
 
     def _idToggled(self, id_, checked):
         if checked:
-            self.dataChecked.emit(self._buttons[id_])
+            self.selectionChanged.emit(self._buttons[id_])

@@ -150,13 +150,13 @@
        <number>0</number>
       </property>
       <item>
-       <spacer name="horizontalSpacer_2">
+       <spacer name="horizontalSpacer">
         <property name="orientation">
-         <enum>Qt::Orientation::Horizontal</enum>
+         <enum>Qt::Horizontal</enum>
         </property>
         <property name="sizeHint" stdset="0">
          <size>
-          <width>208</width>
+          <width>40</width>
           <height>20</height>
          </size>
         </property>
@@ -183,16 +183,6 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>PythonComboBox</class>
-   <extends>QComboBox</extends>
-   <header>widgets.python_combo_box</header>
-  </customwidget>
-  <customwidget>
-   <class>VectorComponentComboBox</class>
-   <extends>QComboBox</extends>
-   <header>baramFlow.view.widgets.vector_component_combo_box</header>
-  </customwidget>
-  <customwidget>
    <class>MonitorNameEdit</class>
    <extends>QLineEdit</extends>
    <header>widgets.typed_edit</header>
@@ -201,6 +191,16 @@
    <class>FloatEdit</class>
    <extends>QLineEdit</extends>
    <header location="global">widgets.typed_edit</header>
+  </customwidget>
+  <customwidget>
+   <class>PythonComboBox</class>
+   <extends>QComboBox</extends>
+   <header location="global">widgets.python_combo_box</header>
+  </customwidget>
+  <customwidget>
+   <class>VectorComponentComboBox</class>
+   <extends>QComboBox</extends>
+   <header>baramFlow.view.widgets.vector_component_combo_box</header>
   </customwidget>
  </customwidgets>
  <resources/>

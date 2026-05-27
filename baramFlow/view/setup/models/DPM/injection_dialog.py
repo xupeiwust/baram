@@ -6,8 +6,10 @@ from typing import cast
 import qasync
 from PySide6.QtWidgets import QDialog, QFormLayout
 
-from baramFlow.base.base import Vector
+from baramFlow.base.model.DPM_model import Injection
+from baramFlow.base.xml_helper import Vector
 from baramFlow.coredb.general_db import GeneralDB
+from libbaram.pfloat import PFloat
 from widgets.async_message_box import AsyncMessageBox
 from widgets.selector_dialog import SelectorDialog
 
@@ -20,7 +22,7 @@ from .injection_dialog_ui import Ui_InjectionDialog
 
 
 class InjectionDialog(QDialog):
-    def __init__(self, parent, injection, usedNames):
+    def __init__(self, parent, injection: Injection, usedNames):
         super().__init__(parent)
         self._ui = Ui_InjectionDialog()
         self._ui.setupUi(self)
@@ -114,7 +116,7 @@ class InjectionDialog(QDialog):
 
     def _load(self):
         self._ui.name.setText(self._injection.name)
-        self._ui.injectionType.setCurrentIndex(self._ui.injectionType.findData(self._injection.injector.type))
+        self._ui.injectionType.setCurrentIndex(self._ui.injectionType.findData(self._injection.type))
 
         self._ui.numberOfParticlesPerPoint.setBatchableNumber(
             self._injection.injector.pointInjection.numberOfParticlesPerPoint)
@@ -187,7 +189,7 @@ class InjectionDialog(QDialog):
             if injectionType == DPMInjectionType.POINT:
                 self._ui.numberOfParticlesPerPoint.validate(self.tr('Number of Particles per Point'))
                 self._ui.injectionTime.validate(self.tr('Injection Time'), low=0, lowInclusive=True)
-                self._ui.pointParticleVelocity.validate(self.tr('Particle Velocity'))
+                pointParticleVelocity = self._ui.pointParticleVelocity.vector(self.tr('Particle Velocity'))
             else:
                 if flowRateSpec == DPMFlowRateSpec.PARTICLE_COUNT:
                     self._ui.countParcelPerSecond.validate(self.tr('Parcels per Second'), low=0, lowInclusive=False)
@@ -207,7 +209,7 @@ class InjectionDialog(QDialog):
                     return
 
                 if injectionType == DPMInjectionType.SURFACE:
-                    self._ui.surfaceParticleVelocity.validate(self.tr('Particle Velocity'))
+                    surfaceParticleVelocity =  self._ui.surfaceParticleVelocity.vector(self.tr('Particle Velocity'))
                     if self._surface == '0':
                         await AsyncMessageBox().information(self, self.tr('Input Error'), self.tr('Select Surface.'))
                         return
@@ -255,11 +257,11 @@ class InjectionDialog(QDialog):
             return
 
         self._injection.name = self._ui.name.text()
-        self._injection.injector.type = injectionType
+        self._injection.type = injectionType
         if injectionType == DPMInjectionType.POINT:
             self._injection.injector.pointInjection.numberOfParticlesPerPoint = self._ui.numberOfParticlesPerPoint.batchableNumber()
             self._injection.injector.pointInjection.injectionTime = self._ui.injectionTime.batchableNumber()
-            self._injection.injector.pointInjection.particleVelocity = self._ui.pointParticleVelocity.vector()
+            self._injection.injector.pointInjection.particleVelocity = pointParticleVelocity
             if self._positions is not None:  # is edited
                 self._injection.injector.pointInjection.positions = self._positions
         else:
@@ -279,7 +281,7 @@ class InjectionDialog(QDialog):
             self._injection.injector.coneInjection.injectorType = coneInjectorType
             if injectionType == DPMInjectionType.SURFACE:
                 self._injection.injector.surfaceInjection.particleVelocity.type = self._ui.surfaceParticleVelocityType.currentData()
-                self._injection.injector.surfaceInjection.particleVelocity.value = self._ui.surfaceParticleVelocity.vector()
+                self._injection.injector.surfaceInjection.particleVelocity.value = surfaceParticleVelocity
                 self._injection.injector.surfaceInjection.bcid = self._surface
             elif injectionType == DPMInjectionType.CONE:
                 self._ui.conePosition.updateData(self._injection.injector.coneInjection.position)
@@ -335,10 +337,10 @@ class InjectionDialog(QDialog):
             self._positions = self._injection.injector.pointInjection.positions
 
         dialog = SimpleSheetDialog(
-            self, ['x', 'y', 'z'],
-            [[float(row.x.text), float(row.y.text), float(row.z.text)] for row in self._positions])
+            self, self.tr('Injection Positions'), ['x', 'y', 'z'],
+            [[float(row.x), float(row.y), float(row.z)] for row in self._positions])
         try:
-            self._positions = [Vector.new(str(x), str(y), str(z)) for x, y, z in await dialog.show()]
+            self._positions = [Vector(PFloat(str(x)), PFloat(str(y)), PFloat(str(z))) for x, y, z in await dialog.show()]
         except asyncio.exceptions.CancelledError:
             return
 

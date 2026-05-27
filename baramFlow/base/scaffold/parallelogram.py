@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 from dataclasses import dataclass
-from lxml import etree
 from uuid import UUID
 
 from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet, vtkPolyData, vtkStaticCellLocator
@@ -10,7 +9,7 @@ from vtkmodules.vtkFiltersCore import vtkPointDataToCellData, vtkResampleWithDat
 from vtkmodules.vtkFiltersSources import vtkPlaneSource
 
 from baramFlow.coredb import coredb
-from baramFlow.coredb.libdb import nsmap
+from baramFlow.coredb.libdb import E, nsmap
 from baramFlow.base.scaffold.scaffold import Scaffold
 from libbaram.openfoam.polymesh import collectInternalMesh
 from libbaram.vtk_threads import vtk_run_in_thread
@@ -78,28 +77,23 @@ class Parallelogram(Scaffold):
                           point2Samples=point2Samples)
 
     def toElement(self):
-        string = ('<parallelogram xmlns="http://www.baramcfd.org/baram">'
-                 f'    <uuid>{str(self.uuid)}</uuid>'
-                 f'    <name>{self.name}</name>'
-                 f'    <origin>'
-                 f'        <x>{self.originX}</x>'
-                 f'        <y>{self.originY}</y>'
-                 f'        <z>{self.originZ}</z>'
-                 f'    </origin>'
-                 f'    <point1>'
-                 f'        <x>{self.point1X}</x>'
-                 f'        <y>{self.point1Y}</y>'
-                 f'        <z>{self.point1Z}</z>'
-                 f'    </point1>'
-                 f'    <point2>'
-                 f'        <x>{self.point2X}</x>'
-                 f'        <y>{self.point2Y}</y>'
-                 f'        <z>{self.point2Z}</z>'
-                 f'    </point2>'
-                 f'    <point1Samples>{str(self.point1Samples)}</point1Samples>'
-                 f'    <point2Samples>{str(self.point2Samples)}</point2Samples>'
-                  '</parallelogram>')
-        return etree.fromstring(string)
+        return E('parallelogram',
+                 E('uuid', str(self.uuid)),
+                 E('name', self.name),
+                 E('origin',
+                     E('x', self.originX),
+                     E('y', self.originY),
+                     E('z', self.originZ)),
+                 E('point1',
+                     E('x', self.point1X),
+                     E('y', self.point1Y),
+                     E('z', self.point1Z)),
+                 E('point2',
+                     E('x', self.point2X),
+                     E('y', self.point2Y),
+                     E('z', self.point2Z)),
+                 E('point1Samples', str(self.point1Samples)),
+                 E('point2Samples', str(self.point2Samples)))
 
     def xpath(self):
         return f'/parallelogram[uuid="{str(self.uuid)}"]'

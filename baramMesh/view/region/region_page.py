@@ -11,8 +11,6 @@ from .region_card import RegionCard
 
 
 class RegionPage(StepPage):
-    OUTPUT_TIME = 0
-
     def __init__(self, ui):
         super().__init__(ui, ui.regionPage)
 
@@ -78,7 +76,7 @@ class RegionPage(StepPage):
         else:
             self.load()
 
-    async def show(self, isCurrentStep, batchRunning):
+    async def show(self, isWorkingStep: bool, batchRunning: bool):
         if not self._loaded:
             self.load()
 

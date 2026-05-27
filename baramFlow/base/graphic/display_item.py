@@ -5,13 +5,11 @@ from dataclasses import dataclass
 from dataclasses import field as dataClassField
 from uuid import UUID
 
-from lxml import etree
-
 from PySide6.QtGui import QColor
 
 from vtkmodules.vtkCommonDataModel import vtkDataSet
 
-from baramFlow.coredb.libdb import nsmap
+from baramFlow.coredb.libdb import E, nsmap
 from baramFlow.base.constants import VectorComponent
 from baramFlow.base.field import Field
 from baramFlow.base.scaffold.scaffolds_db import ScaffoldsDB
@@ -74,23 +72,20 @@ class DisplayItem:
                            streamlinesIntegrateBackward=streamlinesIntegrateBackward)
 
     def toElement(self):
-        string = (f'<displayItem xmlns="http://www.baramcfd.org/baram">'
-                  f'    <scaffoldUuid>{str(self.scaffoldUuid)}</scaffoldUuid>'
-                  f'    <visibility>{"true" if self.visibility else "false"}</visibility>'
-                  f'    <opacity>{str(self.opacity)}</opacity>'
-                  f'    <solidColor>{"true" if self.solidColor else "false"}</solidColor>'
-                  f'    <color>{self.color.name()}</color>'
-                  f'    <edges>{"true" if self.edges else "false"}</edges>'
-                  f'    <faces>{"true" if self.faces else "false"}</faces>'
-                  f'    <frontFaceCulling>{"true" if self.frontFaceCulling else "false"}</frontFaceCulling>'
-                  f'    <vectorsOn>{"true" if self.vectorsOn else "false"}</vectorsOn>'
-                  f'    <streamlinesOn>{"true" if self.streamlinesOn else "false"}</streamlinesOn>'
-                  f'    <maxNumberOfSamplePoints>{str(self.maxNumberOfSamplePoints)}</maxNumberOfSamplePoints>'
-                  f'    <streamlinesIntegrateForward>{"true" if self.streamlinesIntegrateForward else "false"}</streamlinesIntegrateForward>'
-                  f'    <streamlinesIntegrateBackward>{"true" if self.streamlinesIntegrateBackward else "false"}</streamlinesIntegrateBackward>'
-                  f'</displayItem>')
-
-        return etree.fromstring(string)
+        return E('displayItem',
+                 E('scaffoldUuid', str(self.scaffoldUuid)),
+                 E('visibility', self.visibility),
+                 E('opacity', str(self.opacity)),
+                 E('solidColor', self.solidColor),
+                 E('color', self.color.name()),
+                 E('edges', self.edges),
+                 E('faces', self.faces),
+                 E('frontFaceCulling', self.frontFaceCulling),
+                 E('vectorsOn', self.vectorsOn),
+                 E('streamlinesOn', self.streamlinesOn),
+                 E('maxNumberOfSamplePoints', str(self.maxNumberOfSamplePoints)),
+                 E('streamlinesIntegrateForward', self.streamlinesIntegrateForward),
+                 E('streamlinesIntegrateBackward', self.streamlinesIntegrateBackward))
 
     async def markUpdated(self):
         await self.instanceUpdated.emit(self.scaffoldUuid)

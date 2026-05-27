@@ -4,10 +4,8 @@
 
 from PySide6.QtWidgets import QWidget
 
-from baramFlow.base.monitor.monitor import getMonitorField
-from baramFlow.coredb import coredb
+from baramFlow.base.monitor.monitor import MonitorManager
 from baramFlow.coredb.monitor_db import MonitorDB
-from baramFlow.openfoam.function_objects.vol_field_value import VolumeReportType
 from baramFlow.openfoam.function_objects.surface_field_value import SurfaceReportType
 from baramFlow.coredb.boundary_db import BoundaryDB
 from baramFlow.coredb.cell_zone_db import CellZoneDB
@@ -19,126 +17,132 @@ from .monitor_widget_ui import Ui_MonitorWidget
 
 
 class MonitorWidget(QWidget):
-    def __init__(self, name):
+    def __init__(self, data):
         super().__init__()
         self._ui = Ui_MonitorWidget()
         self._ui.setupUi(self)
 
-        self._name = name
+        self._uuid = None
+        self._name = None
         self._dialog = None
 
-        self.load()
+        self.load(data)
 
     @property
     def name(self):
         return self._name
 
-    def load(self):
+    @property
+    def uuid(self):
+        return self._uuid
+
+    def load(self, data=None):
         raise NotImplementedError
 
 
 class ForceMonitorWidget(MonitorWidget):
-    def __init__(self, name):
-        super().__init__(name)
+    def __init__(self, data):
+        super().__init__(data)
 
-    def load(self):
-        db = coredb.CoreDB()
-        xpath = MonitorDB.getForceMonitorXPath(self._name)
-
-        region = db.getValue(xpath + '/region')
-        boundaries = db.getValue(xpath + '/boundaries').split()
-
-        region = f' ({region})' if region else ''
-        self._ui.name.setText(f'{self._name}{region}')
+    def load(self, data=None):
+        if data is None:
+            data = MonitorManager.getForceMonitor(self._uuid)
+        else:
+            self._uuid = data.monitorBase.uuid
+            self._name = data.monitorBase.name
+            
+        region = f' ({data.region})' if data.region else ''
+        self._ui.name.setText(f'{data.monitorBase.name}{region}')
         self._ui.type.setText(
-            f'Force on {len(boundaries)} Boundaries including {BoundaryDB.getBoundaryName(boundaries[0])}')
+            f'Force on {len(data.boundaries)} Boundaries including {BoundaryDB.getBoundaryName(data.boundaries[0])}')
 
     def edit(self):
-        self._dialog = ForceDialog(self, self._name)
+        self._dialog = ForceDialog(self, self._uuid)
         self._dialog.accepted.connect(self.load)
         self._dialog.open()
 
     def delete(self):
-        coredb.CoreDB().removeForceMonitor(self._name)
+        MonitorManager.removeForceMonitor(self._uuid)
 
 
 class PointMonitorWidget(MonitorWidget):
-    def __init__(self, name):
-        super().__init__(name)
+    def __init__(self, uuid):
+        super().__init__(uuid)
 
-    def load(self):
-        db = coredb.CoreDB()
-        xpath = MonitorDB.getPointMonitorXPath(self._name)
+    def load(self, data=None):
+        if data is None:
+            data = MonitorManager.getPointMonitor(self._uuid)
+        else:
+            self._uuid = data.monitorBase.uuid
+            self._name = data.monitorBase.name
 
-        field = getMonitorField(MonitorDB.getPointMonitorXPath(self._name)).displayText()
-        coordinateX = db.getValue(xpath + '/coordinate/x')
-        coordinateY = db.getValue(xpath + '/coordinate/y')
-        coordinateZ = db.getValue(xpath + '/coordinate/z')
-
-        self._ui.name.setText(f'{self._name}')
-        self._ui.type.setText(f'{field} on Point ({coordinateX}, {coordinateY}, {coordinateZ})')
+        self._ui.name.setText(f'{data.monitorBase.name}')
+        self._ui.type.setText(f'{data.field.displayText()} on Point ({data.coordinate.x}, {data.coordinate.y}, {data.coordinate.z})')
 
     def edit(self):
-        self._dialog = PointDialog(self, self._name)
+        self._dialog = PointDialog(self, self._uuid)
         self._dialog.accepted.connect(self.load)
         self._dialog.open()
 
     def delete(self):
-        coredb.CoreDB().removePointMonitor(self._name)
+        MonitorManager.removePointMonitor(self.uuid)
 
 
 class SurfaceMonitorWidget(MonitorWidget):
-    def __init__(self, name):
-        super().__init__(name)
+    def __init__(self, uuid):
+        super().__init__(uuid)
 
-    def load(self):
-        db = coredb.CoreDB()
-        xpath = MonitorDB.getSurfaceMonitorXPath(self._name)
+    def load(self, data=None):
+        if data is None:
+            data = MonitorManager.getSurfaceMonitor(self._uuid)
+        else:
+            self._uuid = data.monitorBase.uuid
+            self._name = data.monitorBase.name
 
-        reportType = SurfaceReportType(db.getValue(xpath + '/reportType'))
-        title = MonitorDB.surfaceReportTypeToText(reportType)
-        if reportType not in (SurfaceReportType.MASS_FLOW_RATE, SurfaceReportType.VOLUME_FLOW_RATE):
-            title += ' ' + getMonitorField(MonitorDB.getSurfaceMonitorXPath(self._name)).displayText()
+        title = MonitorDB.surfaceReportTypeToText(data.reportType)
+        if data.reportType not in (SurfaceReportType.MASS_FLOW_RATE, SurfaceReportType.VOLUME_FLOW_RATE):
+            title += ' ' + data.field.displayText()
 
-        bcid = db.getValue(xpath + '/surface')
-        surface = BoundaryDB.getBoundaryName(bcid)
-        region = BoundaryDB.getBoundaryRegion(bcid)
+        surface = BoundaryDB.getBoundaryName(data.surface)
+        region = BoundaryDB.getBoundaryRegion(data.surface)
 
         region = f' ({region})' if region else ''
-        self._ui.name.setText(f'{self._name}{region}')
+        self._ui.name.setText(f'{data.monitorBase.name}{region}')
         self._ui.type.setText(f'{title} on Surface {surface}')
 
     def edit(self):
-        self._dialog = SurfaceDialog(self, self._name)
+        self._dialog = SurfaceDialog(self, self._uuid)
         self._dialog.accepted.connect(self.load)
         self._dialog.open()
 
     def delete(self):
-        coredb.CoreDB().removeSurfaceMonitor(self._name)
+        MonitorManager.removeSurfaceMonitor(self.uuid)
 
 
 class VolumeMonitorWidget(MonitorWidget):
-    def __init__(self, name):
-        super().__init__(name)
+    def __init__(self, uuid):
+        super().__init__(uuid)
 
-    def load(self):
-        db = coredb.CoreDB()
-        xpath = MonitorDB.getVolumeMonitorXPath(self._name)
+    def load(self, data=None):
+        if data is None:
+            data = MonitorManager.getVolumeMonitor(self._uuid)
+        else:
+            self._uuid = data.monitorBase.uuid
+            self._name = data.monitorBase.name
 
-        reportType = MonitorDB.volumeReportTypeToText(VolumeReportType(db.getValue(xpath + '/reportType')))
-        field = getMonitorField(MonitorDB.getVolumeMonitorXPath(self._name)).displayText()
-        czid = db.getValue(xpath + '/volume')
-        volume = CellZoneDB.getCellZoneName(czid)
-        region = CellZoneDB.getCellZoneRegion(czid)
+        reportType = MonitorDB.volumeReportTypeToText(data.reportType)
+        field = data.field.displayText()
+        volume = CellZoneDB.getCellZoneName(data.volume)
+        region = CellZoneDB.getCellZoneRegion(data.volume)
 
         region = f' ({region})' if region else ''
-        self._ui.name.setText(f'{self._name}{region}')
+        self._ui.name.setText(f'{data.monitorBase.name}{region}')
         self._ui.type.setText(f'{reportType} {field} on Volume {volume}')
 
     def edit(self):
-        self._dialog = VolumeDialog(self, self._name)
+        self._dialog = VolumeDialog(self, self._uuid)
         self._dialog.accepted.connect(self.load)
         self._dialog.open()
 
     def delete(self):
-        coredb.CoreDB().removeVolumeMonitor(self._name)
+        MonitorManager.removeVolumeMonitor(self.uuid)
